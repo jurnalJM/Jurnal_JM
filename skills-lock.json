@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "design-dna": {
+      "source": "zanwei/design-dna",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "424622959df02c2957430bd211d2d058eb672bd43f91f48acc5031d2652a2903"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "93f53fd1c0352d3d7ec17b8f73d7351bf76f4821e55d123c9d2abc2c53ba48e4"
+    },
+    "graphify": {
+      "source": "Graphify-Labs/graphify",
+      "sourceType": "github",
+      "skillPath": "graphify/SKILL.md",
+      "computedHash": "97458b08293daf0326c4679117847fb75631d1551d869ea73ea7d4d26f8a4532"
+    }
+  }
+}

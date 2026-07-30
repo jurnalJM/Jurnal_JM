@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}JayaMotor{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/design-pro.css') }}?v={{ range(1, 99999) | random }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Header with Professional Navigation -->
+        <header class="top-bar">
+            <!-- Logo & Brand -->
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <a href="/" class="logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18M9 3v18"/>
+                    </svg>
+                    <span>JayaMotor</span>
+                </a>
+            </div>
+
+            <!-- Main Navigation -->
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-item" data-page="dashboard">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 14h3V8h6v6h3V6h2L8 1 0 6h2z"/>
+                    </svg>
+                    <span>Dasbor</span>
+                </a>
+                <a href="/transaksi" class="nav-item" data-page="transaksi">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M4 1h8v2H4V1zm0 3h8v10H4V4z"/>
+                    </svg>
+                    <span>Transaksi</span>
+                </a>
+                <a href="/laporan" class="nav-item" data-page="laporan">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h12v2H2v-2z"/>
+                    </svg>
+                    <span>Laporan</span>
+                </a>
+                <a href="/laporan-hutang-sales" class="nav-item" data-page="laporan-hutang-sales">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M3 2h10v12H3V2zm2 2v8h6V4H5z"/>
+                    </svg>
+                    <span>Hutang Sales</span>
+                </a>
+                <a href="/jurnal-informasi" class="nav-item" data-page="jurnal-informasi">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M4 1h8c1.1 0 2 .9 2 2v10c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V3c0-1.1.9-2 2-2zm0 2v10h8V3H4z"/>
+                    </svg>
+                    <span>Jurnal Info</span>
+                </a>
+                <a href="/type-motor" class="nav-item" data-page="type-motor">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 2c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm0 2c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z"/>
+                    </svg>
+                    <span>Master</span>
+                </a>
+                <a href="/stok-motor" class="nav-item" data-page="stok-motor">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 3h12v2H2V3zm0 3h12v8H2V6z"/>
+                    </svg>
+                    <span>Stok</span>
+                </a>
+                <a href="/pindah-stok" class="nav-item" data-page="pindah-stok">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 2l3 3h-2v4h-2V5H5l3-3z"/>
+                    </svg>
+                    <span>Pindah</span>
+                </a>
+                <a href="/broker-master" class="nav-item" data-page="broker-master">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 1c-1.3 0-4 .7-4 2v3h8v-3c0-1.3-2.7-2-4-2z"/>
+                    </svg>
+                    <span>Broker</span>
+                </a>
+                <a href="/master-leasing" class="nav-item" data-page="master-leasing">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 2h12v12H2V2zm2 2v8h8V4H4z"/>
+                    </svg>
+                    <span>Leasing</span>
+                </a>
+                <a href="/import-stok" class="nav-item" data-page="import-stok">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 2L4 6h2v4h4v-4h2L8 2zM3 12h10v2H3v-2z"/>
+                    </svg>
+                    <span>Import</span>
+                </a>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-wrapper">
+            <main class="content">
+                {% block content %}{% endblock %}
+            </main>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <p>&copy; 2026 JayaMotor - Honda by UCHAHUNT. Sistem Manajemen Penjualan Motor Modern.</p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="{{ url_for('static', filename='js/design.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

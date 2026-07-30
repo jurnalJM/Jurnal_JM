@@ -1,0 +1,733 @@
+{% extends "base.html" %}
+
+{% block title %}Dasbor - JayaMotor - Honda{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1>Dasbor Penjualan</h1>
+    <p class="subtitle">Monitor dan kelola semua aktivitas penjualan motor Honda Anda</p>
+</div>
+
+<!-- Top Metrics -->
+<div class="dashboard-stats">
+    <div class="stat-card">
+        <span class="stat-label">Total Transaksi</span>
+        <span class="stat-value" id="total-transactions">0</span>
+        <span class="stat-change">Bulan ini</span>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--success);">
+        <span class="stat-label" style="color: var(--success);">✓ Disetujui</span>
+        <span class="stat-value" id="approved-transactions" style="color: var(--success);">0</span>
+        <span class="stat-change" style="color: var(--success);">Selesai</span>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--warning);">
+        <span class="stat-label" style="color: var(--warning);">⏳ Menunggu</span>
+        <span class="stat-value" id="pending-transactions" style="color: var(--warning);">0</span>
+        <span class="stat-change" style="color: var(--warning);">Pending</span>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--primary);">
+        <span class="stat-label">Total DP</span>
+        <span class="stat-value" id="total-dp" style="color: var(--primary); font-size: 24px;">Rp 0</span>
+        <span class="stat-change">Nilai DP</span>
+    </div>
+</div>
+
+<!-- Main Grid Layout -->
+<div class="grid" style="grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+    <!-- Left Column -->
+    <div>
+        <!-- Date Range Selector -->
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+                <h3 style="margin: 0;">Periode</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <input type="date" id="date-from" class="form-control" style="flex: 1; font-size: 13px;">
+                    <span style="color: var(--text-muted);">→</span>
+                    <input type="date" id="date-to" class="form-control" style="flex: 1; font-size: 13px;">
+                    <button class="btn btn-sm btn-primary" onclick="filterByDateRange()">Filter</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h3 style="margin: 0;">Grafik Penjualan</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart" style="height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div>
+        <!-- Performance Stats -->
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+                <h3 style="margin: 0;">Kinerja Bulan Ini</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-size: 13px; font-weight: 600;">Conversion Rate</span>
+                            <span style="font-size: 13px; color: var(--primary); font-weight: 700;" id="conversion-rate">0%</span>
+                        </div>
+                        <div style="background: var(--bg-secondary); border-radius: 4px; height: 8px; overflow: hidden;">
+                            <div id="conversion-bar" style="background: var(--primary); height: 100%; width: 0%; transition: width 300ms;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-size: 13px; font-weight: 600;">Avg. DP Value</span>
+                            <span style="font-size: 13px; color: var(--success); font-weight: 700;" id="avg-dp">Rp 0</span>
+                        </div>
+                        <div style="background: var(--bg-secondary); border-radius: 4px; height: 8px; overflow: hidden;">
+                            <div id="avg-dp-bar" style="background: var(--success); height: 100%; width: 0%; transition: width 300ms;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-size: 13px; font-weight: 600;">Approval Rate</span>
+                            <span style="font-size: 13px; color: var(--info); font-weight: 700;" id="approval-rate">0%</span>
+                        </div>
+                        <div style="background: var(--bg-secondary); border-radius: 4px; height: 8px; overflow: hidden;">
+                            <div id="approval-bar" style="background: var(--info); height: 100%; width: 0%; transition: width 300ms;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Distribution -->
+        <div class="card">
+            <div class="card-header">
+                <h3 style="margin: 0;">Distribusi Status</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" style="height: 200px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Section -->
+<div class="grid" style="grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+    <!-- Recent Transactions -->
+    <div class="card">
+        <div class="card-header">
+            <h3 style="margin: 0;">Transaksi Terbaru</h3>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="table" style="font-size: 13px;">
+                <thead>
+                    <tr>
+                        <th>Nota</th>
+                        <th>Pelanggan</th>
+                        <th>Motor</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="recent-transaksi">
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted);">Memuat...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Top Customers -->
+    <div class="card">
+        <div class="card-header">
+            <h3 style="margin: 0;">Top Pelanggan</h3>
+        </div>
+        <div class="card-body">
+            <div id="top-customers" style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="text-align: center; color: var(--text-muted); padding: 20px;">Memuat...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Table Section -->
+<div class="section">
+    <div class="section-header">
+        <h3 class="section-title">Semua Transaksi</h3>
+    </div>
+
+    <!-- Filter & Search -->
+    <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 24px;">
+        <div style="flex: 1; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-light);">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="9" r="8"/><path d="M16 16l3 3"/>
+            </svg>
+            <input type="text" id="search-transaksi" placeholder="Cari transaksi, customer, nota..."
+                   style="border: none; background: transparent; flex: 1; outline: none; color: var(--text-primary); font-size: 14px;">
+        </div>
+        <select id="filter-status-quick" class="form-select" style="width: 180px;">
+            <option value="">Semua Status</option>
+            <option value="Pending">Menunggu</option>
+            <option value="Approved">Disetujui</option>
+            <option value="Paid">Dibayar</option>
+            <option value="Cancelled">Dibatalkan</option>
+        </select>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">Nota</th>
+                    <th style="width: 20%;">Pelanggan</th>
+                    <th style="width: 15%;">Motor</th>
+                    <th style="width: 15%;">DP (Rp)</th>
+                    <th style="width: 12%;">Status</th>
+                    <th style="width: 12%;">Tanggal</th>
+                </tr>
+            </thead>
+            <tbody id="transaksi-list">
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">Memuat data...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Floating Action Button -->
+<button class="fab" onclick="openAddModal()" title="Tambah Transaksi Baru">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+    </svg>
+</button>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="transaksiModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h4 class="modal-title" id="modalTitle">Tambah Transaksi Baru</h4>
+            <button class="modal-close" onclick="closeModal('transaksiModal')">×</button>
+        </div>
+        <form id="transaksiForm" onsubmit="saveTransaksi(event)">
+            <div class="modal-body">
+                <input type="hidden" id="transaksi-id">
+
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label required">Nomor Nota</label>
+                        <input type="text" class="form-control" id="nota" placeholder="INV-001" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">Tanggal Nota</label>
+                        <input type="date" class="form-control" id="tanggal-nota" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label required">Nama Pelanggan</label>
+                        <input type="text" class="form-control" id="customer-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">No. Handphone</label>
+                        <input type="text" class="form-control" id="customer-phone">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Alamat</label>
+                    <textarea class="form-control" id="customer-alamat"></textarea>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label required">Tipe Motor</label>
+                        <input type="text" class="form-control" id="motor-type" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="status">
+                            <option value="Pending">Menunggu</option>
+                            <option value="Approved">Disetujui</option>
+                            <option value="Paid">Dibayar</option>
+                            <option value="Cancelled">Dibatalkan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label">DP</label>
+                        <input type="number" class="form-control" id="dp" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Subsidi</label>
+                        <input type="number" class="form-control" id="subsidi" value="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('transaksiModal')">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan Transaksi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Floating Action Button - Psychological UX Placement */
+    .fab {
+        position: fixed;
+        bottom: 32px;
+        right: 32px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        color: white;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(74, 155, 127, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 50;
+        font-size: 24px;
+        outline: none;
+    }
+
+    .fab:hover {
+        transform: scale(1.1) translateY(-4px);
+        box-shadow: 0 12px 32px rgba(74, 155, 127, 0.45);
+    }
+
+    .fab:active {
+        transform: scale(0.95);
+    }
+
+    /* FAB Animation on page load */
+    @keyframes fabBounce {
+        0% {
+            opacity: 0;
+            transform: scale(0.3) translateY(40px);
+        }
+        70% {
+            transform: scale(1.05);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .fab {
+        animation: fabBounce 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
+        opacity: 0;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .fab {
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+        }
+    }
+
+    .grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .status-badge.pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+
+    .status-badge.approved {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .status-badge.paid {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--info);
+    }
+
+    .status-badge.cancelled {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .table-actions {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    .table-actions .btn-icon {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        font-size: 12px;
+        border-radius: 4px;
+    }
+
+    /* Top Customers List */
+    .customer-item {
+        padding: 12px;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .customer-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 13px;
+    }
+
+    .customer-value {
+        font-weight: 700;
+        color: var(--primary);
+        font-size: 13px;
+    }
+
+    @media (max-width: 768px) {
+        .grid {
+            grid-template-columns: 1fr !important;
+        }
+        .grid-2 {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let salesChartInstance = null;
+let statusChartInstance = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('tanggal-nota').value = today;
+
+    // Set default date range
+    const dateFrom = new Date();
+    dateFrom.setDate(dateFrom.getDate() - 30);
+    document.getElementById('date-from').value = dateFrom.toISOString().split('T')[0];
+    document.getElementById('date-to').value = today;
+
+    loadTransaksi();
+    loadDashboardData();
+});
+
+function loadTransaksi() {
+    axios.get('/api/transaksi')
+        .then(response => {
+            const transaksi = response.data.data;
+            updateStats(transaksi);
+            renderTransaksiList(transaksi);
+            renderRecentTransaksi(transaksi);
+            renderTopCustomers(transaksi);
+            updateCharts(transaksi);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+function loadDashboardData() {
+    // This loads additional dashboard data if needed
+    loadTransaksi();
+}
+
+function updateStats(transaksi) {
+    const total = transaksi.length;
+    const approved = transaksi.filter(t => t.status === 'Approved').length;
+    const pending = transaksi.filter(t => t.status === 'Pending').length;
+    const totalDp = transaksi.reduce((sum, t) => sum + t.dp, 0);
+
+    document.getElementById('total-transactions').textContent = total;
+    document.getElementById('approved-transactions').textContent = approved;
+    document.getElementById('pending-transactions').textContent = pending;
+    document.getElementById('total-dp').textContent = formatCurrency(totalDp);
+
+    // Calculate performance metrics
+    const conversionRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+    const avgDp = total > 0 ? totalDp / total : 0;
+    const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+
+    document.getElementById('conversion-rate').textContent = conversionRate + '%';
+    document.getElementById('conversion-bar').style.width = conversionRate + '%';
+    document.getElementById('avg-dp').textContent = formatCurrency(avgDp);
+    document.getElementById('avg-dp-bar').style.width = Math.min(conversionRate, 100) + '%';
+    document.getElementById('approval-rate').textContent = approvalRate + '%';
+    document.getElementById('approval-bar').style.width = approvalRate + '%';
+}
+
+function updateCharts(transaksi) {
+    // Sales Chart
+    const salesByMonth = {};
+    transaksi.forEach(t => {
+        const month = new Date(t.tanggal_nota).toLocaleDateString('id-ID', { month: 'short' });
+        salesByMonth[month] = (salesByMonth[month] || 0) + 1;
+    });
+
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    if (salesChartInstance) salesChartInstance.destroy();
+    salesChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Object.keys(salesByMonth),
+            datasets: [{
+                label: 'Transaksi',
+                data: Object.values(salesByMonth),
+                borderColor: 'var(--primary)',
+                backgroundColor: 'rgba(74, 155, 127, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4,
+                pointBackgroundColor: 'var(--primary)',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Status Chart
+    const statusCounts = {
+        'Menunggu': transaksi.filter(t => t.status === 'Pending').length,
+        'Disetujui': transaksi.filter(t => t.status === 'Approved').length,
+        'Dibayar': transaksi.filter(t => t.status === 'Paid').length,
+        'Dibatalkan': transaksi.filter(t => t.status === 'Cancelled').length,
+    };
+
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    if (statusChartInstance) statusChartInstance.destroy();
+    statusChartInstance = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(statusCounts),
+            datasets: [{
+                data: Object.values(statusCounts),
+                backgroundColor: [
+                    'var(--warning)',
+                    'var(--success)',
+                    'var(--info)',
+                    'var(--danger)'
+                ],
+                borderColor: 'white',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 12 } }
+            }
+        }
+    });
+}
+
+function renderRecentTransaksi(transaksi) {
+    const tbody = document.getElementById('recent-transaksi');
+    tbody.innerHTML = '';
+
+    if (transaksi.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted);">Belum ada transaksi</td></tr>';
+        return;
+    }
+
+    transaksi.slice(-5).reverse().forEach(t => {
+        const statusClass = t.status.toLowerCase();
+        tbody.innerHTML += `
+            <tr>
+                <td><strong style="color: var(--primary);">${t.nota}</strong></td>
+                <td>${t.customer_name}</td>
+                <td>${t.motor_type}</td>
+                <td><span class="status-badge ${statusClass}">${t.status}</span></td>
+            </tr>
+        `;
+    });
+}
+
+function renderTopCustomers(transaksi) {
+    const customerMap = {};
+    transaksi.forEach(t => {
+        const key = t.customer_name;
+        customerMap[key] = (customerMap[key] || 0) + t.dp;
+    });
+
+    const sorted = Object.entries(customerMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+    const container = document.getElementById('top-customers');
+    container.innerHTML = '';
+
+    if (sorted.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Belum ada pelanggan</div>';
+        return;
+    }
+
+    sorted.forEach(([ name, value ]) => {
+        container.innerHTML += `
+            <div class="customer-item">
+                <span class="customer-name">${name}</span>
+                <span class="customer-value">${formatCurrency(value)}</span>
+            </div>
+        `;
+    });
+}
+
+function renderTransaksiList(transaksi) {
+    const tbody = document.getElementById('transaksi-list');
+    tbody.innerHTML = '';
+
+    if (transaksi.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    Belum ada transaksi
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    transaksi.slice(-20).reverse().forEach(t => {
+        const statusClass = t.status.toLowerCase();
+        tbody.innerHTML += `
+            <tr>
+                <td><strong style="color: var(--primary);">${t.nota}</strong></td>
+                <td>${t.customer_name}</td>
+                <td style="color: var(--text-secondary); font-size: 13px;">${t.motor_type}</td>
+                <td><strong>${formatCurrency(t.dp)}</strong></td>
+                <td><span class="status-badge ${statusClass}">${t.status}</span></td>
+                <td style="color: var(--text-muted); font-size: 13px;">${formatDate(t.tanggal_nota)}</td>
+            </tr>
+        `;
+    });
+}
+
+function filterByDateRange() {
+    loadTransaksi();
+}
+
+function openAddModal() {
+    document.getElementById('transaksiForm').reset();
+    document.getElementById('transaksi-id').value = '';
+    document.getElementById('modalTitle').textContent = 'Tambah Transaksi Baru';
+    document.getElementById('transaksiModal').classList.add('show');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+}
+
+function editTransaksi(id) {
+    axios.get(`/api/transaksi/${id}`)
+        .then(response => {
+            const t = response.data.data;
+            document.getElementById('transaksi-id').value = t.id;
+            document.getElementById('nota').value = t.nota;
+            document.getElementById('tanggal-nota').value = t.tanggal_nota;
+            document.getElementById('customer-name').value = t.customer_name;
+            document.getElementById('customer-phone').value = t.customer_phone || '';
+            document.getElementById('customer-alamat').value = t.customer_alamat || '';
+            document.getElementById('motor-type').value = t.motor_type;
+            document.getElementById('status').value = t.status;
+            document.getElementById('dp').value = t.dp;
+            document.getElementById('subsidi').value = t.subsidi;
+
+            document.getElementById('modalTitle').textContent = 'Edit Transaksi';
+            document.getElementById('transaksiModal').classList.add('show');
+        })
+        .catch(error => showToast('Error: ' + error.message, 'error'));
+}
+
+function saveTransaksi(event) {
+    event.preventDefault();
+
+    const id = document.getElementById('transaksi-id').value;
+    const data = {
+        nota: document.getElementById('nota').value,
+        tanggal_nota: document.getElementById('tanggal-nota').value,
+        customer_name: document.getElementById('customer-name').value,
+        customer_phone: document.getElementById('customer-phone').value,
+        customer_alamat: document.getElementById('customer-alamat').value,
+        motor_type: document.getElementById('motor-type').value,
+        status: document.getElementById('status').value,
+        dp: parseFloat(document.getElementById('dp').value) || 0,
+        subsidi: parseFloat(document.getElementById('subsidi').value) || 0,
+    };
+
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/transaksi/${id}` : '/api/transaksi';
+
+    axios({
+        method: method,
+        url: url,
+        data: data
+    })
+    .then(response => {
+        showToast(response.data.message || 'Transaksi berhasil disimpan', 'success');
+        closeModal('transaksiModal');
+        loadTransaksi();
+    })
+    .catch(error => {
+        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+    });
+}
+
+function deleteTransaksi(id) {
+    if (!confirm('Yakin ingin menghapus?')) return;
+
+    axios.delete(`/api/transaksi/${id}`)
+        .then(response => {
+            showToast(response.data.message || 'Transaksi berhasil dihapus', 'success');
+            loadTransaksi();
+        })
+        .catch(error => {
+            showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+        });
+}
+
+document.getElementById('transaksiModal').addEventListener('click', (e) => {
+    if (e.target.id === 'transaksiModal') closeModal('transaksiModal');
+});
+</script>
+{% endblock %}

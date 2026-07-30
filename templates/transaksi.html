@@ -1,0 +1,1914 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Transaksi - JayaMotor - Honda{% endblock %}
+
+{% block content %}
+<!-- Page Header with Optimal Button Placement -->
+<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 32px;">
+    <div class="page-header" style="margin: 0; flex: 1;">
+        <h1>Manajemen Transaksi</h1>
+        <p class="subtitle">Kelola data transaksi penjualan motor Anda</p>
+    </div>
+    <button class="btn btn-primary" onclick="openAddModal()" style="margin-top: 8px; white-space: nowrap; display: flex; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+        </svg>
+        <span>Tambah Transaksi</span>
+    </button>
+</div>
+
+<!-- Filter Panel -->
+<div class="card">
+    <div class="card-header">
+        <h5>Filter & Pencarian</h5>
+    </div>
+    <div class="card-body">
+        <div class="grid grid-3">
+            <div class="form-group">
+                <label class="form-label">Dari Tanggal</label>
+                <input type="date" class="form-control" id="filter-start-date">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sampai Tanggal</label>
+                <input type="date" class="form-control" id="filter-end-date">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="filter-status">
+                    <option value="">Semua Status</option>
+                    <option value="Pending">Menunggu</option>
+                    <option value="Approved">Disetujui</option>
+                    <option value="Paid">Dibayar</option>
+                    <option value="Cancelled">Dibatalkan</option>
+                </select>
+            </div>
+        </div>
+        <div style="display: flex; gap: var(--space-3); margin-top: var(--space-4);">
+            <button class="btn btn-primary" onclick="filterTransaksi()">Terapkan Filter</button>
+            <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+        </div>
+    </div>
+</div>
+
+<!-- Transactions Table -->
+<div class="card" style="margin-top: var(--space-8);">
+    <div class="card-body">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nota</th>
+                        <th>Tanggal</th>
+                        <th>Pelanggan</th>
+                        <th>Motor</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">DP (Rp)</th>
+                        <th style="width: 120px; text-align: center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="transaksi-body">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: var(--space-8);">Memuat...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="transaksiModal">
+    <div class="modal" style="width: 90%; max-width: 1000px; height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h4 class="modal-title" id="modalTitle">Tambah Transaksi Baru</h4>
+            <button class="modal-close" onclick="closeModal('transaksiModal')">Ã—</button>
+        </div>
+        <form id="transaksiForm" onsubmit="saveTransaksi(event)">
+            <div class="modal-body">
+                <input type="hidden" id="transaksi-id">
+
+                <!-- Baris 1: No Transaksi & Tanggal -->
+                <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label class="form-label required">No. Transaksi</label>
+                        <input type="text" class="form-control" id="nota" placeholder="misal: TRX-001" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">Tanggal Transaksi</label>
+                        <input type="date" class="form-control" id="tanggal-nota" required>
+                    </div>
+                </div>
+
+                <!-- Baris 2: Nama Pelanggan, No. Handphone, Status -->
+                <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="form-group">
+                        <label class="form-label required">Nama Pelanggan</label>
+                        <input type="text" class="form-control" id="customer-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">No. Handphone</label>
+                        <input type="text" class="form-control" id="customer-phone">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="status">
+                            <option value="P">Menunggu (Pending)</option>
+                            <option value="A">Disetujui (Approved)</option>
+                            <option value="L">Lunas (Paid)</option>
+                            <option value="C">Dibatalkan (Cancelled)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Baris 3: Alamat (Full Width) -->
+                <div class="form-group">
+                    <label class="form-label">Alamat Pelanggan</label>
+                    <textarea class="form-control" id="customer-alamat" rows="2" placeholder="Jalan/Jln No. ..."></textarea>
+                </div>
+
+                <!-- Baris 3b: Kelurahan, Kecamatan, Kabupaten -->
+                <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="form-group">
+                        <label class="form-label">Kelurahan (Kel.)</label>
+                        <div style="position: relative;">
+                            <input type="text" class="form-control" id="kelurahan" placeholder="Nama kelurahan" autocomplete="off" data-autocomplete="true" data-type="kelurahan">
+                            <div class="autocomplete-list" id="kelurahan-list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000;"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Kecamatan (Kec.)</label>
+                        <div style="position: relative;">
+                            <input type="text" class="form-control" id="kecamatan" placeholder="Nama kecamatan" autocomplete="off" data-autocomplete="true" data-type="kecamatan">
+                            <div class="autocomplete-list" id="kecamatan-list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000;"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Kabupaten (Kab.)</label>
+                        <div style="position: relative;">
+                            <input type="text" class="form-control" id="kabupaten" placeholder="Nama kabupaten" autocomplete="off" data-autocomplete="true" data-type="kabupaten">
+                            <div class="autocomplete-list" id="kabupaten-list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info: Nama Surat akan diisi saat pemberitahuan -->
+                <div style="background-color: var(--bg-tertiary); padding: var(--space-3); border-radius: 4px; margin-bottom: var(--space-4);">
+                    <small style="color: var(--text-secondary);">
+                         <strong>Nama pada BPKB/STNK</strong> akan dikonfirmasi setelah barang dikirim melalui form "Pemberitahuan Nama Surat"
+                    </small>
+                </div>
+
+                <!-- Baris 4: Tipe Motor, No. Mesin (Dropdown), No. Rangka (Dropdown) -->
+                <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="form-group">
+                        <label class="form-label required">Tipe Motor</label>
+                        <select class="form-select" id="motor-type" required onchange="onMotorTypeChange()">
+                            <option value="">-- Pilih Type Motor --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">No. Mesin</label>
+                        <select class="form-select" id="no-engine" onchange="onNoMesinChange()">
+                            <option value="">-- Pilih No. Mesin --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">No. Rangka</label>
+                        <input type="text" class="form-control" id="no-chassis" readonly placeholder="Auto-fill saat pilih no mesin" style="background-color: var(--bg-tertiary);">
+                        <input type="hidden" id="stok-id">
+                    </div>
+                </div>
+
+                <!-- Baris 5: Warna & Broker/Sales -->
+                <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label class="form-label">Warna</label>
+                        <input type="text" class="form-control" id="warna" readonly style="background-color: var(--bg-tertiary);" placeholder="Auto-fill dari stok motor">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Broker/Sales</label>
+                        <select class="form-select" id="broker-id">
+                            <option value="">-- Pilih Broker/Sales --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); margin: var(--space-6) 0; padding-top: var(--space-6);">
+                    <h5 style="margin-bottom: var(--space-4);">Informasi Keuangan</h5>
+
+                    <!-- Baris 1: Harga Dasar & Sistem Pembayaran -->
+                    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="form-group">
+                            <label class="form-label">Harga Dasar (Rp)</label>
+                            <input type="text" class="form-control currency-input" id="harga-dasar" value="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Sistem Pembayaran</label>
+                            <select class="form-select" id="sistem-pembayaran" onchange="onSistemPembayaranChange()" required>
+                                <option value="">-- Pilih Sistem Pembayaran --</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Kredit">Kredit</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Baris 1b: Ketentuan DP (Cash=auto from OTR, Kredit=manual) -->
+                    <div class="grid" style="grid-template-columns: 1fr;">
+                        <div class="form-group">
+                            <label class="form-label">Ketentuan DP (Rp)</label>
+                            <input type="text" class="form-control currency-input" id="ketentuan-dp" value="0" placeholder="0" readonly style="background-color: var(--bg-tertiary);">
+                            <small style="color: var(--text-secondary);">Cash: auto dari OTR | Kredit: manual input</small>
+                        </div>
+                    </div>
+
+                    <!-- Baris 2: DP, Tanggal Bayar DP, Keterangan DP -->
+                    <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                        <div class="form-group">
+                            <label class="form-label">DP (Rp)</label>
+                            <input type="text" class="form-control currency-input" id="dp" value="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tanggal Bayar DP</label>
+                            <input type="date" class="form-control" id="tgl-bayar-dp">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Keterangan DP</label>
+                            <input type="text" class="form-control" id="ket-dp" placeholder="Ketentuan DP">
+                        </div>
+                    </div>
+
+                    <!-- Baris 3: Leasing & Subsidi -->
+                    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="form-group">
+                            <label class="form-label">Leasing</label>
+                            <select class="form-control" id="leasing-id">
+                                <option value="">-- Pilih Leasing --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Subsidi (Rp)</label>
+                            <input type="text" class="form-control currency-input" id="subsidi" value="0" placeholder="0">
+                        </div>
+                    </div>
+
+                    <!-- Baris 4: Diskon AHM, Dealer, Leasing -->
+                    <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                        <div class="form-group">
+                            <label class="form-label">Diskon AHM / Main Dealer (Rp)</label>
+                            <input type="text" class="form-control currency-input" id="diskon-ahm" value="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Diskon Dealer (Rp)</label>
+                            <input type="text" class="form-control currency-input" id="diskon-dealer" value="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Diskon Leasing / AHM (Rp)</label>
+                            <input type="text" class="form-control currency-input" id="diskon-leasing" value="0" placeholder="0">
+                        </div>
+                    </div>
+
+                    <!-- Baris 5: Insentif Penjual -->
+                    <div class="grid" style="grid-template-columns: 1fr;">
+                        <div class="form-group">
+                            <label class="form-label">Insentif Penjual (Rp)</label>
+                            <input type="text" class="form-control currency-input" id="insentif-penjual" value="0" placeholder="0">
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border-color); margin: var(--space-6) 0; padding-top: var(--space-6);">
+                        <h5 style="margin-bottom: var(--space-4);">Hutang ke Sales</h5>
+
+                        <!-- Hutang Sales & Hutang Leasing Display -->
+                        <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                            <div class="form-group">
+                                <label class="form-label">💰 Hutang Sales/Broker (Rp)</label>
+                                <div style="padding: var(--space-3); background-color: var(--bg-tertiary); border-radius: 4px; font-weight: bold; color: var(--color-warning);">
+                                    Rp <span id="hutang-sales-display">0</span>
+                                </div>
+                                <small style="color: var(--text-secondary);">Cash=Rp0 | Kredit=Ketentuan DP</small>
+                                <input type="hidden" id="hutang-sales">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🏦 Hutang Leasing (Rp)</label>
+                                <div style="padding: var(--space-3); background-color: var(--bg-tertiary); border-radius: 4px; font-weight: bold; color: var(--color-info);">
+                                    Rp <span id="hutang-leasing-display">0</span>
+                                </div>
+                                <small style="color: var(--text-secondary);">Kredit=OTR-Ketentuan DP</small>
+                                <input type="hidden" id="hutang-leasing">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">📊 Total Hutang (Rp)</label>
+                                <div style="padding: var(--space-3); background-color: var(--bg-tertiary); border-radius: 4px; font-weight: bold; color: var(--color-danger);">
+                                    Rp <span id="total-hutang-display">0</span>
+                                </div>
+                                <small style="color: var(--text-secondary);">Sales + Leasing</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('transaksiModal')">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan Transaksi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+    <div class="modal" style="width: 95%; max-width: 1200px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+            <div>
+                <h4 class="modal-title" id="detailTitle">Detail Transaksi</h4>
+                <span style="font-size: 12px; color: var(--text-muted);" id="detailSubtitle">Nota: -</span>
+            </div>
+            <button class="modal-close" onclick="closeModal('detailModal')">Ã—</button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+            <!-- Tabs Navigation -->
+            <div style="display: flex; gap: 0; border-bottom: 2px solid var(--border-light); background: var(--bg-secondary); position: sticky; top: 0; z-index: 10;">
+                <button class="detail-tab" data-tab="info" onclick="switchDetailTab('info')" style="flex: 1; padding: 16px; border: none; background: none; color: var(--text-secondary); cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent; transition: all 300ms;">
+                    Informasi Dasar
+                </button>
+                <button class="detail-tab" data-tab="motor" onclick="switchDetailTab('motor')" style="flex: 1; padding: 16px; border: none; background: none; color: var(--text-secondary); cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent; transition: all 300ms;">
+                    Motor
+                </button>
+                <button class="detail-tab" data-tab="financial" onclick="switchDetailTab('financial')" style="flex: 1; padding: 16px; border: none; background: none; color: var(--text-secondary); cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent; transition: all 300ms;">
+                    Finansial
+                </button>
+                <button class="detail-tab" data-tab="stnk" onclick="switchDetailTab('stnk')" style="flex: 1; padding: 16px; border: none; background: none; color: var(--text-secondary); cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent; transition: all 300ms;">
+                    STNK / BPKB/BPKB
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div style="padding: 24px;">
+                <!-- Tab: Informasi Dasar -->
+                <div id="tab-info" class="detail-tab-content" style="display: block;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <!-- Left Column -->
+                        <div>
+                            <h5 style="color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Data Pelanggan</h5>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Nama Pelanggan</span>
+                                    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-top: 4px;" id="detailCustomerName">-</div>
+                                </div>
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">No. Handphone</span>
+                                    <div style="font-size: 15px; color: var(--text-primary); margin-top: 4px;" id="detailCustomerPhone">-</div>
+                                </div>
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Alamat</span>
+                                    <div style="font-size: 14px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5;" id="detailCustomerAddress">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div>
+                            <h5 style="color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Data Transaksi</h5>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">No. Transaksi</span>
+                                    <div style="font-size: 15px; font-weight: 600; color: var(--primary); margin-top: 4px;" id="detailNota">-</div>
+                                </div>
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Tanggal</span>
+                                    <div style="font-size: 15px; color: var(--text-primary); margin-top: 4px;" id="detailTanggal">-</div>
+                                </div>
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Status</span>
+                                    <div style="margin-top: 4px;" id="detailStatus">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Motor -->
+                <div id="tab-motor" class="detail-tab-content" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <div>
+                            <h5 style="color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Spesifikasi Motor</h5>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Tipe Motor</span>
+                                    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-top: 4px;" id="detailMotorType">-</div>
+                                </div>
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Warna</span>
+                                    <div style="font-size: 15px; color: var(--text-primary); margin-top: 4px;" id="detailWarna">-</div>
+                                </div>
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">No. Mesin</span>
+                                    <div style="font-size: 14px; color: var(--text-secondary); font-family: monospace; margin-top: 4px;" id="detailNoMesin">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 style="color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Identitas Motor</h5>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">No. Rangka</span>
+                                    <div style="font-size: 14px; color: var(--text-secondary); font-family: monospace; margin-top: 4px;" id="detailNoChassis">-</div>
+                                </div>
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">No. Polisi</span>
+                                    <div style="font-size: 15px; font-weight: 600; color: var(--primary); margin-top: 4px;" id="detailNoPolisi">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Finansial -->
+                <div id="tab-financial" class="detail-tab-content" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <div>
+                            <h5 style="color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Rincian Harga</h5>
+                            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 14px;">
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-light);">
+                                    <span style="color: var(--text-secondary);">Harga Dasar</span>
+                                    <span style="font-weight: 600; color: var(--text-primary);" id="detailHargaDasar">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-light);">
+                                    <span style="color: var(--text-secondary);">OTR</span>
+                                    <span style="font-weight: 600; color: var(--text-primary);" id="detailOTR">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 style="color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Pembayaran</h5>
+                            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 14px;">
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-light);">
+                                    <span style="color: var(--text-secondary);">Sistem Pembayaran</span>
+                                    <span style="font-weight: 600; color: var(--text-primary);" id="detailSistemPembayaran">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-light);">
+                                    <span style="color: var(--text-secondary);">DP</span>
+                                    <span style="font-weight: 700; color: var(--primary); font-size: 15px;" id="detailDP">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-light);">
+                                    <span style="color: var(--text-secondary);">Leasing</span>
+                                    <span style="font-weight: 600; color: var(--text-primary);" id="detailLeasing">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: STNK/BPKB -->
+                <div id="tab-stnk" class="detail-tab-content" style="display: none;">
+                    <div>
+                        <h5 style="color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Data STNK/BPKB</h5>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                            <div>
+                                <div style="margin-bottom: 16px;">
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">No. BPKB</span>
+                                    <div style="font-size: 15px; color: var(--text-primary); margin-top: 4px; font-family: monospace;" id="detailNoBPKB">-</div>
+                                </div>
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Tgl. Biro Jasa</span>
+                                    <div style="font-size: 15px; color: var(--text-primary); margin-top: 4px;" id="detailTglBiro">-</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="margin-bottom: 16px;">
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Nama Pemilik (STNK)</span>
+                                    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-top: 4px;" id="detailNamaSurat">-</div>
+                                </div>
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Tgl. Serah Terima Motor</span>
+                                    <div style="font-size: 15px; color: var(--text-primary); margin-top: 4px;" id="detailTglSerahTerima">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('detailModal')">Tutup</button>
+            <button type="button" class="btn btn-primary" onclick="editFromDetail()">Edit Transaksi</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .detail-tab {
+        transition: all 300ms;
+    }
+
+    .detail-tab.active {
+        color: var(--primary) !important;
+        border-bottom-color: var(--primary) !important;
+        background: white !important;
+    }
+
+    .detail-tab-content {
+        animation: fadeIn 300ms ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .fab {
+        position: fixed;
+        bottom: 32px;
+        right: 32px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        color: white;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(74, 155, 127, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 50;
+        font-size: 24px;
+        outline: none;
+        animation: fabBounce 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
+    }
+
+    .fab:hover {
+        transform: scale(1.1) translateY(-4px);
+        box-shadow: 0 12px 32px rgba(74, 155, 127, 0.45);
+    }
+
+    .fab:active {
+        transform: scale(0.95);
+    }
+
+    @keyframes fabBounce {
+        0% {
+            opacity: 0;
+            transform: scale(0.3) translateY(40px);
+        }
+        70% {
+            transform: scale(1.05);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .fab {
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+        }
+    }
+</style>
+
+<!-- Pemberitahuan Nama Surat Modal -->
+<div class="modal-overlay" id="pemberitahuanModal">
+    <div class="modal" style="width: 90%; max-width: 700px;">
+        <div class="modal-header">
+            <h4 class="modal-title">Pemberitahuan Nama Surat BPKB/STNK</h4>
+            <button class="modal-close" onclick="closeModal('pemberitahuanModal')">Ã—</button>
+        </div>
+        <form id="pemberitahuanForm" onsubmit="savePemberitahuan(event)">
+            <div class="modal-body">
+                <input type="hidden" id="pemberitahuan-transaksi-id">
+
+                <!-- Nama Pemohon (readonly) -->
+                <div class="form-group">
+                    <label class="form-label">Nama Pemohon (Asli)</label>
+                    <input type="text" class="form-control" id="pemberitahuan-nama-pemohon" readonly style="background-color: var(--bg-tertiary);">
+                </div>
+
+                <!-- Pilihan: Nama & Alamat Sama atau Berbeda -->
+                <div class="form-group">
+                    <label class="form-label">Nama & Alamat pada BPKB/STNK</label>
+                    <div style="display: flex; gap: var(--space-3); margin-bottom: var(--space-3);">
+                        <label style="display: flex; align-items: center; gap: var(--space-2);">
+                            <input type="radio" name="sama-beda" value="sama" checked onchange="onPemberitahuanOptionChange()">
+                            <span>Sama dengan Nama Pemohon</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: var(--space-2);">
+                            <input type="radio" name="sama-beda" value="beda" onchange="onPemberitahuanOptionChange()">
+                            <span>Berbeda (Buka Form Edit)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Section: Nama & Alamat Surat Berbeda (hidden by default) -->
+                <div id="alamat-surat-section" style="display: none; border: 1px solid var(--border-color); padding: var(--space-4); border-radius: 4px; margin-bottom: var(--space-4);">
+                    <h5 style="margin-bottom: var(--space-4);">Data pada BPKB/STNK</h5>
+
+                    <!-- Nama Surat -->
+                    <div class="form-group">
+                        <label class="form-label required">Nama pada BPKB/STNK</label>
+                        <input type="text" class="form-control" id="pemberitahuan-nama-surat" placeholder="Nama sesuai dokumen BPKB/STNK">
+                    </div>
+
+                    <!-- Alamat Surat -->
+                    <div class="form-group">
+                        <label class="form-label">Alamat pada BPKB/STNK</label>
+                        <textarea class="form-control" id="pemberitahuan-alamat-surat" rows="2" placeholder="Jalan/Jln No. ..."></textarea>
+                    </div>
+
+                    <!-- Kel., Kec., Kab. Surat -->
+                    <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                        <div class="form-group">
+                            <label class="form-label">Kelurahan (Kel.)</label>
+                            <div style="position: relative;">
+                                <input type="text" class="form-control" id="pemberitahuan-kelurahan-surat" placeholder="Nama kelurahan" autocomplete="off" data-autocomplete="true" data-type="kelurahan" data-prefix="pemberitahuan">
+                                <div class="autocomplete-list" id="pemberitahuan-kelurahan-surat-list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000;"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Kecamatan (Kec.)</label>
+                            <div style="position: relative;">
+                                <input type="text" class="form-control" id="pemberitahuan-kecamatan-surat" placeholder="Nama kecamatan" autocomplete="off" data-autocomplete="true" data-type="kecamatan" data-prefix="pemberitahuan">
+                                <div class="autocomplete-list" id="pemberitahuan-kecamatan-surat-list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000;"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Kabupaten (Kab.)</label>
+                            <div style="position: relative;">
+                                <input type="text" class="form-control" id="pemberitahuan-kabupaten-surat" placeholder="Nama kabupaten" autocomplete="off" data-autocomplete="true" data-type="kabupaten" data-prefix="pemberitahuan">
+                                <div class="autocomplete-list" id="pemberitahuan-kabupaten-surat-list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No. Surat Pemberitahuan -->
+                <div class="form-group">
+                    <label class="form-label">No. Surat Pemberitahuan</label>
+                    <input type="text" class="form-control" id="pemberitahuan-no-surat" placeholder="misal: SU-2026-001">
+                    <small style="color: var(--text-secondary);">Nomor surat internal pemberitahuan dari dealer</small>
+                </div>
+
+                <!-- Tanggal Surat Pemberitahuan -->
+                <div class="form-group">
+                    <label class="form-label">Tanggal Surat Pemberitahuan</label>
+                    <input type="date" class="form-control" id="pemberitahuan-tgl-surat">
+                    <small style="color: var(--text-secondary);">Tanggal surat pemberitahuan diterbitkan</small>
+                </div>
+
+                <!-- Faktur dari Main Dealer -->
+                <div style="background-color: var(--bg-secondary); padding: var(--space-3); border-radius: var(--radius-md); margin-top: var(--space-6);">
+                    <h5 style=”margin-top: 0; margin-bottom: var(--space-4);”>Surat Faktur dari Main Dealer</h5>
+
+                    <!-- No. Faktur -->
+                    <div class="form-group">
+                        <label class="form-label">No. Faktur</label>
+                        <input type="text" class="form-control" id="faktur-no" placeholder="Nomor faktur dari main dealer">
+                    </div>
+
+                    <!-- Tanggal Faktur -->
+                    <div class="form-group">
+                        <label class="form-label">Tanggal Faktur</label>
+                        <input type="date" class="form-control" id="faktur-tgl">
+                    </div>
+
+                    <!-- Upload Faktur -->
+                    <div class="form-group">
+                        <label class="form-label">Upload Surat Faktur</label>
+                        <div class="input-file-wrapper" style="border: 2px dashed var(--border); border-radius: var(--radius-md); padding: var(--space-4); text-align: center; cursor: pointer; transition: all 0.2s;">
+                            <input type="file" id="faktur-file" class="form-control" accept=".pdf,.png,.jpg,.jpeg" style="display: none;">
+                            <div id="faktur-file-label" style="color: var(--text-secondary); font-size: 0.95rem;">
+                                Klik untuk pilih atau drag file (PDF, PNG, JPG)
+                            </div>
+                            <div id="faktur-file-info" style="display: none; margin-top: var(--space-2); color: var(--success); font-weight: 500;">
+                                <span id="faktur-file-name"></span>
+                            </div>
+                            <div id="faktur-file-delete" style="display: none; margin-top: var(--space-2);">
+                                <button type="button" class="btn btn-sm btn-danger" onclick="clearFakturFile()">Hapus File</button>
+                            </div>
+                        </div>
+                        <small style="color: var(--text-secondary); margin-top: var(--space-2); display: block;">Format: PDF, PNG, JPG (Max 10MB)</small>
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div style="background-color: var(--bg-tertiary); padding: var(--space-3); border-radius: 4px; margin-top: var(--space-4);">
+                    <small style="color: var(--text-secondary);">
+                         Form ini untuk konfirmasi nama & alamat pada BPKB/STNK setelah barang dikirim, beserta nomor dan tanggal surat pemberitahuan dari dealer.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('pemberitahuanModal')">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan Pemberitahuan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- STNK Data Modal -->
+<div class="modal-overlay" id="stnkModal">
+    <div class="modal" style="width: 90%; max-width: 700px;">
+        <div class="modal-header">
+            <h4 class="modal-title" id="stnkModalTitle">Tambah Data STNK</h4>
+            <button class="modal-close" onclick="closeModal('stnkModal')">Ã—</button>
+        </div>
+        <form id="stnkForm" onsubmit="saveStnk(event)">
+            <div class="modal-body">
+                <input type="hidden" id="stnk-transaksi-id">
+
+                <!-- Nomor Polisi -->
+                <div class="form-group">
+                    <label class="form-label">Nomor Polisi</label>
+                    <input type="text" class="form-control" id="stnk-no-polisi" placeholder="misal: B 1234 ABC" required>
+                    <small style="color: var(--text-secondary);">Format: [Huruf] [Angka] [Huruf]</small>
+                </div>
+
+                <!-- Tanggal Diterima dari Biro Jasa -->
+                <div class="form-group">
+                    <label class="form-label">Tanggal Diterima dari Biro Jasa</label>
+                    <input type="date" class="form-control" id="stnk-tgl-biro" required>
+                    <small style="color: var(--text-secondary);">Tanggal diterima plat nomor dari biro jasa</small>
+                </div>
+
+                <!-- No. BPKB -->
+                <div class="form-group">
+                    <label class="form-label">Nomor BPKB (Surat Tanda Terima Kendaraan)</label>
+                    <input type="text" class="form-control" id="stnk-no-bpkb" placeholder="Nomor BPKB">
+                    <small style="color: var(--text-secondary);">Opsional - diisi saat BPKB diterima</small>
+                </div>
+
+                <!-- Info -->
+                <div style="background-color: var(--bg-tertiary); padding: var(--space-3); border-radius: 4px; margin-top: var(--space-6);">
+                    <small style="color: var(--text-secondary);">
+                         Data ini dicatat setelah unit terjual dan proses pengurusan STNK/plat nomor di biro jasa selesai.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('stnkModal')">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan STNK</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Floating Action Button - Psychological UX Placement -->
+<button class="fab" onclick="openAddModal()" title="Tambah Transaksi Baru">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+    </svg>
+</button>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('filter-end-date').value = today;
+    document.getElementById('tanggal-nota').value = today;
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    document.getElementById('filter-start-date').value = thirtyDaysAgo;
+
+    loadTypeMotor();
+    loadBrokers();
+    loadLeasingOptions();
+    loadTransaksi();
+    setupCurrencyInputs();
+
+    // Setup debt calculation triggers
+    const debtFields = ['dp', 'subsidi', 'diskon-ahm', 'diskon-dealer', 'diskon-leasing'];
+    debtFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('blur', calculateHutangSales);
+            field.addEventListener('input', calculateHutangSales);
+        }
+    });
+
+    // Setup sistem pembayaran change
+    const sistemField = document.getElementById('sistem-pembayaran');
+    if (sistemField) {
+        sistemField.addEventListener('change', onSistemPembayaranChange);
+        onSistemPembayaranChange();
+    }
+
+    // Setup faktur file upload
+    const fakturFileInput = document.getElementById('faktur-file');
+    const fakturFileWrapper = document.querySelector('.input-file-wrapper');
+
+    if (fakturFileInput && fakturFileWrapper) {
+        fakturFileWrapper.addEventListener('click', () => fakturFileInput.click());
+        fakturFileWrapper.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fakturFileWrapper.style.backgroundColor = 'var(--bg-tertiary)';
+        });
+        fakturFileWrapper.addEventListener('dragleave', () => {
+            fakturFileWrapper.style.backgroundColor = '';
+        });
+        fakturFileWrapper.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fakturFileWrapper.style.backgroundColor = '';
+            if (e.dataTransfer.files.length > 0) {
+                fakturFileInput.files = e.dataTransfer.files;
+                updateFakturFileLabel();
+            }
+        });
+        fakturFileInput.addEventListener('change', updateFakturFileLabel);
+    }
+});
+
+// Store type motor data and stok data
+window.typeMotorData = {};
+window.stokData = {};
+
+// Format currency with thousands separator
+function formatCurrency(value) {
+    if (!value) return 'Rp 0';
+    const num = parseInt(value);
+    return `Rp ${num.toLocaleString('id-ID')}`;
+}
+
+// Format number with thousands separator (for display)
+function formatNumberDisplay(value) {
+    if (!value) return '0';
+    const num = parseInt(value);
+    return num.toLocaleString('id-ID');
+}
+
+// Parse currency input (remove formatting)
+function parseCurrencyInput(value) {
+    return value.replace(/\D/g, '') || '0';
+}
+
+// Setup currency input formatting
+function setupCurrencyInputs() {
+    const currencyInputs = document.querySelectorAll('.currency-input');
+    currencyInputs.forEach(input => {
+        // Format on blur
+        input.addEventListener('blur', function() {
+            const rawValue = parseCurrencyInput(this.value);
+            this.value = formatNumberDisplay(rawValue);
+        });
+
+        // Allow only numbers while typing
+        input.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '');
+        });
+    });
+}
+
+function loadTypeMotor() {
+    axios.get('/api/type-motor')
+        .then(response => {
+            const types = response.data.data;
+            const select = document.getElementById('motor-type');
+            select.innerHTML = '<option value="">-- Pilih Type Motor --</option>';
+
+            types.forEach(t => {
+                const option = document.createElement('option');
+                option.value = t.id;
+                option.textContent = `${t.kd_type} - ${t.nama_type} (Rp ${formatCurrency(t.harga_otr).replace('Rp ', '')})`;
+                select.appendChild(option);
+
+                window.typeMotorData[t.id] = {
+                    nama_type: t.nama_type,
+                    kd_type: t.kd_type,
+                    harga_otr: t.harga_otr,
+                    harga_dasar: t.harga_dasar
+                };
+            });
+        })
+        .catch(error => console.error('Error loading type motor:', error));
+}
+
+function loadBrokers() {
+    axios.get('/api/broker')
+        .then(response => {
+            const brokers = response.data.data;
+            const select = document.getElementById('broker-id');
+            select.innerHTML = '<option value="">-- Pilih Broker/Sales --</option>';
+
+            brokers.forEach(b => {
+                const option = document.createElement('option');
+                option.value = b.id;
+                option.textContent = b.nama;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error loading brokers:', error));
+}
+
+function onMotorTypeChange(includeStokId) {
+    const typeId = document.getElementById('motor-type').value;
+    const mesinSelect = document.getElementById('no-engine');
+
+    mesinSelect.innerHTML = '<option value="">⏳ Memuat...</option>';
+    mesinSelect.disabled = true;
+    document.getElementById('no-chassis').value = '';
+    document.getElementById('warna').value = '';
+    document.getElementById('stok-id').value = '';
+
+    // Auto-fill harga dasar from type motor (using harga_otr)
+    const typeMotorData = window.typeMotorData[typeId];
+    if (typeMotorData && typeMotorData.harga_otr) {
+        document.getElementById('harga-dasar').value = typeMotorData.harga_otr;
+    } else {
+        document.getElementById('harga-dasar').value = 0;
+    }
+
+    if (!typeId) {
+        mesinSelect.innerHTML = '<option value="">-- Pilih No. Mesin --</option>';
+        mesinSelect.disabled = false;
+        return Promise.resolve();
+    }
+
+    // Load available stok for this type (status = R for Ready)
+    // When editing, also include stok_id yang sedang dipakai (untuk backward compatibility)
+    const currentStokId = includeStokId || document.getElementById('stok-id').value;
+    const url = currentStokId
+        ? `/api/stok-motor?type_id=${typeId}&status=R&include_id=${currentStokId}`
+        : `/api/stok-motor?type_id=${typeId}&status=R`;
+
+    console.log('🔍 Loading stok untuk type_id:', typeId, 'include_id:', currentStokId);
+    return axios.get(url)
+        .then(response => {
+            const stoks = response.data.data;
+            console.log('✅ Stok loaded:', stoks);
+            mesinSelect.innerHTML = '<option value="">-- Pilih No. Mesin --</option>';
+
+            if (stoks.length === 0) {
+                console.warn('⚠️ Tidak ada stok untuk type_id:', typeId);
+                mesinSelect.innerHTML = '<option value="">-- Tidak ada stok tersedia untuk type ini --</option>';
+                mesinSelect.disabled = true;
+                return;
+            }
+
+            stoks.forEach(s => {
+                const option = document.createElement('option');
+                option.value = String(s.id);  // Ensure string
+                option.textContent = `${s.no_mesin}`;
+                option.dataset.noRangka = s.no_rangka;
+                option.dataset.warna = s.warna;
+                option.dataset.stokId = s.id;
+                mesinSelect.appendChild(option);
+
+                window.stokData[s.id] = {
+                    no_mesin: s.no_mesin,
+                    no_rangka: s.no_rangka,
+                    warna: s.warna,
+                    type_id: s.type_id
+                };
+
+                console.log(`  📌 Stok option: id=${s.id}, no_mesin=${s.no_mesin}, value="${String(s.id)}"`);
+            });
+
+            console.log(`✅ Dropdown populated dengan ${stoks.length} options`);
+            console.log(`📋 Dropdown all values:`, Array.from(mesinSelect.options).map((o, i) => `[${i}]="${o.value}"`).join(', '));
+            mesinSelect.disabled = false;
+        })
+        .catch(error => {
+            console.error('❌ Error loading stok:', error);
+            mesinSelect.innerHTML = '<option value="">-- Error: ' + error.message + ' --</option>';
+            mesinSelect.disabled = true;
+        });
+}
+
+function onNoMesinChange() {
+    const select = document.getElementById('no-engine');
+    const selectedOption = select.options[select.selectedIndex];
+
+    if (!selectedOption.value) {
+        document.getElementById('no-chassis').value = '';
+        document.getElementById('warna').value = '';
+        document.getElementById('stok-id').value = '';
+        return;
+    }
+
+    const stokId = selectedOption.value;
+    const stok = window.stokData[stokId];
+
+    if (stok) {
+        document.getElementById('no-chassis').value = stok.no_rangka;
+        document.getElementById('warna').value = stok.warna || '';
+        document.getElementById('stok-id').value = stokId;
+    }
+}
+
+function onSistemPembayaranChange() {
+    const sistem = document.getElementById('sistem-pembayaran').value;
+    const ketentuanDpField = document.getElementById('ketentuan-dp');
+    const hargaDasarValue = parseInt(parseCurrencyInput(document.getElementById('harga-dasar').value)) || 0;
+
+    if (sistem === 'Cash') {
+        // Cash: Ketentuan DP = OTR (auto), readonly
+        ketentuanDpField.value = formatNumberDisplay(hargaDasarValue);
+        ketentuanDpField.readOnly = true;
+        ketentuanDpField.style.backgroundColor = 'var(--bg-tertiary)';
+    } else {
+        // Kredit: Ketentuan DP = manual, editable
+        ketentuanDpField.readOnly = false;
+        ketentuanDpField.style.backgroundColor = 'var(--bg-secondary)';
+    }
+
+    calculateHutangSales();
+}
+
+function calculateHutangSales() {
+    const sistem = document.getElementById('sistem-pembayaran').value;
+    const otr = parseInt(parseCurrencyInput(document.getElementById('harga-dasar').value)) || 0;
+    const ketentuan_dp = parseInt(parseCurrencyInput(document.getElementById('ketentuan-dp').value)) || 0;
+    const dp_dibayar = parseInt(parseCurrencyInput(document.getElementById('dp').value)) || 0;
+    const subsidi = parseInt(parseCurrencyInput(document.getElementById('subsidi').value)) || 0;
+    const diskon_ahm = parseInt(parseCurrencyInput(document.getElementById('diskon-ahm').value)) || 0;
+    const diskon_dealer = parseInt(parseCurrencyInput(document.getElementById('diskon-dealer').value)) || 0;
+    const diskon_leasing = parseInt(parseCurrencyInput(document.getElementById('diskon-leasing').value)) || 0;
+
+    // Pokok = OTR - (subsidi + diskon_ahm + diskon_dealer + diskon_leasing)
+    const total_diskon = subsidi + diskon_ahm + diskon_dealer + diskon_leasing;
+    const pokok = Math.max(0, otr - total_diskon);
+
+    let hutang_sales = 0, hutang_leasing = 0;
+
+    if (sistem === 'Cash') {
+        // CASH: For cash sales, DP target = OTR; hutang_sales = remaining DP needed
+        hutang_sales = Math.max(0, otr - dp_dibayar);
+        hutang_leasing = 0;
+    } else {
+        // KREDIT: Hutang terbagi dua
+        // Hutang Sales = sisa DP yang harus dikumpulkan = ketentuan_dp - dp_sudah_dibayar
+        // Hutang Leasing = sisa harga yang dibiayai leasing = pokok - ketentuan_dp
+        hutang_sales = Math.max(0, ketentuan_dp - dp_dibayar);
+        hutang_leasing = Math.max(0, pokok - ketentuan_dp);
+    }
+
+    document.getElementById('hutang-sales').value = hutang_sales;
+    document.getElementById('hutang-leasing').value = hutang_leasing;
+    document.getElementById('hutang-sales-display').textContent = formatNumberDisplay(hutang_sales);
+    document.getElementById('hutang-leasing-display').textContent = formatNumberDisplay(hutang_leasing);
+    document.getElementById('total-hutang-display').textContent = formatNumberDisplay(hutang_sales + hutang_leasing);
+}
+
+function loadLeasingOptions() {
+    axios.get('/api/leasing')
+        .then(response => {
+            const select = document.getElementById('leasing-id');
+            const currentValue = select.value;
+
+            // Keep placeholder option
+            select.innerHTML = '<option value="">-- Pilih Leasing --</option>';
+
+            response.data.data.forEach(leasing => {
+                const option = document.createElement('option');
+                option.value = leasing.id;
+                option.textContent = leasing.nama;
+                select.appendChild(option);
+            });
+
+            // Restore previous selection
+            if (currentValue) select.value = currentValue;
+        })
+        .catch(error => console.error('Error loading leasing:', error));
+}
+
+function formatDateLocal(dateString) {
+    if (!dateString) return '-';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch(e) {
+        return dateString;
+    }
+}
+
+function getStatusColorLocal(status) {
+    const colors = { 'P': 'warning', 'A': 'success', 'L': 'secondary', 'C': 'danger' };
+    return colors[status] || 'secondary';
+}
+
+function loadTransaksi() {
+    try {
+        const startDate = document.getElementById('filter-start-date').value;
+        const endDate = document.getElementById('filter-end-date').value;
+        const status = document.getElementById('filter-status').value;
+
+        let url = '/api/transaksi?';
+        if (startDate) url += `start_date=${startDate}&`;
+        if (endDate) url += `end_date=${endDate}&`;
+        if (status) url += `status=${status}&`;
+
+        axios.get(url)
+            .then(response => {
+                const transaksi = response.data.data;
+                const tbody = document.getElementById('transaksi-body');
+                tbody.innerHTML = '';
+
+                if (transaksi.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: var(--space-6);">Tidak ada transaksi</td></tr>';
+                    return;
+                }
+
+                transaksi.forEach((t, index) => {
+                    const statusColor = getStatusColorLocal(t.status);
+                    const row = `
+                        <tr>
+                            <td><strong>${t.nota}</strong></td>
+                            <td>${formatDateLocal(t.tanggal_nota)}</td>
+                            <td>${t.customer_name}</td>
+                            <td>${t.motor_type}</td>
+                            <td><span class="badge badge-${statusColor}">${t.status}</span></td>
+                            <td style="text-align: right;">${formatCurrency(t.dp)}</td>
+                            <td style="text-align: center;">
+                                <div class="btn-group" style="gap: var(--space-1); justify-content: center;">
+                                    <button class="btn btn-sm btn-secondary" onclick="viewDetail(${t.id})">Lihat</button>
+                                    <button class="btn btn-sm btn-secondary" onclick="editTransaksi(${t.id})">Edit</button>
+                                    <button class="btn btn-sm btn-secondary" onclick="deleteTransaksi(${t.id})">Hapus</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            })
+            .catch(error => {
+                console.error('Error loading transaksi:', error);
+                document.getElementById('transaksi-body').innerHTML =
+                    '<tr><td colspan="7" style="text-align: center; color: var(--danger); padding: var(--space-6);">Gagal memuat data</td></tr>';
+            });
+    } catch (error) {
+        console.error('Critical error in loadTransaksi:', error);
+        document.getElementById('transaksi-body').innerHTML =
+            '<tr><td colspan="7" style="text-align: center; color: var(--danger); padding: var(--space-6);">Error kritis: ' + error.message + '</td></tr>';
+    }
+}
+
+function filterTransaksi() {
+    loadTransaksi();
+}
+
+function resetFilters() {
+    document.getElementById('filter-status').value = '';
+    loadTransaksi();
+}
+
+function openAddModal() {
+    document.getElementById('transaksiForm').reset();
+    document.getElementById('transaksi-id').value = '';
+    document.getElementById('modalTitle').textContent = 'Tambah Transaksi Baru';
+    document.getElementById('tanggal-nota').value = new Date().toISOString().split('T')[0];
+    document.getElementById('transaksiModal').classList.add('show');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+}
+
+function editTransaksi(id) {
+    axios.get(`/api/transaksi/${id}`)
+        .then(response => {
+            const t = response.data.data;
+            document.getElementById('transaksi-id').value = t.id;
+            document.getElementById('nota').value = t.nota;
+            document.getElementById('tanggal-nota').value = t.tanggal_nota;
+            document.getElementById('customer-name').value = t.customer_name;
+            document.getElementById('customer-phone').value = t.customer_phone || '';
+            document.getElementById('customer-alamat').value = t.customer_alamat || '';
+            document.getElementById('kelurahan').value = t.kelurahan_pembeli || '';
+            document.getElementById('kecamatan').value = t.kecamatan_pembeli || '';
+            document.getElementById('kabupaten').value = t.kabupaten_pembeli || '';
+
+            // Set motor type and wait for stok to load
+            if (t.type_motor_id) {
+                document.getElementById('motor-type').value = t.type_motor_id;
+            } else {
+                document.getElementById('motor-type').value = '';
+            }
+
+            // Set stok-id untuk reference
+            document.getElementById('stok-id').value = t.stok_id || '';
+
+            // Wait for stok dropdown to load (pass stok_id explicitly)
+            Promise.resolve(onMotorTypeChange(t.stok_id)).then(() => {
+                const mesinSelect = document.getElementById('no-engine');
+
+                console.log('💾 Data dari API - stok_id:', t.stok_id, 'no_engine:', t.no_engine);
+                console.log('📋 Dropdown options count:', mesinSelect.options.length);
+
+                // Set No. Mesin by stok_id (most reliable)
+                if (t.stok_id) {
+                    console.log('🎯 Setting stok_id:', t.stok_id);
+                    mesinSelect.value = t.stok_id;
+
+                    // Check if set was successful
+                    if (mesinSelect.value === String(t.stok_id)) {
+                        console.log('✅ Stok selected, triggering onNoMesinChange');
+                        onNoMesinChange();
+                    } else {
+                        console.warn('⚠️ Stok_id not found in dropdown, trying fallback');
+                        // Fallback
+                        for (let i = 0; i < mesinSelect.options.length; i++) {
+                            if (mesinSelect.options[i].textContent.includes(t.no_engine)) {
+                                mesinSelect.value = mesinSelect.options[i].value;
+                                onNoMesinChange();
+                                break;
+                            }
+                        }
+                    }
+                } else if (t.no_engine) {
+                    console.log('🔍 Using fallback - finding by no_engine:', t.no_engine);
+                    // Fallback: find by no_mesin text
+                    for (let i = 0; i < mesinSelect.options.length; i++) {
+                        if (mesinSelect.options[i].textContent.includes(t.no_engine)) {
+                            console.log('✅ Found at index', i);
+                            mesinSelect.value = mesinSelect.options[i].value;
+                            onNoMesinChange();
+                            break;
+                        }
+                    }
+                }
+
+                // Ensure all data is set as backup
+                document.getElementById('no-chassis').value = t.no_chassis || '';
+                document.getElementById('warna').value = t.warna || '';
+                console.log('✅ Motor data set: rangka=', t.no_chassis, 'warna=', t.warna);
+            });
+
+            document.getElementById('status').value = t.status;
+            document.getElementById('harga-dasar').value = formatNumberDisplay(t.harga_dasar || 0);
+            document.getElementById('sistem-pembayaran').value = t.sistem_pembayaran || 'Cash';
+            document.getElementById('ketentuan-dp').value = formatNumberDisplay(t.ketentuan_dp || 0);
+            document.getElementById('dp').value = formatNumberDisplay(t.dp);
+            document.getElementById('tgl-bayar-dp').value = t.tgl_bayar_dp || '';
+            document.getElementById('subsidi').value = formatNumberDisplay(t.subsidi);
+            document.getElementById('ket-dp').value = t.ket_dp || '';
+            document.getElementById('diskon-ahm').value = formatNumberDisplay(t.diskon_ahm);
+            document.getElementById('diskon-dealer').value = formatNumberDisplay(t.diskon_dealer);
+            document.getElementById('diskon-leasing').value = formatNumberDisplay(t.diskon_leasing);
+            document.getElementById('insentif-penjual').value = formatNumberDisplay(t.insentif_penjual);
+            document.getElementById('hutang-sales').value = t.hutang_sales || 0;
+            document.getElementById('hutang-sales-display').textContent = formatNumberDisplay(t.hutang_sales || 0);
+            document.getElementById('hutang-leasing').value = t.hutang_leasing || 0;
+            document.getElementById('hutang-leasing-display').textContent = formatNumberDisplay(t.hutang_leasing || 0);
+            document.getElementById('total-hutang-display').textContent = formatNumberDisplay((t.hutang_sales || 0) + (t.hutang_leasing || 0));
+            document.getElementById('broker-id').value = t.broker_id || '';
+            document.getElementById('leasing-id').value = t.leasing_id || '';
+
+            // Load faktur data
+            document.getElementById('faktur-no').value = t.no_faktur || '';
+            document.getElementById('faktur-tgl').value = t.tgl_faktur || '';
+            document.getElementById('faktur-file').value = '';
+            updateFakturFileLabel();
+
+            // Recalculate sistem pembayaran UI
+            onSistemPembayaranChange();
+
+            document.getElementById('modalTitle').textContent = 'Edit Transaksi';
+            document.getElementById('transaksiModal').classList.add('show');
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function validateTransaksiForm() {
+    const errors = [];
+
+    // Check required fields
+    if (!document.getElementById('nota').value.trim()) {
+        errors.push('No. Transaksi harus diisi');
+    }
+    if (!document.getElementById('tanggal-nota').value) {
+        errors.push('Tanggal Transaksi harus diisi');
+    }
+    if (!document.getElementById('customer-name').value.trim()) {
+        errors.push('Nama Pelanggan harus diisi');
+    }
+    if (!document.getElementById('motor-type').value) {
+        errors.push('Tipe Motor harus dipilih');
+    }
+    if (!document.getElementById('no-engine').value) {
+        errors.push('No. Mesin harus dipilih (pilih motor type dulu)');
+    }
+    if (!document.getElementById('no-chassis').value) {
+        errors.push('No. Rangka harus terisi (pilih motor type dulu)');
+    }
+    if (!document.getElementById('stok-id').value) {
+        errors.push('Stok Motor harus dipilih');
+    }
+    if (!document.getElementById('warna').value) {
+        errors.push('Warna harus terisi');
+    }
+    if (!document.getElementById('status').value) {
+        errors.push('Status harus dipilih');
+    }
+
+    if (errors.length > 0) {
+        showToast('âŒ Mohon isi data berikut:\n\n' + errors.join('\n'), 'error');
+        return false;
+    }
+    return true;
+}
+
+function saveTransaksi(event) {
+    event.preventDefault();
+
+    // Validate form first
+    if (!validateTransaksiForm()) {
+        return;
+    }
+
+    const id = document.getElementById('transaksi-id').value;
+    const motorTypeSelect = document.getElementById('motor-type');
+    const selectedOption = motorTypeSelect.options[motorTypeSelect.selectedIndex];
+    const motorTypeName = selectedOption.textContent;
+
+    // Get no mesin & rangka from stok (already complete)
+    const noMesin = document.getElementById('no-engine').value;
+    const noRangka = document.getElementById('no-chassis').value;
+    const stokId = document.getElementById('stok-id').value;
+
+    const data = {
+        nota: document.getElementById('nota').value,
+        tanggal_nota: document.getElementById('tanggal-nota').value,
+        customer_name: document.getElementById('customer-name').value,
+        customer_phone: document.getElementById('customer-phone').value,
+        customer_alamat: document.getElementById('customer-alamat').value,
+        kelurahan_pembeli: document.getElementById('kelurahan').value,
+        kecamatan_pembeli: document.getElementById('kecamatan').value,
+        kabupaten_pembeli: document.getElementById('kabupaten').value,
+        motor_type: motorTypeName,
+        no_chassis: noRangka,
+        no_engine: noMesin,
+        warna: document.getElementById('warna').value,
+        status: document.getElementById('status').value,
+        harga_dasar: parseInt(parseCurrencyInput(document.getElementById('harga-dasar').value)) || 0,
+        sistem_pembayaran: document.getElementById('sistem-pembayaran').value,
+        ketentuan_dp: parseInt(parseCurrencyInput(document.getElementById('ketentuan-dp').value)) || 0,
+        dp: parseInt(parseCurrencyInput(document.getElementById('dp').value)) || 0,
+        tgl_bayar_dp: document.getElementById('tgl-bayar-dp').value,
+        subsidi: parseInt(parseCurrencyInput(document.getElementById('subsidi').value)) || 0,
+        ket_dp: document.getElementById('ket-dp').value,
+        diskon_ahm: parseInt(parseCurrencyInput(document.getElementById('diskon-ahm').value)) || 0,
+        diskon_dealer: parseInt(parseCurrencyInput(document.getElementById('diskon-dealer').value)) || 0,
+        diskon_leasing: parseInt(parseCurrencyInput(document.getElementById('diskon-leasing').value)) || 0,
+        insentif_penjual: parseInt(parseCurrencyInput(document.getElementById('insentif-penjual').value)) || 0,
+        hutang_sales: parseInt(parseCurrencyInput(document.getElementById('hutang-sales').value)) || 0,
+        hutang_leasing: parseInt(parseCurrencyInput(document.getElementById('hutang-leasing').value)) || 0,
+        leasing_id: document.getElementById('leasing-id').value ? parseInt(document.getElementById('leasing-id').value) : null,
+        stok_id: stokId ? parseInt(stokId) : null,
+        broker_id: document.getElementById('broker-id').value ? parseInt(document.getElementById('broker-id').value) : null,
+    };
+
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/transaksi/${id}` : '/api/transaksi';
+
+    axios({
+        method: method,
+        url: url,
+        data: data
+    })
+    .then(response => {
+        showToast(response.data.message || 'Transaksi berhasil disimpan', 'success');
+
+        // Upload faktur if present
+        const transaksiId = response.data.id || id;
+        return uploadFaktur(transaksiId).then(() => {
+            closeModal('transaksiModal');
+            loadTransaksi();
+        });
+    })
+    .catch(error => {
+        let errorMsg = error.message;
+        if (error.response?.data?.error) {
+            errorMsg = error.response.data.error;
+            // If there are detailed field errors, show them
+            if (error.response?.data?.details && error.response.data.details.length > 0) {
+                const errorDetails = error.response.data.details
+                    .map(e => `${e.field}: ${e.message}`)
+                    .join('\n');
+                errorMsg += '\n\n' + errorDetails;
+            }
+        }
+        showToast('Error: ' + errorMsg, 'error');
+        console.error('Transaksi save error:', error.response?.data);
+    });
+}
+
+function viewDetail(id) {
+    axios.get(`/api/transaksi/${id}`)
+        .then(response => {
+            const t = response.data.data;
+
+            // Safe populate dengan null checks
+            const safeSet = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+
+            const safeSetHTML = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = value;
+            };
+
+            // Populate detail modal fields
+            document.getElementById('detailTitle').textContent = `Detail Transaksi - ${t.motor_type}`;
+            document.getElementById('detailSubtitle').textContent = `Nota: ${t.nota}`;
+
+            // Tab: Informasi Dasar
+            safeSet('detailCustomerName', t.customer_name || '-');
+            safeSet('detailCustomerPhone', t.customer_phone || '-');
+            safeSet('detailCustomerAddress', t.customer_alamat ? `${t.customer_alamat}, ${t.kelurahan_pembeli || ''} ${t.kecamatan_pembeli || ''} ${t.kabupaten_pembeli || ''}` : '-');
+            safeSet('detailNota', t.nota || '-');
+            safeSet('detailTanggal', formatDate(t.tanggal_nota) || '-');
+            safeSetHTML('detailStatus', `<span class="badge badge-${getStatusColor(t.status)}">${t.status}</span>`);
+
+            // Tab: Motor
+            safeSet('detailMotorType', t.motor_type || '-');
+            safeSet('detailWarna', t.warna || '-');
+            safeSet('detailNoMesin', t.no_engine || '-');
+            safeSet('detailNoChassis', t.no_chassis || '-');
+            safeSet('detailNoPolisi', t.no_polisi || '-');
+
+            // Tab: Finansial
+            safeSet('detailHargaDasar', formatCurrency(t.harga_dasar || 0));
+            safeSet('detailOTR', formatCurrency(t.otr || 0));
+            safeSet('detailSistemPembayaran', t.sistem_pembayaran || 'Cash');
+            safeSet('detailDP', formatCurrency(t.dp || 0));
+            safeSet('detailLeasing', t.leasing_nama || '-');
+
+            // Tab: STNK/BPKB
+            safeSet('detailNoBPKB', t.no_bpkb || '-');
+            safeSet('detailTglBiro', formatDate(t.tgl_biro) || '-');
+            safeSet('detailNamaSurat', t.nama_surat || '-');
+            safeSet('detailTglSerahTerima', formatDate(t.tgl_serah_terima) || '-');
+
+            // Reset to first tab
+            try {
+                switchDetailTab('info');
+            } catch(e) {
+                console.error('switchDetailTab error:', e);
+            }
+
+            // Show modal
+            const modal = document.getElementById('detailModal');
+            if (modal) {
+                modal.classList.add('show');
+            } else {
+                console.error('detailModal not found');
+            }
+
+            // Store ID for edit function
+            window.detailTransaksiId = id;
+
+            console.log('Detail modal populated successfully');
+        })
+        .catch(error => {
+            console.error('viewDetail API error:', error);
+            showToast('Error loading detail: ' + (error.response?.data?.error || error.message), 'error');
+        });
+}
+
+function deleteTransaksi(id) {
+    if (!confirm('Yakin ingin menghapus transaksi ini?')) return;
+
+    axios.delete(`/api/transaksi/${id}`)
+        .then(response => {
+            showToast(response.data.message || 'Transaksi berhasil dihapus', 'success');
+            loadTransaksi();
+        })
+        .catch(error => {
+            showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+        });
+}
+
+function openPemberitahuanModal(transaksiId) {
+    axios.get(`/api/transaksi/${transaksiId}`)
+        .then(response => {
+            const t = response.data.data;
+            document.getElementById('pemberitahuan-transaksi-id').value = transaksiId;
+            document.getElementById('pemberitahuan-nama-pemohon').value = t.customer_name;
+
+            // Determine if sama or beda
+            const isSama = !t.nama_surat || t.nama_surat === t.customer_name;
+            if (isSama) {
+                document.querySelector('input[name="sama-beda"][value="sama"]').checked = true;
+                document.getElementById('alamat-surat-section').style.display = 'none';
+            } else {
+                document.querySelector('input[name="sama-beda"][value="beda"]').checked = true;
+                document.getElementById('alamat-surat-section').style.display = 'block';
+                document.getElementById('pemberitahuan-nama-surat').value = t.nama_surat || '';
+                document.getElementById('pemberitahuan-alamat-surat').value = t.alamat_surat || '';
+                document.getElementById('pemberitahuan-kelurahan-surat').value = t.kelurahan_surat || '';
+                document.getElementById('pemberitahuan-kecamatan-surat').value = t.kecamatan_surat || '';
+                document.getElementById('pemberitahuan-kabupaten-surat').value = t.kabupaten_surat || '';
+            }
+
+            document.getElementById('pemberitahuan-no-surat').value = t.no_surat_pemberitahuan || '';
+            document.getElementById('pemberitahuan-tgl-surat').value = t.tgl_surat_pemberitahuan || '';
+
+            document.getElementById('pemberitahuanModal').classList.add('show');
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function onPemberitahuanOptionChange() {
+    const isBeda = document.querySelector('input[name="sama-beda"][value="beda"]').checked;
+    const alamatSection = document.getElementById('alamat-surat-section');
+
+    if (isBeda) {
+        alamatSection.style.display = 'block';
+        document.getElementById('pemberitahuan-nama-surat').focus();
+    } else {
+        alamatSection.style.display = 'none';
+        // Clear values when switching to "sama"
+        document.getElementById('pemberitahuan-nama-surat').value = '';
+        document.getElementById('pemberitahuan-alamat-surat').value = '';
+        document.getElementById('pemberitahuan-kelurahan-surat').value = '';
+        document.getElementById('pemberitahuan-kecamatan-surat').value = '';
+        document.getElementById('pemberitahuan-kabupaten-surat').value = '';
+    }
+}
+
+function savePemberitahuan(event) {
+    event.preventDefault();
+
+    const transaksiId = document.getElementById('pemberitahuan-transaksi-id').value;
+    const isBeda = document.querySelector('input[name="sama-beda"][value="beda"]').checked;
+
+    let data = {
+        no_surat_pemberitahuan: document.getElementById('pemberitahuan-no-surat').value.trim(),
+        tgl_surat_pemberitahuan: document.getElementById('pemberitahuan-tgl-surat').value,
+    };
+
+    if (isBeda) {
+        const namaSurat = document.getElementById('pemberitahuan-nama-surat').value.trim();
+        if (!namaSurat) {
+            showToast('Nama pada BPKB/STNK harus diisi jika berbeda', 'error');
+            return;
+        }
+        data.nama_surat = namaSurat;
+        data.alamat_surat = document.getElementById('pemberitahuan-alamat-surat').value.trim();
+        data.kelurahan_surat = document.getElementById('pemberitahuan-kelurahan-surat').value.trim();
+        data.kecamatan_surat = document.getElementById('pemberitahuan-kecamatan-surat').value.trim();
+        data.kabupaten_surat = document.getElementById('pemberitahuan-kabupaten-surat').value.trim();
+    } else {
+        // Sama - set to NULL
+        data.nama_surat = null;
+        data.alamat_surat = null;
+        data.kelurahan_surat = null;
+        data.kecamatan_surat = null;
+        data.kabupaten_surat = null;
+    }
+
+    axios.put(`/api/transaksi/${transaksiId}`, data)
+        .then(response => {
+            showToast('Pemberitahuan berhasil disimpan', 'success');
+            closeModal('pemberitahuanModal');
+            closeModal('detailModal');
+            loadTransaksi();
+        })
+        .catch(error => {
+            showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+        });
+}
+
+document.getElementById('transaksiModal').addEventListener('click', (e) => {
+    if (e.target.id === 'transaksiModal') closeModal('transaksiModal');
+});
+
+document.getElementById('detailModal').addEventListener('click', (e) => {
+    if (e.target.id === 'detailModal') closeModal('detailModal');
+});
+
+// Faktur file upload functions
+function updateFakturFileLabel() {
+    const fileInput = document.getElementById('faktur-file');
+    const fileLabel = document.getElementById('faktur-file-label');
+    const fileInfo = document.getElementById('faktur-file-info');
+    const fileName = document.getElementById('faktur-file-name');
+    const fileDelete = document.getElementById('faktur-file-delete');
+
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        fileLabel.style.display = 'none';
+        fileInfo.style.display = 'block';
+        fileDelete.style.display = 'block';
+        fileName.textContent = `✗“ ${file.name}`;
+    } else {
+        fileLabel.style.display = 'block';
+        fileInfo.style.display = 'none';
+        fileDelete.style.display = 'none';
+    }
+}
+
+function clearFakturFile() {
+    document.getElementById('faktur-file').value = '';
+    updateFakturFileLabel();
+}
+
+function uploadFaktur(transaksiId) {
+    const fileInput = document.getElementById('faktur-file');
+    const noFaktur = document.getElementById('faktur-no').value.trim();
+    const tglFaktur = document.getElementById('faktur-tgl').value;
+
+    if (!fileInput.files.length && !noFaktur && !tglFaktur) {
+        return Promise.resolve(); // No faktur to upload
+    }
+
+    if (fileInput.files.length === 0) {
+        // Just save no_faktur and tgl_faktur without file
+        const data = {};
+        if (noFaktur) data.no_faktur = noFaktur;
+        if (tglFaktur) data.tgl_faktur = tglFaktur;
+        return axios.put(`/api/transaksi/${transaksiId}`, data);
+    }
+
+    // Upload file with faktur info
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('no_faktur', noFaktur);
+    formData.append('tgl_faktur', tglFaktur);
+
+    return axios.post(`/api/transaksi/${transaksiId}/upload-faktur`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+}
+
+function deleteFaktur(transaksiId) {
+    if (confirm('Yakin ingin menghapus file faktur?')) {
+        axios.delete(`/api/transaksi/${transaksiId}/delete-faktur`)
+            .then(response => {
+                showToast('File faktur berhasil dihapus', 'success');
+                clearFakturFile();
+                loadTransaksi();
+            })
+            .catch(error => {
+                showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+            });
+    }
+}
+
+function openStnkModal(transaksiId) {
+    axios.get(`/api/transaksi/${transaksiId}`)
+        .then(response => {
+            const t = response.data.data;
+            document.getElementById('stnk-transaksi-id').value = transaksiId;
+            document.getElementById('stnk-no-polisi').value = t.no_polisi || '';
+            document.getElementById('stnk-tgl-biro').value = t.tgl_biro || '';
+            document.getElementById('stnk-no-bpkb').value = t.no_bpkb || '';
+
+            document.getElementById('stnkModalTitle').textContent = 'Edit Data STNK';
+            document.getElementById('stnkModal').classList.add('show');
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function closeStnkModal() {
+    document.getElementById('stnkModal').classList.remove('show');
+}
+
+function saveStnk(event) {
+    event.preventDefault();
+
+    const transaksiId = document.getElementById('stnk-transaksi-id').value;
+    let noPolisi = document.getElementById('stnk-no-polisi').value.trim();
+
+    // Validasi nomor polisi
+    if (!noPolisi) {
+        showToast('Nomor polisi harus diisi!', 'error');
+        return;
+    }
+
+    // Remove spasi dari nomor polisi
+    noPolisi = noPolisi.replace(/\s+/g, '');
+
+    const data = {
+        no_polisi: noPolisi,
+        tgl_biro: document.getElementById('stnk-tgl-biro').value,
+        no_bpkb: document.getElementById('stnk-no-bpkb').value.trim() || null,
+    };
+
+    axios.put(`/api/transaksi/${transaksiId}`, data)
+        .then(response => {
+            showToast('Data STNK berhasil disimpan!', 'success');
+            closeStnkModal();
+            loadTransaksi();
+        })
+        .catch(error => {
+            showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+        });
+}
+
+// Detail Modal Tab Switching
+function switchDetailTab(tabName) {
+    try {
+        // Hide all tab contents
+        document.querySelectorAll('.detail-tab-content').forEach(el => {
+            el.style.display = 'none';
+        });
+
+        // Remove active state from all tabs
+        document.querySelectorAll('.detail-tab').forEach(el => {
+            el.classList.remove('active');
+            el.style.color = '';
+            el.style.borderBottomColor = '';
+            el.style.background = '';
+        });
+
+        // Show selected tab content
+        const tabContent = document.getElementById(`tab-${tabName}`);
+        if (tabContent) {
+            tabContent.style.display = 'block';
+        }
+
+        // Add active state to selected tab
+        const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
+        if (tabButton) {
+            tabButton.classList.add('active');
+            tabButton.style.color = 'var(--primary)';
+            tabButton.style.borderBottomColor = 'var(--primary)';
+            tabButton.style.background = 'white';
+        }
+    } catch(e) {
+        console.error('Tab switch error:', e);
+    }
+}
+
+// Edit from detail view
+function editFromDetail() {
+    const id = window.detailTransaksiId;
+    closeModal('detailModal');
+    editTransaksi(id);
+}
+
+// FAB button functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const fab = document.querySelector('.fab');
+    if (fab) {
+        fab.addEventListener('click', openAddModal);
+    }
+
+    // Initialize autocomplete for wilayah fields
+    initWilayahAutocomplete();
+});
+
+// =====================================================================
+// Wilayah Autocomplete
+// =====================================================================
+
+function initWilayahAutocomplete() {
+    const autocompleteInputs = document.querySelectorAll('[data-autocomplete="true"]');
+
+    autocompleteInputs.forEach(input => {
+        input.addEventListener('input', handleWilayahInput);
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                const listId = getListId(input);
+                const list = document.getElementById(listId);
+                if (list) list.style.display = 'none';
+            }, 200);
+        });
+    });
+}
+
+function getListId(input) {
+    const prefix = input.getAttribute('data-prefix') || '';
+    const type = input.getAttribute('data-type');
+    const separator = prefix ? '-' : '';
+    return prefix ? `${prefix}-${type}-surat-list` : `${type}-list`;
+}
+
+function handleWilayahInput(event) {
+    const input = event.target;
+    const type = input.getAttribute('data-type');
+    const prefix = input.getAttribute('data-prefix') || '';
+    const searchQ = input.value.trim();
+
+    if (searchQ.length < 1) {
+        const listId = getListId(input);
+        document.getElementById(listId).style.display = 'none';
+        return;
+    }
+
+    // Build query params
+    let params = `type=${type}&q=${encodeURIComponent(searchQ)}`;
+
+    if (type === 'kecamatan') {
+        const kelurahanhField = document.getElementById(prefix ? `${prefix}-kelurahan-surat` : 'kelurahan');
+        const kelurahan = kelurahanhField.value.trim();
+        if (kelurahan) params += `&kelurahan=${encodeURIComponent(kelurahan)}`;
+    } else if (type === 'kabupaten') {
+        const kecamatanField = document.getElementById(prefix ? `${prefix}-kecamatan-surat` : 'kecamatan');
+        const kecamatan = kecamatanField.value.trim();
+        if (kecamatan) params += `&kecamatan=${encodeURIComponent(kecamatan)}`;
+
+        const kelurahanhField = document.getElementById(prefix ? `${prefix}-kelurahan-surat` : 'kelurahan');
+        const kelurahan = kelurahanhField.value.trim();
+        if (kelurahan) params += `&kelurahan=${encodeURIComponent(kelurahan)}`;
+    }
+
+    axios.get(`/api/wilayah/suggest?${params}`)
+        .then(response => {
+            const suggestions = response.data.data || [];
+            showSuggestions(input, suggestions, type, prefix);
+        })
+        .catch(error => {
+            console.error('Error fetching suggestions:', error);
+        });
+}
+
+function showSuggestions(input, suggestions, type, prefix) {
+    const listId = getListId(input);
+    const list = document.getElementById(listId);
+
+    list.innerHTML = '';
+
+    if (suggestions.length === 0) {
+        list.style.display = 'none';
+        return;
+    }
+
+    suggestions.forEach(suggestion => {
+        const div = document.createElement('div');
+        div.style.cssText = `
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        `;
+        div.textContent = suggestion;
+
+        div.addEventListener('mouseover', () => {
+            div.style.backgroundColor = 'var(--bg-tertiary)';
+        });
+
+        div.addEventListener('mouseout', () => {
+            div.style.backgroundColor = 'transparent';
+        });
+
+        div.addEventListener('click', () => {
+            selectWilayah(input, suggestion, type, prefix);
+        });
+
+        list.appendChild(div);
+    });
+
+    list.style.display = 'block';
+}
+
+function selectWilayah(input, value, type, prefix) {
+    console.log('🎯 selectWilayah:', {value, type, prefix, inputId: input.id});
+
+    input.value = value;
+    const listId = getListId(input);
+    const list = document.getElementById(listId);
+    if (list) list.style.display = 'none';
+
+    // Clear dependent fields
+    if (type === 'kelurahan') {
+        const kecamatanId = prefix ? `${prefix}-kecamatan-surat` : 'kecamatan';
+        const kabupatenId = prefix ? `${prefix}-kabupaten-surat` : 'kabupaten';
+        console.log('  Clearing:', {kecamatanId, kabupatenId});
+
+        const kecamatanField = document.getElementById(kecamatanId);
+        const kabupatenField = document.getElementById(kabupatenId);
+
+        if (kecamatanField) {
+            kecamatanField.value = '';
+            console.log('  ✓ Kecamatan cleared');
+        } else {
+            console.warn('  ✗ Kecamatan field not found:', kecamatanId);
+        }
+
+        if (kabupatenField) {
+            kabupatenField.value = '';
+            console.log('  ✓ Kabupaten cleared');
+        } else {
+            console.warn('  ✗ Kabupaten field not found:', kabupatenId);
+        }
+    } else if (type === 'kecamatan') {
+        const kabupatenId = prefix ? `${prefix}-kabupaten-surat` : 'kabupaten';
+        const kabupatenField = document.getElementById(kabupatenId);
+        if (kabupatenField) kabupatenField.value = '';
+    }
+
+    input.focus();
+}
+</script>
+
+{% endblock %}
+
+
+
+

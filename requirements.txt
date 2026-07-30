@@ -1,0 +1,38 @@
+# Core Framework & GUI
+PyQt6==6.6.1
+PyQt6-Qt6==6.6.0
+
+# Database & ORM
+SQLAlchemy==2.0.23
+sqlalchemy-utils==0.41.1
+
+# Data Processing & Export
+openpyxl==3.1.2
+pandas==2.0.3
+python-dateutil==2.8.2
+
+# Reporting & PDF
+reportlab==4.0.7
+Pillow==10.0.1
+
+# Configuration & Environment
+python-dotenv==1.0.0
+pydantic==2.4.2
+
+# Utilities
+requests==2.31.0
+pytz==2023.3
+
+# Development & Testing
+pytest==7.4.2
+pytest-cov==4.1.0
+pytest-qt==4.2.0
+black==23.11.0
+pylint==3.0.2
+flake8==6.1.0
+
+# Logging
+colorlog==6.7.0
+
+# Optional: PyInstaller for creating executable
+PyInstaller==6.1.0

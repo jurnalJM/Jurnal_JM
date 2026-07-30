@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Stok Motor - JayaMotor - Honda{% endblock %}
+
+{% block content %}
+<div class="actions-bar">
+    <div class="page-header" style="margin-bottom: 0;">
+        <h1 class="page-title">Stok Motor</h1>
+        <p class="page-subtitle">Kelola inventory unit motor</p>
+    </div>
+    <button class="btn btn-primary btn-lg" onclick="openAddModal()" style="align-self: flex-start;">
+        Tambah Stok Motor
+    </button>
+</div>
+
+<!-- Filter Panel -->
+<div class="card">
+    <div class="card-header">
+        <h5>Filter Stok</h5>
+    </div>
+    <div class="card-body">
+        <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
+            <div class="form-group">
+                <label class="form-label">Type Motor</label>
+                <select class="form-select" id="filter-type" onchange="filterStok()">
+                    <option value="">Semua Type</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="filter-status" onchange="filterStok()">
+                    <option value="">Semua Status</option>
+                    <option value="Ready">Tersedia</option>
+                    <option value="Sold">Terjual</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button class="btn btn-primary" onclick="filterStok()" style="width: 100%; margin-top: 6px;">Terapkan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="card" style="margin-top: var(--space-8);">
+    <div class="card-body">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tanggal Masuk</th>
+                        <th>No. Mesin</th>
+                        <th>No. Rangka</th>
+                        <th>Type</th>
+                        <th>Warna</th>
+                        <th>Dealer</th>
+                        <th>Status</th>
+                        <th style="width: 100px; text-align: center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="stok-body">
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: var(--space-8);">Memuat...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="stokModal">
+    <div class="modal" style="width: 90%; max-width: 900px; height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h4 class="modal-title" id="modalTitle">Tambah Stok Motor Baru</h4>
+            <button class="modal-close" onclick="closeModal('stokModal')">×</button>
+        </div>
+        <form id="stokForm" onsubmit="saveStok(event)">
+            <div class="modal-body">
+                <input type="hidden" id="stok-id">
+
+                <!-- Baris 1: Tanggal Masuk -->
+                <div class="grid" style="grid-template-columns: 1fr;">
+                    <div class="form-group">
+                        <label class="form-label required">Tanggal Masuk</label>
+                        <input type="date" class="form-control" id="tanggal-datang" required>
+                    </div>
+                </div>
+
+                <!-- Baris 2: No. Mesin & No. Rangka -->
+                <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label class="form-label required">No. Mesin</label>
+                        <input type="text" class="form-control" id="no-mesin" placeholder="Misal: MH1JMF217TK23372" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">No. Rangka</label>
+                        <input type="text" class="form-control" id="no-rangka" placeholder="Misal: JMF2F18236291" required>
+                    </div>
+                </div>
+
+                <!-- Baris 3: Type Motor & Warna & Dealer -->
+                <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="form-group">
+                        <label class="form-label required">Type Motor</label>
+                        <select class="form-select" id="type-motor" required>
+                            <option value="">-- Pilih Type --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Warna</label>
+                        <input type="text" class="form-control" id="warna" placeholder="Misal: Merah">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Dealer</label>
+                        <select class="form-select" id="dealer">
+                            <option value="">-- Pilih Dealer --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Baris 4: Status -->
+                <div class="grid" style="grid-template-columns: 1fr;">
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="status">
+                            <option value="Ready">Tersedia</option>
+                            <option value="Sold">Terjual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('stokModal')">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan Stok</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('tanggal-datang').value = today;
+    loadTypeMotor();
+    loadDealers();
+    loadStok();
+});
+
+function loadTypeMotor() {
+    axios.get('/api/type-motor')
+        .then(response => {
+            const types = response.data.data;
+            const typeSelect = document.getElementById('type-motor');
+            const filterType = document.getElementById('filter-type');
+
+            typeSelect.innerHTML = '<option value="">-- Pilih Type --</option>';
+            filterType.innerHTML = '<option value="">Semua Type</option>';
+
+            types.forEach(t => {
+                const option = document.createElement('option');
+                option.value = t.id;
+                option.textContent = `${t.kd_type} - ${t.nama_type}`;
+                typeSelect.appendChild(option);
+
+                const filterOption = document.createElement('option');
+                filterOption.value = t.id;
+                filterOption.textContent = `${t.kd_type} - ${t.nama_type}`;
+                filterType.appendChild(filterOption);
+            });
+        })
+        .catch(error => console.error('Error loading type motor:', error));
+}
+
+function loadDealers() {
+    axios.get('/api/dealers')
+        .then(response => {
+            const dealers = response.data.data;
+            const dealerSelect = document.getElementById('dealer');
+            dealerSelect.innerHTML = '<option value="">-- Pilih Dealer --</option>';
+
+            dealers.forEach(d => {
+                const option = document.createElement('option');
+                option.value = d.id;
+                option.textContent = d.nama;
+                dealerSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error loading dealers:', error));
+}
+
+function loadStok() {
+    axios.get('/api/stok-motor')
+        .then(response => {
+            const stoks = response.data.data;
+            const tbody = document.getElementById('stok-body');
+            tbody.innerHTML = '';
+
+            if (stoks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: var(--space-6);">Tidak ada stok</td></tr>';
+                return;
+            }
+
+            stoks.forEach(s => {
+                const statusBadge = s.status === 'R' ? 'success' : 'danger';
+                const statusText = s.status === 'R' ? 'Tersedia' : 'Terjual';
+                const row = `
+                    <tr>
+                        <td>${formatDate(s.tanggal_datang)}</td>
+                        <td><strong>${s.no_mesin}</strong></td>
+                        <td><strong>${s.no_rangka}</strong></td>
+                        <td>${s.type_nama}</td>
+                        <td>${s.warna || '-'}</td>
+                        <td>${s.dealer_nama || '-'}</td>
+                        <td><span class="badge badge-${statusBadge}">${statusText}</span></td>
+                        <td style="text-align: center;">
+                            <div class="btn-group" style="gap: var(--space-1); justify-content: center;">
+                                <button class="btn btn-sm btn-secondary" onclick="editStok(${s.id})">Edit</button>
+                                <button class="btn btn-sm btn-secondary" onclick="deleteStok(${s.id})">Hapus</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        })
+        .catch(error => {
+            console.error('Error loading stok:', error);
+            document.getElementById('stok-body').innerHTML =
+                '<tr><td colspan="8" style="text-align: center; color: var(--danger); padding: var(--space-6);">Gagal memuat data</td></tr>';
+        });
+}
+
+function filterStok() {
+    const typeId = document.getElementById('filter-type').value;
+    const statusDisplay = document.getElementById('filter-status').value;
+
+    // Map display values to database codes
+    const statusMap = {
+        'Ready': 'R',
+        'Sold': 'S'
+    };
+    const status = statusMap[statusDisplay] || statusDisplay;
+
+    let url = '/api/stok-motor?';
+    if (typeId) url += `type_id=${typeId}&`;
+    if (status) url += `status=${status}&`;
+
+    axios.get(url)
+        .then(response => {
+            const stoks = response.data.data;
+            const tbody = document.getElementById('stok-body');
+            tbody.innerHTML = '';
+
+            if (stoks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: var(--space-6);">Tidak ada stok sesuai filter</td></tr>';
+                return;
+            }
+
+            stoks.forEach(s => {
+                const statusBadge = s.status === 'R' ? 'success' : 'danger';
+                const statusText = s.status === 'R' ? 'Tersedia' : 'Terjual';
+                const row = `
+                    <tr>
+                        <td>${formatDate(s.tanggal_datang)}</td>
+                        <td><strong>${s.no_mesin}</strong></td>
+                        <td><strong>${s.no_rangka}</strong></td>
+                        <td>${s.type_nama}</td>
+                        <td>${s.warna || '-'}</td>
+                        <td>${s.dealer_nama || '-'}</td>
+                        <td><span class="badge badge-${statusBadge}">${statusText}</span></td>
+                        <td style="text-align: center;">
+                            <div class="btn-group" style="gap: var(--space-1); justify-content: center;">
+                                <button class="btn btn-sm btn-secondary" onclick="editStok(${s.id})">Edit</button>
+                                <button class="btn btn-sm btn-secondary" onclick="deleteStok(${s.id})">Hapus</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        })
+        .catch(error => console.error('Error filtering stok:', error));
+}
+
+function openAddModal() {
+    document.getElementById('stokForm').reset();
+    document.getElementById('stok-id').value = '';
+    document.getElementById('modalTitle').textContent = 'Tambah Stok Motor Baru';
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('tanggal-datang').value = today;
+    document.getElementById('stokModal').classList.add('show');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+}
+
+function editStok(id) {
+    axios.get(`/api/stok-motor/${id}`)
+        .then(response => {
+            const s = response.data.data;
+            document.getElementById('stok-id').value = s.id;
+            document.getElementById('tanggal-datang').value = s.tanggal_datang;
+            document.getElementById('no-mesin').value = s.no_mesin;
+            document.getElementById('no-rangka').value = s.no_rangka;
+            document.getElementById('type-motor').value = s.type_id;
+            document.getElementById('warna').value = s.warna || '';
+            document.getElementById('dealer').value = s.dealer_id || '';
+            document.getElementById('status').value = s.status;
+
+            document.getElementById('modalTitle').textContent = 'Edit Stok Motor';
+            document.getElementById('stokModal').classList.add('show');
+        })
+        .catch(error => showToast('Error: ' + error.message, 'error'));
+}
+
+function saveStok(event) {
+    event.preventDefault();
+
+    const id = document.getElementById('stok-id').value;
+    const data = {
+        tanggal_datang: document.getElementById('tanggal-datang').value,
+        no_mesin: document.getElementById('no-mesin').value,
+        no_rangka: document.getElementById('no-rangka').value,
+        type_id: parseInt(document.getElementById('type-motor').value),
+        warna: document.getElementById('warna').value,
+        dealer_id: document.getElementById('dealer').value ? parseInt(document.getElementById('dealer').value) : null,
+        status: document.getElementById('status').value,
+    };
+
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/stok-motor/${id}` : '/api/stok-motor';
+
+    axios({ method, url, data })
+        .then(response => {
+            showToast(response.data.message || 'Stok berhasil disimpan', 'success');
+            closeModal('stokModal');
+            loadStok();
+        })
+        .catch(error => showToast('Error: ' + (error.response?.data?.error || error.message), 'error'));
+}
+
+function deleteStok(id) {
+    if (confirm('Apakah Anda yakin ingin menghapus stok ini?')) {
+        axios.delete(`/api/stok-motor/${id}`)
+            .then(response => {
+                showToast('Stok berhasil dihapus', 'success');
+                loadStok();
+            })
+            .catch(error => showToast('Error: ' + (error.response?.data?.error || error.message), 'error'));
+    }
+}
+</script>
+{% endblock %}

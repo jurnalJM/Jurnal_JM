@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}Import Stok Motor - JayaMotor - Honda{% endblock %}
+
+{% block content %}
+<div class="actions-bar">
+    <div class="page-header" style="margin-bottom: 0;">
+        <h1 class="page-title">Import Stok Motor</h1>
+        <p class="page-subtitle">Import data stok motor dari file Excel format Distribusi</p>
+    </div>
+</div>
+
+<!-- Upload Card -->
+<div class="card">
+    <div class="card-header">
+        <h5>Upload File Distribusi</h5>
+    </div>
+    <div class="card-body">
+        <div class="form-group">
+            <label class="form-label">Format File</label>
+            <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">
+                File harus berformat Excel dengan kolom:
+                <br>A: Nama Dealer | B: No. Rangka | C: No. Mesin | D: Kode Type | E: Kode Warna | F: Kode Dealer
+            </p>
+        </div>
+
+        <form id="importForm" enctype="multipart/form-data" style="display: grid; gap: var(--space-6);">
+            <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="form-group">
+                    <label class="form-label required">File Excel</label>
+                    <div style="position: relative; overflow: hidden;">
+                        <input type="file" id="excelFile" name="file" accept=".xlsx,.xls" required
+                               style="position: absolute; left: -9999px;">
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('excelFile').click()"
+                                style="width: 100%;">
+                            Pilih File
+                        </button>
+                        <div id="fileName" style="margin-top: var(--space-2); font-size: 0.9em; color: var(--text-secondary);">
+                            Belum ada file dipilih
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tanggal Masuk</label>
+                    <input type="date" id="tglDatang" name="tgl_datang" class="form-control">
+                    <small style="color: var(--text-secondary);">Jika kosong, gunakan tanggal hari ini</small>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: var(--space-3);">
+                <button type="submit" class="btn btn-primary">Proses Import</button>
+                <button type="reset" class="btn btn-secondary">Reset</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Preview Card -->
+<div class="card" style="margin-top: var(--space-8); display: none;" id="previewCard">
+    <div class="card-header">
+        <h5>Preview Data</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No. Mesin</th>
+                        <th>No. Rangka</th>
+                        <th>Type</th>
+                        <th>Warna</th>
+                        <th>Dealer</th>
+                    </tr>
+                </thead>
+                <tbody id="previewBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Status Card -->
+<div class="card" style="margin-top: var(--space-8); display: none;" id="statusCard">
+    <div class="card-header">
+        <h5>Hasil Import</h5>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-6);">
+            <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-sm); text-align: center;">
+                <div style="font-size: 1.5em; font-weight: bold; color: var(--success);" id="successCount">0</div>
+                <div style="color: var(--text-secondary); margin-top: var(--space-1);">Berhasil Diimport</div>
+            </div>
+            <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-sm); text-align: center;">
+                <div style="font-size: 1.5em; font-weight: bold; color: var(--warning);" id="warningCount">0</div>
+                <div style="color: var(--text-secondary); margin-top: var(--space-1);">Peringatan</div>
+            </div>
+            <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-sm); text-align: center;">
+                <div style="font-size: 1.5em; font-weight: bold; color: var(--danger);" id="errorCount">0</div>
+                <div style="color: var(--text-secondary); margin-top: var(--space-1);">Error</div>
+            </div>
+        </div>
+
+        <!-- Errors -->
+        <div id="errorsSection" style="display: none; margin-bottom: var(--space-6);">
+            <h6 style="color: var(--danger); margin-bottom: var(--space-2);">❌ Kesalahan:</h6>
+            <div id="errorsList" style="padding: var(--space-4); background: #fff5f5; border-left: 4px solid var(--danger); border-radius: var(--radius-xs); font-size: 0.9em;">
+            </div>
+        </div>
+
+        <!-- Warnings -->
+        <div id="warningsSection" style="display: none; margin-bottom: var(--space-6);">
+            <h6 style="color: var(--warning); margin-bottom: var(--space-2);">⚠️ Peringatan:</h6>
+            <div id="warningsList" style="padding: var(--space-4); background: #fffbf0; border-left: 4px solid var(--warning); border-radius: var(--radius-xs); font-size: 0.9em;">
+            </div>
+        </div>
+
+        <!-- Success Message -->
+        <div id="successMessage" style="padding: var(--space-4); background: #f0fdf4; border-left: 4px solid var(--success); border-radius: var(--radius-xs); color: var(--success);">
+        </div>
+
+        <!-- Type Motor Format Suggestions -->
+        <div id="suggestionsSection" style="display: none; margin-top: var(--space-6);">
+            <h6 style="color: var(--text-primary); margin-bottom: var(--space-3);">💡 Saran Format Master Type Motor:</h6>
+            <p style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: var(--space-4);">
+                Klik "Terapkan" untuk mengupdate format nomor mesin dan rangka di Master Type Motor
+            </p>
+            <div id="suggestionsList" style="display: grid; gap: var(--space-4);">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Card -->
+<div class="card" style="margin-top: var(--space-8);">
+    <div class="card-header">
+        <h5>Format File yang Didukung</h5>
+    </div>
+    <div class="card-body">
+        <h6 style="margin-bottom: var(--space-3);">Mapping Kode Type:</h6>
+        <div style="background: var(--bg-secondary); padding: var(--space-4); border-radius: var(--radius-sm); margin-bottom: var(--space-6); font-size: 0.9em;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                <div><strong>ML1F</strong> → Honda CB 150</div>
+                <div><strong>MJ1E</strong> → Yamaha MX 130</div>
+                <div><strong>NE0F</strong> → Suzuki Axelo 100</div>
+                <div><strong>MSBG</strong> → Kawasaki Revo 100</div>
+            </div>
+        </div>
+
+        <h6 style="margin-bottom: var(--space-3);">Mapping Kode Warna:</h6>
+        <div style="background: var(--bg-secondary); padding: var(--space-4); border-radius: var(--radius-sm); margin-bottom: var(--space-6); font-size: 0.9em;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-3);">
+                <div><strong>BW</strong> → Putih</div>
+                <div><strong>BL</strong> → Biru</div>
+                <div><strong>BK</strong> → Hitam</div>
+                <div><strong>BR</strong> → Merah</div>
+                <div><strong>GR</strong> → Abu-abu</div>
+                <div><strong>MH</strong> → Mahoni</div>
+            </div>
+        </div>
+
+        <h6 style="margin-bottom: var(--space-3);">Mapping Kode Dealer:</h6>
+        <div style="background: var(--bg-secondary); padding: var(--space-4); border-radius: var(--radius-sm); font-size: 0.9em;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                <div><strong>A0035</strong> → Jaya Motor Pusat</div>
+                <div><strong>A0105</strong> → Jaya Motor BSD</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Set default tgl_datang to today
+document.getElementById('tglDatang').value = new Date().toISOString().split('T')[0];
+
+// File selection handler
+document.getElementById('excelFile').addEventListener('change', function() {
+    const fileName = this.files[0]?.name || 'Belum ada file dipilih';
+    document.getElementById('fileName').textContent = fileName;
+});
+
+// Form submit handler
+document.getElementById('importForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const file = document.getElementById('excelFile').files[0];
+    const tglDatang = document.getElementById('tglDatang').value;
+
+    if (!file) {
+        showToast('Pilih file Excel terlebih dahulu', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    if (tglDatang) {
+        formData.append('tgl_datang', tglDatang);
+    }
+
+    try {
+        showToast('Memproses import...', 'info');
+        const response = await axios.post('/api/stok-motor/import/excel', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        displayResults(response.data);
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Gagal memproses import: ' + (error.response?.data?.error || error.message), 'error');
+    }
+});
+
+function displayResults(data) {
+    const statusCard = document.getElementById('statusCard');
+    const previewCard = document.getElementById('previewCard');
+
+    // Update stats
+    document.getElementById('successCount').textContent = data.imported || 0;
+    document.getElementById('warningCount').textContent = data.warnings?.length || 0;
+    document.getElementById('errorCount').textContent = data.errors?.length || 0;
+
+    // Show errors
+    if (data.errors && data.errors.length > 0) {
+        document.getElementById('errorsSection').style.display = 'block';
+        document.getElementById('errorsList').innerHTML = data.errors
+            .map(e => `<div>• ${e}</div>`).join('');
+    } else {
+        document.getElementById('errorsSection').style.display = 'none';
+    }
+
+    // Show warnings
+    if (data.warnings && data.warnings.length > 0) {
+        document.getElementById('warningsSection').style.display = 'block';
+        document.getElementById('warningsList').innerHTML = data.warnings
+            .map(w => `<div>• ${w}</div>`).join('');
+    } else {
+        document.getElementById('warningsSection').style.display = 'none';
+    }
+
+    // Show success message
+    if (data.success) {
+        document.getElementById('successMessage').innerHTML =
+            `✓ Berhasil mengimport <strong>${data.imported} unit</strong> stok motor`;
+        showToast(`Import berhasil! ${data.imported} unit ditambahkan`, 'success');
+    } else {
+        document.getElementById('successMessage').innerHTML =
+            '✗ Import gagal. Perbaiki kesalahan di atas dan coba lagi';
+    }
+
+    // Show preview if available
+    if (data.preview && data.preview.length > 0) {
+        previewCard.style.display = 'block';
+        const tbody = document.getElementById('previewBody');
+        tbody.innerHTML = data.preview.map(row => `
+            <tr>
+                <td>${row.no_mesin}</td>
+                <td>${row.no_rangka}</td>
+                <td>${row.type_id}</td>
+                <td>${row.warna || '-'}</td>
+                <td>${row.dealer_id}</td>
+            </tr>
+        `).join('');
+    }
+
+    // Show type motor format suggestions
+    if (data.type_motor_suggestions && data.type_motor_suggestions.length > 0) {
+        document.getElementById('suggestionsSection').style.display = 'block';
+        const suggestionsList = document.getElementById('suggestionsList');
+        suggestionsList.innerHTML = data.type_motor_suggestions.map(suggestion => `
+            <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-sm); border-left: 4px solid var(--info);">
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: var(--space-4);">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
+                            <strong style="font-size: 1.1em;">${suggestion.type_kode}</strong>
+                            <span style="color: var(--text-secondary); font-size: 0.9em;">${suggestion.type_nama}</span>
+                        </div>
+                        <div style="margin-top: var(--space-3); font-size: 0.9em; font-family: monospace; background: var(--bg-primary); padding: var(--space-3); border-radius: var(--radius-xs); line-height: 1.8;">
+                            <div><strong>No. Mesin:</strong> <span style="color: var(--info);">${suggestion.prefix_nomesin}</span> <span style="color: var(--text-secondary);">(5 digit)</span></div>
+                            <div><strong>No. Rangka:</strong> <span style="color: var(--info);">${suggestion.prefix_norangka}</span> <span style="color: var(--text-secondary);">(7 digit)</span></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="btn-type-${suggestion.type_id}" style="white-space: nowrap; padding: var(--space-2) var(--space-4);" onclick="updateTypeFormat(event, ${suggestion.type_id}, '${suggestion.prefix_nomesin}', '${suggestion.prefix_norangka}')">
+                        ✓ Terapkan
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        document.getElementById('suggestionsSection').style.display = 'none';
+    }
+
+    statusCard.style.display = 'block';
+}
+
+async function updateTypeFormat(event, typeId, prefixMesin, prefixRangka) {
+    const button = event.target;
+
+    // Prevent double-click
+    if (button.disabled) {
+        return;
+    }
+
+    button.disabled = true;
+    const originalText = button.innerHTML;
+    button.innerHTML = '⏳ Memproses...';
+
+    try {
+        const response = await axios.put(`/api/type-motor/${typeId}/update-format`, {
+            prefix_nomesin: prefixMesin,
+            prefix_norangka: prefixRangka
+        });
+
+        if (response.data.success) {
+            // Update button to show success state
+            button.innerHTML = '✅ Berhasil Diterapkan';
+            button.className = 'btn btn-secondary';
+            button.style.backgroundColor = 'var(--success)';
+            button.style.color = 'white';
+            button.style.cursor = 'default';
+
+            showToast('✓ Format Master Type Motor berhasil diupdate', 'success');
+        } else {
+            // Restore button on error
+            button.disabled = false;
+            button.innerHTML = originalText;
+            showToast('Error: ' + (response.data.error || 'Gagal mengupdate'), 'error');
+        }
+    } catch (error) {
+        // Restore button on error
+        button.disabled = false;
+        button.innerHTML = originalText;
+        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+    }
+}
+</script>
+{% endblock %}

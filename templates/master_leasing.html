@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Master Leasing - JayaMotor{% endblock %}
+
+{% block content %}
+<div class="actions-bar">
+    <div class="page-header" style="margin-bottom: 0;">
+        <h1 class="page-title">Master Leasing</h1>
+        <p class="page-subtitle">Kelola data perusahaan leasing</p>
+    </div>
+    <button class="btn btn-primary btn-lg" onclick="openAddModal()" style="align-self: flex-start;">
+        Tambah Leasing
+    </button>
+</div>
+
+<!-- Master Data Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Kode</th>
+                        <th>Nama Leasing</th>
+                        <th>Alamat</th>
+                        <th>Kota</th>
+                        <th>Telepon</th>
+                        <th style="width: 120px; text-align: center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="leasing-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: var(--space-8);">Memuat...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="leasingModal">
+    <div class="modal" style="width: 90%; max-width: 700px;">
+        <div class="modal-header">
+            <h4 class="modal-title" id="modalTitle">Tambah Leasing Baru</h4>
+            <button class="modal-close" onclick="closeModal('leasingModal')">×</button>
+        </div>
+        <form id="leasingForm" onsubmit="saveLeasing(event)">
+            <div class="modal-body">
+                <input type="hidden" id="leasing-id">
+
+                <div class="form-group">
+                    <label class="form-label required">Kode Leasing</label>
+                    <input type="text" class="form-control" id="kode" placeholder="Kode leasing (unik)" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Nama Leasing</label>
+                    <input type="text" class="form-control" id="nama" placeholder="Nama perusahaan leasing" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Alamat</label>
+                    <textarea class="form-control" id="alamat" rows="3" placeholder="Alamat lengkap"></textarea>
+                </div>
+
+                <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label class="form-label">Kota</label>
+                        <input type="text" class="form-control" id="kota" placeholder="Kota">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Telepon</label>
+                        <input type="text" class="form-control" id="telp" placeholder="Nomor telepon">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('leasingModal')">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadLeasings();
+});
+
+function loadLeasings() {
+    axios.get('/api/leasing')
+        .then(response => {
+            const leasings = response.data.data;
+            const tbody = document.getElementById('leasing-body');
+            tbody.innerHTML = '';
+
+            if (leasings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: var(--space-8);">Tidak ada data leasing</td></tr>';
+                return;
+            }
+
+            leasings.forEach(l => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${l.kode}</strong></td>
+                        <td>${l.nama}</td>
+                        <td>${l.alamat || '-'}</td>
+                        <td>${l.kota || '-'}</td>
+                        <td>${l.telp || '-'}</td>
+                        <td style="text-align: center;">
+                            <button class="btn btn-sm btn-info" onclick="editLeasing(${l.id})" title="Edit">✎</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteLeasing(${l.id})" title="Hapus">✕</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        })
+        .catch(error => {
+            showToast('Error memuat leasing: ' + error.message, 'error');
+        });
+}
+
+function openAddModal() {
+    document.getElementById('leasing-id').value = '';
+    document.getElementById('leasingForm').reset();
+    document.getElementById('modalTitle').textContent = 'Tambah Leasing Baru';
+    document.getElementById('leasingModal').classList.add('show');
+}
+
+function editLeasing(id) {
+    axios.get(`/api/leasing/${id}`)
+        .then(response => {
+            const l = response.data.data;
+            document.getElementById('leasing-id').value = l.id;
+            document.getElementById('kode').value = l.kode;
+            document.getElementById('nama').value = l.nama;
+            document.getElementById('alamat').value = l.alamat || '';
+            document.getElementById('kota').value = l.kota || '';
+            document.getElementById('telp').value = l.telp || '';
+
+            document.getElementById('modalTitle').textContent = 'Edit Leasing';
+            document.getElementById('leasingModal').classList.add('show');
+        })
+        .catch(error => {
+            showToast('Error memuat leasing: ' + error.message, 'error');
+        });
+}
+
+function saveLeasing(event) {
+    event.preventDefault();
+
+    const id = document.getElementById('leasing-id').value;
+    const data = {
+        kode: document.getElementById('kode').value,
+        nama: document.getElementById('nama').value,
+        alamat: document.getElementById('alamat').value,
+        kota: document.getElementById('kota').value,
+        telp: document.getElementById('telp').value,
+    };
+
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/leasing/${id}` : '/api/leasing';
+
+    axios({
+        method: method,
+        url: url,
+        data: data
+    })
+    .then(response => {
+        showToast('Leasing berhasil disimpan', 'success');
+        closeModal('leasingModal');
+        loadLeasings();
+    })
+    .catch(error => {
+        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+    });
+}
+
+function deleteLeasing(id) {
+    if (confirm('Yakin ingin menghapus leasing ini?')) {
+        axios.delete(`/api/leasing/${id}`)
+            .then(response => {
+                showToast('Leasing berhasil dihapus', 'success');
+                loadLeasings();
+            })
+            .catch(error => {
+                showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+            });
+    }
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,1097 @@
+{% extends "base.html" %}
+
+{% block title %}Jurnal Informasi - {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Jurnal Informasi - Perjalanan Motor</h1>
+    <p class="subtitle">Data detail lengkap dari perjalanan unit motor dari gudang hingga customer</p>
+</div>
+
+<!-- Filter Section -->
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h3>Filter Data</h3>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; align-items: end;">
+            <div class="form-group">
+                <label class="form-label">Dari Tanggal</label>
+                <input type="date" id="filterTglAwal" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sampai Tanggal</label>
+                <input type="date" id="filterTglAkhir" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">No. Mesin / Nota</label>
+                <input type="text" id="filterSearch" class="form-control" placeholder="Cari no mesin atau nota..." />
+            </div>
+            <button onclick="loadJurnalData()" class="btn btn-primary">
+                <span>Cari Data</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Export Buttons -->
+<div style="margin-bottom: 15px; display: flex; gap: 10px;">
+    <button onclick="exportToExcel()" class="btn btn-secondary">
+        <span>📊 Export ke Excel</span>
+    </button>
+    <button onclick="printReport()" class="btn btn-secondary">
+        <span>🖨️ Cetak</span>
+    </button>
+</div>
+
+<!-- Data Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-wrapper" style="overflow-x: auto;">
+            <table class="table" id="jurnalTable">
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>No Transaksi</th>
+                        <th>Dealer</th>
+                        <th>No Mesin</th>
+                        <th>No Rangka</th>
+                        <th>Type Motor</th>
+                        <th>Warna</th>
+                        <th>Nama Pemohon</th>
+                        <th>Alamat</th>
+                        <th>Handphone</th>
+                        <th>Tgl Faktur</th>
+                        <th>Link/Broker</th>
+                        <th>Ket. DP</th>
+                        <th>DP (Rp)</th>
+                        <th>Subsidi (Rp)</th>
+                        <th>Diskon AHM (Rp)</th>
+                        <th>Diskon Dealer (Rp)</th>
+                        <th>Diskon Leasing (Rp)</th>
+                        <th>Insentif (Rp)</th>
+                        <th>Leasing</th>
+                        <th>Tgl Lunas</th>
+                        <th>Status</th>
+                        <th>No Polisi</th>
+                        <th>Nama Pemilik (STNK/BPKB)</th>
+                        <th>No BPKB</th>
+                        <th>Tgl BIRO</th>
+                        <th>Tgl Serah Terima Motor</th>
+                    </tr>
+                </thead>
+                <tbody id="jurnalBody">
+                    <tr>
+                        <td colspan="28" style="text-align: center; padding: 40px; color: #9ca3af;">
+                            Tekan tombol "Cari Data" untuk memuat data jurnal informasi
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Summary -->
+<div class="card" style="margin-top: 20px;">
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+            <div style="padding: 15px; background-color: var(--bg-tertiary); border-radius: 8px;">
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Total Record</div>
+                <div style="font-size: 1.5rem; font-weight: bold;" id="summaryTotal">0</div>
+            </div>
+            <div style="padding: 15px; background-color: var(--bg-tertiary); border-radius: 8px;">
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Total DP</div>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #10b981;" id="summaryDP">Rp 0</div>
+            </div>
+            <div style="padding: 15px; background-color: var(--bg-tertiary); border-radius: 8px;">
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Total Subsidi</div>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #3b82f6;" id="summarySubsidi">Rp 0</div>
+            </div>
+            <div style="padding: 15px; background-color: var(--bg-tertiary); border-radius: 8px;">
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Total Diskon</div>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #f97316;" id="summaryDiskon">Rp 0</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentJurnalData = [];
+let currentDetailTransaksiId = null;
+
+function loadJurnalData() {
+    const tglAwal = document.getElementById('filterTglAwal').value;
+    const tglAkhir = document.getElementById('filterTglAkhir').value;
+    const search = document.getElementById('filterSearch').value;
+
+    const params = new URLSearchParams();
+    if (tglAwal) params.append('tgl_awal', tglAwal);
+    if (tglAkhir) params.append('tgl_akhir', tglAkhir);
+    if (search) params.append('search', search);
+
+    axios.get(`/api/jurnal-informasi?${params.toString()}`)
+        .then(response => {
+            const data = response.data.data;
+            currentJurnalData = data;
+
+            const tbody = document.getElementById('jurnalBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="27" style="text-align: center; padding: 40px; color: #9ca3af;">Tidak ada data yang cocok dengan filter</td></tr>`;
+                updateSummary([]);
+                return;
+            }
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.onclick = () => viewDetailJurnal(row.id);
+                tr.onmouseover = function() { this.style.backgroundColor = 'var(--bg-tertiary)'; };
+                tr.onmouseout = function() { this.style.backgroundColor = ''; };
+                tr.innerHTML = `
+                    <td>${row.tanggal || '-'}</td>
+                    <td><strong>${row.nota || '-'}</strong></td>
+                    <td>${row.dealer_nama || '-'}</td>
+                    <td>${row.no_mesin || '-'}</td>
+                    <td>${row.no_rangka || '-'}</td>
+                    <td>${row.motor_type || '-'}</td>
+                    <td>${row.warna || '-'}</td>
+                    <td>${row.customer_name || '-'}</td>
+                    <td>${row.customer_alamat || '-'}</td>
+                    <td>${row.customer_phone || '-'}</td>
+                    <td>${row.tgl_faktur || '-'}</td>
+                    <td>${row.broker_nama || '-'}</td>
+                    <td>${row.ket_dp || '-'}</td>
+                    <td style="text-align: right;">${formatNumberDisplay(row.dp)}</td>
+                    <td style="text-align: right;">${formatNumberDisplay(row.subsidi)}</td>
+                    <td style="text-align: right;">${formatNumberDisplay(row.diskon_ahm)}</td>
+                    <td style="text-align: right;">${formatNumberDisplay(row.diskon_dealer)}</td>
+                    <td style="text-align: right;">${formatNumberDisplay(row.diskon_leasing)}</td>
+                    <td style="text-align: right;">${formatNumberDisplay(row.insentif)}</td>
+                    <td>${row.leasing_nama || '-'}</td>
+                    <td>${row.tgl_hutang_dibayar || '-'}</td>
+                    <td><span class="badge badge-${getStatusColor(row.status)}">${row.status || '-'}</span></td>
+                    <td>${row.no_polisi || '-'}</td>
+                    <td>${row.nama_surat || '-'}</td>
+                    <td>${row.no_bpkb || '-'}</td>
+                    <td>${row.tgl_biro || '-'}</td>
+                    <td>${row.tgl_serah_terima || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            updateSummary(data);
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function updateSummary(data) {
+    const total = data.length;
+    const totalDP = data.reduce((sum, row) => sum + (parseFloat(row.dp) || 0), 0);
+    const totalSubsidi = data.reduce((sum, row) => sum + (parseFloat(row.subsidi) || 0), 0);
+    const totalDiskon = data.reduce((sum, row) => sum + (parseFloat(row.diskon_ahm) || 0) + (parseFloat(row.diskon_dealer) || 0) + (parseFloat(row.diskon_leasing) || 0), 0);
+
+    document.getElementById('summaryTotal').textContent = total.toString();
+    document.getElementById('summaryDP').textContent = 'Rp ' + formatNumberDisplay(totalDP);
+    document.getElementById('summarySubsidi').textContent = 'Rp ' + formatNumberDisplay(totalSubsidi);
+    document.getElementById('summaryDiskon').textContent = 'Rp ' + formatNumberDisplay(totalDiskon);
+}
+
+function getStatusColor(status) {
+    const statusMap = {
+        'A': 'success',
+        'P': 'warning',
+        'L': 'secondary',
+        'C': 'danger'
+    };
+    return statusMap[status] || 'secondary';
+}
+
+function formatNumberDisplay(value) {
+    if (!value) return '0';
+    return Math.round(parseFloat(value)).toLocaleString('id-ID');
+}
+
+function exportToExcel() {
+    if (currentJurnalData.length === 0) {
+        showToast('Tidak ada data untuk di-export', 'warning');
+        return;
+    }
+
+    let csv = 'Tanggal,No Transaksi,Dealer,No Mesin,No Rangka,Type Motor,Warna,Nama Pemohon,Alamat,Handphone,Tgl Faktur,Link/Broker,Ket DP,DP,Subsidi,Diskon AHM,Diskon Dealer,Diskon Leasing,Insentif,Leasing,Tgl Lunas,Status,No Polisi,Nama Pemilik (STNK/BPKB),No BPKB,Tgl BIRO,Tgl Serah Terima\n';
+
+    currentJurnalData.forEach(row => {
+        csv += `"${row.tanggal || ''}","${row.nota || ''}","${row.dealer_nama || ''}","${row.no_mesin || ''}","${row.no_rangka || ''}","${row.motor_type || ''}","${row.warna || ''}","${row.customer_name || ''}","${row.customer_alamat || ''}","${row.customer_phone || ''}","${row.tgl_faktur || ''}","${row.broker_nama || ''}","${row.ket_dp || ''}",${row.dp || 0},${row.subsidi || 0},${row.diskon_ahm || 0},${row.diskon_dealer || 0},${row.diskon_leasing || 0},${row.insentif || 0},"${row.leasing_nama || ''}","${row.tgl_hutang_dibayar || ''}","${row.status || ''}","${row.no_polisi || ''}","${row.nama_surat || ''}","${row.no_bpkb || ''}","${row.tgl_biro || ''}","${row.tgl_serah_terima || ''}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.setAttribute('href', URL.createObjectURL(blob));
+    link.setAttribute('download', `jurnal_informasi_${new Date().toISOString().split('T')[0]}.csv`);
+    link.click();
+
+    showToast('Data berhasil di-export ke Excel', 'success');
+}
+
+function printReport() {
+    if (currentJurnalData.length === 0) {
+        showToast('Tidak ada data untuk di-cetak', 'warning');
+        return;
+    }
+
+    const printWindow = window.open('', '', 'height=600,width=1200');
+    let html = '<html><head><title>Jurnal Informasi</title>';
+    html += '<style>body{font-family:Arial;font-size:9px;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #999;padding:3px;} th{background-color:#f0f0f0;font-weight:bold;}</style>';
+    html += '</head><body>';
+    html += '<h2>Jurnal Informasi - Perjalanan Motor</h2>';
+    html += '<table><thead><tr>';
+    html += '<th>Tgl</th><th>Nota</th><th>Dealer</th><th>No Mesin</th><th>Type</th><th>Warna</th><th>Pelanggan</th><th>HP</th><th>DP</th><th>Subsidi</th><th>Diskon</th><th>Leasing</th><th>Status</th><th>No Polisi</th><th>BPKB</th>';
+    html += '</tr></thead><tbody>';
+
+    currentJurnalData.forEach(row => {
+        html += '<tr>';
+        html += `<td>${row.tanggal || '-'}</td>`;
+        html += `<td>${row.nota || '-'}</td>`;
+        html += `<td>${row.dealer_nama || '-'}</td>`;
+        html += `<td>${row.no_mesin || '-'}</td>`;
+        html += `<td>${row.motor_type || '-'}</td>`;
+        html += `<td>${row.warna || '-'}</td>`;
+        html += `<td>${row.customer_name || '-'}</td>`;
+        html += `<td>${row.customer_phone || '-'}</td>`;
+        html += `<td style="text-align:right;">${formatNumberDisplay(row.dp)}</td>`;
+        html += `<td style="text-align:right;">${formatNumberDisplay(row.subsidi)}</td>`;
+        html += `<td style="text-align:right;">${formatNumberDisplay((row.diskon_ahm || 0) + (row.diskon_dealer || 0) + (row.diskon_leasing || 0))}</td>`;
+        html += `<td>${row.leasing_nama || '-'}</td>`;
+        html += `<td>${row.status || '-'}</td>`;
+        html += `<td>${row.no_polisi || '-'}</td>`;
+        html += `<td>${row.no_bpkb || '-'}</td>`;
+        html += '</tr>';
+    });
+
+    html += '</tbody></table></body></html>';
+    printWindow.document.write(html);
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 500);
+}
+
+// Set default date range (last 30 days)
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const lastMonth = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+    document.getElementById('filterTglAwal').valueAsDate = lastMonth;
+    document.getElementById('filterTglAkhir').valueAsDate = today;
+});
+
+function viewDetailJurnal(transaksiId) {
+    currentDetailTransaksiId = transaksiId;  // Store for pembayaran form
+
+    axios.get(`/api/transaksi/${transaksiId}`)
+        .then(response => {
+            const t = response.data.data;
+
+            // Populate detail modal
+            const modal = document.getElementById('detailJurnalModal');
+
+            // Info section
+            document.getElementById('detailNota').textContent = t.nota;
+            document.getElementById('detailCustomer').textContent = t.customer_name;
+            document.getElementById('detailDealer').textContent = t.dealer_id ? 'Jaya Motor' : '-';
+
+            // Motor info
+            document.getElementById('detailNoMesin').textContent = t.no_engine || '-';
+            document.getElementById('detailNoRangka').textContent = t.no_chassis || '-';
+            document.getElementById('detailType').textContent = t.motor_type || '-';
+            document.getElementById('detailWarna').textContent = t.warna || '-';
+
+            // Customer detail
+            document.getElementById('detailAlamat').textContent = t.customer_alamat || '-';
+            document.getElementById('detailKelurahan').textContent = t.kelurahan_pembeli || '-';
+            document.getElementById('detailKecamatan').textContent = t.kecamatan_pembeli || '-';
+            document.getElementById('detailKabupaten').textContent = t.kabupaten_pembeli || '-';
+            document.getElementById('detailHP').textContent = t.customer_phone || '-';
+
+            // Financial detail breakdown
+            document.getElementById('detailOTR').textContent = 'Rp ' + formatNumberDisplay(t.otr);
+            document.getElementById('detailDP').textContent = 'Rp ' + formatNumberDisplay(t.dp);
+            document.getElementById('detailSubsidi').textContent = 'Rp ' + formatNumberDisplay(t.subsidi);
+            document.getElementById('detailDiskonAhm').textContent = 'Rp ' + formatNumberDisplay(t.diskon_ahm);
+            document.getElementById('detailDiskonDealer').textContent = 'Rp ' + formatNumberDisplay(t.diskon_dealer);
+            document.getElementById('detailDiskonLeasing').textContent = 'Rp ' + formatNumberDisplay(t.diskon_leasing);
+            document.getElementById('detailHutangSales').textContent = 'Rp ' + formatNumberDisplay(t.hutang_sales);
+
+            // Sistem pembayaran & info kredit
+            const sistemPembayaran = t.sistem_pembayaran || 'Cash';
+            document.getElementById('detailSistemPembayaran').textContent = sistemPembayaran;
+
+            const infoKreditContainer = document.getElementById('infoKreditContainer');
+            if (sistemPembayaran === 'Kredit') {
+                infoKreditContainer.style.display = 'block';
+                document.getElementById('detailLeasingNama').textContent = t.leasing_nama || '-';
+                document.getElementById('detailKetentuan').textContent = 'Rp ' + formatNumberDisplay(t.ketentuan_dp);
+
+                const kekuranganSales = Math.max(0, parseFloat(t.ketentuan_dp || 0) - parseFloat(t.dp || 0));
+                document.getElementById('detailKekuranganSales').textContent = 'Rp ' + formatNumberDisplay(kekuranganSales);
+            } else {
+                infoKreditContainer.style.display = 'none';
+            }
+
+            // Payment status
+            document.getElementById('detailTotalTerbayar').textContent = 'Rp ' + formatNumberDisplay(t.total_terbayar);
+            const sisaHutang = (parseFloat(t.hutang_sales) || 0) - (parseFloat(t.total_terbayar) || 0);
+            document.getElementById('detailSisaHutang').textContent = 'Rp ' + formatNumberDisplay(sisaHutang);
+
+            // Status badge
+            const statusEl = document.getElementById('detailStatusHutang');
+            if (t.status_hutang === 'Lunas') {
+                statusEl.className = 'badge badge-success';
+                statusEl.textContent = 'Lunas';
+            } else if (t.status_hutang === 'Cicilan') {
+                statusEl.className = 'badge badge-warning';
+                statusEl.textContent = 'Cicilan';
+            } else {
+                statusEl.className = 'badge badge-danger';
+                statusEl.textContent = 'Belum Dibayar';
+            }
+
+            // Broker info
+            document.getElementById('detailBroker').textContent = t.broker_nama || '-';
+
+            // Leasing info (kesimpulan dari transaksi)
+            document.getElementById('detailLeasing').textContent = t.leasing_nama || '-';
+
+            // Surat pemberitahuan & faktur info
+            document.getElementById('detailNoSurat').textContent = t.no_surat_pemberitahuan || '-';
+            document.getElementById('detailTglSurat').textContent = t.tgl_surat_pemberitahuan ? formatDate(t.tgl_surat_pemberitahuan) : '-';
+            document.getElementById('detailNoFaktur').textContent = t.no_faktur || '-';
+            document.getElementById('detailTglFaktur').textContent = t.tgl_faktur ? formatDate(t.tgl_faktur) : '-';
+
+            // File faktur
+            if (t.file_faktur) {
+                document.getElementById('detailFileFaktur').innerHTML = `<a href="/${t.file_faktur}" target="_blank" style="color: var(--primary); text-decoration: underline;">📎 Lihat File</a>`;
+            } else {
+                document.getElementById('detailFileFaktur').textContent = '-';
+            }
+
+            // STNK info
+            document.getElementById('detailNoPolisi').textContent = t.no_polisi || '-';
+            document.getElementById('detailNoBpkb').textContent = t.no_bpkb || '-';
+            document.getElementById('detailTglBiro').textContent = t.tgl_biro ? formatDate(t.tgl_biro) : '-';
+            document.getElementById('detailTglSerahTerima').textContent = t.tgl_serah_terima ? formatDate(t.tgl_serah_terima) : '-';
+
+            // Load payment history
+            loadPaymentHistory(transaksiId);
+
+            // Show modal
+            modal.classList.add('show');
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function loadPaymentHistory(transaksiId) {
+    axios.get(`/api/transaksi/${transaksiId}/pembayaran-history`)
+        .then(response => {
+            const historyBody = document.getElementById('detailPaymentBody');
+            historyBody.innerHTML = '';
+
+            const data = response.data.data;
+            if (data && data.length > 0) {
+                data.forEach((p, idx) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${idx + 1}</td>
+                        <td>${p.tgl_pembayaran}</td>
+                        <td>${p.metode}</td>
+                        <td style="text-align: right;">Rp ${formatNumberDisplay(p.nominal)}</td>
+                        <td style="text-align: right;">Rp ${formatNumberDisplay(p.sisa_hutang)}</td>
+                        <td>${p.keterangan || '-'}</td>
+                    `;
+                    historyBody.appendChild(row);
+                });
+                document.getElementById('paymentHistorySection').style.display = 'block';
+            } else {
+                document.getElementById('paymentHistorySection').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading payment history:', error);
+        });
+}
+
+function closeDetailJurnal() {
+    document.getElementById('detailJurnalModal').classList.remove('show');
+}
+
+function openPembayaranForm(transaksiId) {
+    if (!transaksiId) {
+        showToast('Error: Transaksi ID tidak ditemukan', 'error');
+        return;
+    }
+
+    // Fetch fresh data untuk nilai sisa hutang terbaru
+    axios.get(`/api/transaksi/${transaksiId}`)
+        .then(response => {
+            const t = response.data.data;
+            const sisaHutang = (parseFloat(t.hutang_sales) || 0) - (parseFloat(t.total_terbayar) || 0);
+
+            // Populate payment form
+            document.getElementById('bayarNota').textContent = t.nota;
+            document.getElementById('bayarCustomer').textContent = t.customer_name;
+            document.getElementById('bayarTotalHutang').textContent = 'Rp ' + formatNumberDisplay(t.hutang_sales);
+            document.getElementById('bayarTerbayar').textContent = 'Rp ' + formatNumberDisplay(t.total_terbayar);
+            document.getElementById('bayarSisa').textContent = 'Rp ' + formatNumberDisplay(sisaHutang);
+
+            // Status badge
+            const statusEl = document.getElementById('bayarStatus');
+            if (t.status_hutang === 'Lunas') {
+                statusEl.className = 'badge badge-success';
+                statusEl.textContent = 'Lunas';
+            } else if (t.status_hutang === 'Cicilan') {
+                statusEl.className = 'badge badge-warning';
+                statusEl.textContent = 'Cicilan';
+            } else {
+                statusEl.className = 'badge badge-danger';
+                statusEl.textContent = 'Belum Dibayar';
+            }
+
+            // Reset form
+            document.getElementById('bayarNominal').value = '';
+            document.getElementById('bayarNominal').max = sisaHutang;
+            document.getElementById('bayarNominalNote').textContent = 'Max: Rp ' + formatNumberDisplay(sisaHutang);
+            document.getElementById('bayarTglPembayaran').value = new Date().toISOString().split('T')[0];
+            document.getElementById('bayarMetode').value = 'Cash';
+            document.getElementById('bayarKeterangan').value = '';
+
+            // Show payment form modal
+            document.getElementById('pembayaranModal').classList.add('show');
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function closePembayaranForm() {
+    document.getElementById('pembayaranModal').classList.remove('show');
+}
+
+function submitPembayaran(event) {
+    event.preventDefault();
+
+    const nominal = parseFloat(document.getElementById('bayarNominal').value) || 0;
+    const tglPembayaran = document.getElementById('bayarTglPembayaran').value;
+    const metode = document.getElementById('bayarMetode').value;
+    const keterangan = document.getElementById('bayarKeterangan').value;
+
+    if (!currentDetailTransaksiId || !nominal || nominal <= 0 || !tglPembayaran) {
+        showToast('Error: Data tidak lengkap', 'error');
+        return;
+    }
+
+    axios.post(`/api/transaksi/${currentDetailTransaksiId}/bayar-hutang`, {
+        nominal: nominal,
+        tgl_pembayaran: tglPembayaran,
+        metode: metode,
+        keterangan: keterangan || null
+    })
+    .then(response => {
+        const data = response.data.data;
+        showToast('Pembayaran berhasil dicatat!', 'success');
+
+        // Close payment form
+        closePembayaranForm();
+
+        // Refresh detail modal
+        viewDetailJurnal(currentDetailTransaksiId);
+    })
+    .catch(error => {
+        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+    });
+}
+
+function openEditSuratModal(transaksiId) {
+    axios.get(`/api/transaksi/${transaksiId}`)
+        .then(response => {
+            const t = response.data.data;
+            document.getElementById('edit-surat-transaksi-id').value = transaksiId;
+            document.getElementById('edit-no-surat').value = t.no_surat_pemberitahuan || '';
+            document.getElementById('edit-tgl-surat').value = t.tgl_surat_pemberitahuan || '';
+            document.getElementById('edit-nama-surat').value = t.nama_surat || '';
+            initNamaSuratOption(t.nama_surat);
+            document.getElementById('edit-alamat-surat').value = t.alamat_surat || '';
+            document.getElementById('edit-kelurahan-surat').value = t.kelurahan_surat || '';
+            document.getElementById('edit-kecamatan-surat').value = t.kecamatan_surat || '';
+            document.getElementById('edit-kabupaten-surat').value = t.kabupaten_surat || '';
+
+            // Load faktur data
+            document.getElementById('edit-faktur-no').value = t.no_faktur || '';
+            document.getElementById('edit-faktur-tgl').value = t.tgl_faktur || '';
+
+            // Load STNK data
+            document.getElementById('edit-no-polisi').value = t.no_polisi || '';
+            document.getElementById('edit-no-bpkb').value = t.no_bpkb || '';
+            document.getElementById('edit-tgl-biro').value = t.tgl_biro || '';
+            document.getElementById('edit-tgl-terima-bpkb').value = t.tgl_terima_bpkb || '';
+            document.getElementById('edit-tgl-serah-terima').value = t.tgl_serah_terima || '';
+
+            // Display file info
+            const fileInfoEl = document.getElementById('edit-faktur-file-info');
+            if (t.file_faktur) {
+                fileInfoEl.innerHTML = `
+                    <small style="color: var(--success);">✓ File tersedia: <a href="/${t.file_faktur}" target="_blank" style="color: var(--primary); text-decoration: underline;">📎 Lihat File</a></small>
+                `;
+            } else {
+                fileInfoEl.innerHTML = `<small style="color: var(--text-secondary);">Belum ada file</small>`;
+            }
+
+            document.getElementById('editSuratModal').classList.add('show');
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function closeEditSuratModal() {
+    document.getElementById('editSuratModal').classList.remove('show');
+}
+
+function saveEditSurat(event) {
+    event.preventDefault();
+
+    const transaksiId = document.getElementById('edit-surat-transaksi-id').value;
+    const data = {
+        no_surat_pemberitahuan: document.getElementById('edit-no-surat').value.trim(),
+        tgl_surat_pemberitahuan: document.getElementById('edit-tgl-surat').value,
+        nama_surat: document.getElementById('edit-nama-surat').value.trim() || null,
+        alamat_surat: document.getElementById('edit-alamat-surat').value.trim() || null,
+        kelurahan_surat: document.getElementById('edit-kelurahan-surat').value.trim() || null,
+        kecamatan_surat: document.getElementById('edit-kecamatan-surat').value.trim() || null,
+        kabupaten_surat: document.getElementById('edit-kabupaten-surat').value.trim() || null,
+        no_faktur: document.getElementById('edit-faktur-no').value.trim() || null,
+        tgl_faktur: document.getElementById('edit-faktur-tgl').value || null,
+        no_polisi: document.getElementById('edit-no-polisi').value.trim().replace(/\s+/g, '') || null,
+        no_bpkb: document.getElementById('edit-no-bpkb').value.trim() || null,
+        tgl_biro: document.getElementById('edit-tgl-biro').value || null,
+        tgl_terima_bpkb: document.getElementById('edit-tgl-terima-bpkb').value || null,
+        tgl_serah_terima: document.getElementById('edit-tgl-serah-terima').value || null,
+    };
+
+    // Validasi nomor polisi jika diisi
+    if (data.no_polisi === '') data.no_polisi = null;
+    if (!data.no_polisi && document.getElementById('edit-no-polisi').value.trim()) {
+        showToast('Nomor polisi tidak boleh kosong atau hanya berisi spasi!', 'error');
+        return;
+    }
+
+    axios.put(`/api/transaksi/${transaksiId}`, data)
+        .then(response => {
+            showToast('Informasi surat, faktur & STNK berhasil diupdate!', 'success');
+            closeEditSuratModal();
+            viewDetailJurnal(transaksiId);
+        })
+        .catch(error => {
+            showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+        });
+}
+
+function toggleNamaSuratField() {
+    const samaPilihan = document.getElementById('option-sama').checked;
+    const inputField = document.getElementById('edit-nama-surat');
+
+    if (samaPilihan) {
+        inputField.disabled = true;
+        inputField.value = '';
+    } else {
+        inputField.disabled = false;
+        inputField.focus();
+    }
+}
+
+function initNamaSuratOption(namaSurat) {
+    if (!namaSurat || namaSurat.trim() === '') {
+        document.getElementById('option-sama').checked = true;
+        document.getElementById('edit-nama-surat').disabled = true;
+    } else {
+        document.getElementById('option-berbeda').checked = true;
+        document.getElementById('edit-nama-surat').disabled = false;
+    }
+}
+</script>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailJurnalModal">
+    <div class="modal" style="width: 95%; max-width: 1000px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h3 class="modal-title">Detail Jurnal Informasi</h3>
+            <button class="modal-close" onclick="closeDetailJurnal()">×</button>
+        </div>
+        <div class="modal-body">
+            <!-- Transaction Info -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">No. Transaksi</div>
+                    <div style="font-size: 1.1rem; font-weight: bold;" id="detailNota">-</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">Pelanggan</div>
+                    <div style="font-size: 1.1rem; font-weight: bold;" id="detailCustomer">-</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">Dealer</div>
+                    <div style="font-size: 1rem;" id="detailDealer">-</div>
+                </div>
+            </div>
+
+            <!-- Motor Info -->
+            <div style="background-color: var(--bg-tertiary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin-top: 0; margin-bottom: 15px;">Informasi Motor</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px;">
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">No. Mesin</div>
+                        <div id="detailNoMesin">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">No. Rangka</div>
+                        <div id="detailNoRangka">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Type Motor</div>
+                        <div id="detailType">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Warna</div>
+                        <div id="detailWarna">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Detail -->
+            <div style="background-color: var(--bg-tertiary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin-top: 0; margin-bottom: 15px;">Informasi Pelanggan</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Alamat</div>
+                        <div id="detailAlamat">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Handphone</div>
+                        <div id="detailHP">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Kelurahan</div>
+                        <div id="detailKelurahan">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Kecamatan</div>
+                        <div id="detailKecamatan">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Kabupaten</div>
+                        <div id="detailKabupaten">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Breakdown -->
+            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e5e7eb;">
+                <h4 style="margin-top: 0; margin-bottom: 15px;">Perhitungan Keuangan</h4>
+
+                <!-- Sistem Pembayaran & Info Kredit -->
+                <div style="background-color: white; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #3b82f6;">
+                    <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Sistem Pembayaran</p>
+                    <p style="margin: 0 0 10px 0; font-weight: 600; font-size: 1rem;" id="detailSistemPembayaran">-</p>
+
+                    <div id="infoKreditContainer" style="display: none;">
+                        <div style="border-top: 1px solid #e5e7eb; padding-top: 10px;">
+                            <p style="margin: 0 0 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Perusahaan Leasing</p>
+                            <p style="margin: 0 0 10px 0; font-weight: 500;" id="detailLeasingNama">-</p>
+
+                            <p style="margin: 0 0 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Ketentuan DP</p>
+                            <p style="margin: 0 0 10px 0; font-weight: 500;" id="detailKetentuan">Rp 0</p>
+
+                            <p style="margin: 0 0 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Kekurangan Sales (Ketentuan DP - DP Dibayar)</p>
+                            <p style="margin: 0; font-weight: 600; color: #f59e0b;" id="detailKekuranganSales">Rp 0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <p style="margin: 8px 0; font-size: 0.9rem;">
+                            <span style="color: var(--text-secondary);">OTR Motor:</span>
+                            <br/><strong id="detailOTR" style="color: #10b981; font-size: 1.1rem;">Rp 0</strong>
+                        </p>
+                        <p style="margin: 8px 0; font-size: 0.9rem;">
+                            <span style="color: var(--text-secondary);">- DP (Dibayar):</span>
+                            <br/><strong id="detailDP">Rp 0</strong>
+                        </p>
+                        <p style="margin: 8px 0; font-size: 0.9rem;">
+                            <span style="color: var(--text-secondary);">- Subsidi:</span>
+                            <br/><strong id="detailSubsidi">Rp 0</strong>
+                        </p>
+                    </div>
+                    <div>
+                        <p style="margin: 8px 0; font-size: 0.9rem;">
+                            <span style="color: var(--text-secondary);">- Diskon AHM:</span>
+                            <br/><strong id="detailDiskonAhm">Rp 0</strong>
+                        </p>
+                        <p style="margin: 8px 0; font-size: 0.9rem;">
+                            <span style="color: var(--text-secondary);">- Diskon Dealer:</span>
+                            <br/><strong id="detailDiskonDealer">Rp 0</strong>
+                        </p>
+                        <p style="margin: 8px 0; font-size: 0.9rem;">
+                            <span style="color: var(--text-secondary);">- Diskon Leasing:</span>
+                            <br/><strong id="detailDiskonLeasing">Rp 0</strong>
+                        </p>
+                        <p style="margin: 12px 0; padding-top: 12px; border-top: 2px solid #d97706; font-size: 0.9rem;">
+                            <span style="color: var(--text-secondary);"><strong>= Hutang Sales:</strong></span>
+                            <br/><strong id="detailHutangSales" style="color: #dc2626; font-size: 1.1rem;">Rp 0</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informasi Surat -->
+            <div style="background-color: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin-top: 0; margin-bottom: 15px;">📋 Informasi Surat Pemberitahuan & Faktur</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: var(--text-secondary);">No. Surat Pemberitahuan</p>
+                        <p style="margin: 0; font-weight: 500;" id="detailNoSurat">-</p>
+                    </div>
+                    <div>
+                        <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Tanggal Surat Pemberitahuan</p>
+                        <p style="margin: 0; font-weight: 500;" id="detailTglSurat">-</p>
+                    </div>
+                </div>
+                <div style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: var(--text-secondary);">No. Faktur</p>
+                            <p style="margin: 0; font-weight: 500;" id="detailNoFaktur">-</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Tanggal Faktur</p>
+                            <p style="margin: 0; font-weight: 500;" id="detailTglFaktur">-</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: var(--text-secondary);">File Faktur</p>
+                        <div id="detailFileFaktur" style="font-weight: 500;">-</div>
+                    </div>
+                </div>
+
+                <!-- STNK Info -->
+                <div style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px;">
+                    <h5 style="margin: 15px 0; color: #1f2937;">📋 Data STNK & Nomor Polisi</h5>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Nomor Polisi</p>
+                            <p style="margin: 0; font-weight: 500;" id="detailNoPolisi">-</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Nomor BPKB</p>
+                            <p style="margin: 0; font-weight: 500;" id="detailNoBpkb">-</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Tgl Diterima dari Biro</p>
+                            <p style="margin: 0; font-weight: 500;" id="detailTglBiro">-</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Tgl Serah Terima Motor</p>
+                            <p style="margin: 0; font-weight: 500;" id="detailTglSerahTerima">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Status -->
+            <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f59e0b;">
+                <h4 style="margin-top: 0; margin-bottom: 15px;">Status Pembayaran</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Total Terbayar</div>
+                        <div style="font-size: 1.1rem; font-weight: bold; color: #10b981;" id="detailTotalTerbayar">Rp 0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Sisa Hutang</div>
+                        <div style="font-size: 1.1rem; font-weight: bold; color: #d97706;" id="detailSisaHutang">Rp 0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Status</div>
+                        <div id="detailStatusHutang" class="badge badge-danger">Belum Dibayar</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Broker & Leasing -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div style="background-color: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">Broker/Link</div>
+                    <div id="detailBroker">-</div>
+                </div>
+                <div style="background-color: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">Leasing</div>
+                    <div id="detailLeasing">-</div>
+                </div>
+            </div>
+
+            <!-- Payment History -->
+            <div id="paymentHistorySection" style="display: none;">
+                <h4>Riwayat Pembayaran</h4>
+                <div class="table-wrapper" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table" style="font-size: 0.9rem;">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Tanggal</th>
+                                <th>Metode</th>
+                                <th style="text-align: right;">Nominal (Rp)</th>
+                                <th style="text-align: right;">Sisa Hutang (Rp)</th>
+                                <th>Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailPaymentBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-info" onclick="openEditSuratModal(currentDetailTransaksiId)">
+                <span>📝 Edit Informasi Surat</span>
+            </button>
+            <button type="button" class="btn btn-primary" onclick="openPembayaranForm(currentDetailTransaksiId)">
+                <span>💰 Catat Pembayaran</span>
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="closeDetailJurnal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- Pembayaran Modal -->
+<div class="modal-overlay" id="pembayaranModal">
+    <div class="modal" style="width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h4 class="modal-title">Catat Pembayaran Hutang</h4>
+            <button class="modal-close" onclick="closePembayaranForm()">×</button>
+        </div>
+        <form onsubmit="submitPembayaran(event)">
+            <div class="modal-body">
+                <!-- Info Section -->
+                <div style="background-color: var(--bg-tertiary); padding: var(--space-3); border-radius: 4px; margin-bottom: var(--space-4);">
+                    <p style="margin-bottom: var(--space-2);"><span class="text-muted">No. Transaksi:</span> <strong id="bayarNota">-</strong></p>
+                    <p style="margin: 0;"><span class="text-muted">Pelanggan:</span> <strong id="bayarCustomer">-</strong></p>
+                </div>
+
+                <!-- Hutang Info -->
+                <div style="background-color: #fef3c7; padding: var(--space-3); border-radius: 4px; margin-bottom: var(--space-4); border-left: 4px solid #f59e0b;">
+                    <p style="margin-bottom: var(--space-2);"><span class="text-muted">Total Hutang:</span> <strong id="bayarTotalHutang" style="color: #ef4444;">Rp 0</strong></p>
+                    <p style="margin-bottom: var(--space-2);"><span class="text-muted">Sudah Dibayar:</span> <strong id="bayarTerbayar">Rp 0</strong></p>
+                    <p style="margin: 0;"><span class="text-muted">Sisa Hutang:</span> <strong id="bayarSisa" style="color: #d97706; font-size: 1.1rem;">Rp 0</strong></p>
+                    <p style="margin-top: var(--space-2); margin-bottom: 0; font-size: 0.85rem;"><span class="text-muted">Status:</span> <span id="bayarStatus" class="badge">-</span></p>
+                </div>
+
+                <!-- Pembayaran Form -->
+                <div class="form-group">
+                    <label class="form-label required">Nominal Pembayaran (Rp)</label>
+                    <input type="number" class="form-control" id="bayarNominal" placeholder="Masukkan jumlah pembayaran" required min="1" step="1">
+                    <small id="bayarNominalNote" style="color: var(--text-secondary);">Max: Rp 0</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Tanggal Pembayaran</label>
+                    <input type="date" class="form-control" id="bayarTglPembayaran" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Metode Pembayaran</label>
+                    <select class="form-select" id="bayarMetode">
+                        <option value="Cash">Cash</option>
+                        <option value="Transfer">Transfer</option>
+                        <option value="Cek">Cek</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Keterangan (Optional)</label>
+                    <textarea class="form-control" id="bayarKeterangan" rows="2" placeholder="Catatan pembayaran..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closePembayaranForm()">Batal</button>
+                <button type="submit" class="btn btn-success">Catat Pembayaran</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Informasi Surat Modal -->
+<div class="modal-overlay" id="editSuratModal">
+    <div class="modal" style="width: 90%; max-width: 700px;">
+        <div class="modal-header">
+            <h4 class="modal-title">Edit Informasi Surat Pemberitahuan</h4>
+            <button class="modal-close" onclick="closeEditSuratModal()">×</button>
+        </div>
+        <form id="editSuratForm" onsubmit="saveEditSurat(event)">
+            <div class="modal-body">
+                <input type="hidden" id="edit-surat-transaksi-id">
+
+                <!-- SECTION 1: Surat Pemberitahuan -->
+                <div style="background-color: var(--bg-secondary); padding: var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-6);">
+                    <h5 style="margin-top: 0; margin-bottom: var(--space-4); color: var(--primary); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Surat Pemberitahuan</h5>
+
+                    <!-- No. Surat & Tanggal Surat -->
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
+                        <div class="form-group">
+                            <label class="form-label">No. Surat</label>
+                            <input type="text" class="form-control" id="edit-no-surat" placeholder="misal: SU-2026-001">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tanggal Surat</label>
+                            <input type="date" class="form-control" id="edit-tgl-surat">
+                        </div>
+                    </div>
+
+                    <!-- Nama pada STNK/BPKB - Radio Selection -->
+                    <div class="form-group" style="margin-bottom: var(--space-4);">
+                        <label class="form-label" style="display: block; margin-bottom: var(--space-3);">Nama pada BPKB/STNK</label>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4);">
+                            <!-- Option 1: Sama dengan Pemohon -->
+                            <label style="display: flex; align-items: center; padding: var(--space-4); border: 2px solid var(--border-light); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s; background-color: var(--bg-tertiary); min-height: 80px;" class="radio-card" id="label-sama">
+                                <input type="radio" name="nama-surat-option" value="same" id="option-sama" onchange="toggleNamaSuratField()" style="width: 22px; height: 22px; cursor: pointer; margin-right: var(--space-4); flex-shrink: 0;">
+                                <div style="flex-grow: 1;">
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 15px; line-height: 1.4;">Sama dengan Pemohon</div>
+                                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px; line-height: 1.3;">Gunakan nama pemohon</div>
+                                </div>
+                            </label>
+
+                            <!-- Option 2: Berbeda -->
+                            <label style="display: flex; align-items: center; padding: var(--space-4); border: 2px solid var(--border-light); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s; background-color: var(--bg-tertiary); min-height: 80px;" class="radio-card" id="label-berbeda">
+                                <input type="radio" name="nama-surat-option" value="berbeda" id="option-berbeda" onchange="toggleNamaSuratField()" style="width: 22px; height: 22px; cursor: pointer; margin-right: var(--space-4); flex-shrink: 0;">
+                                <div style="flex-grow: 1;">
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 15px; line-height: 1.4;">Nama Berbeda</div>
+                                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px; line-height: 1.3;">Gunakan nama lain</div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Input field untuk nama berbeda -->
+                        <input type="text" class="form-control" id="edit-nama-surat" placeholder="Masukkan nama yang tertera di BPKB/STNK" disabled style="margin-bottom: var(--space-2);">
+                        <small style="color: var(--text-secondary); display: block;">Aktifkan dengan memilih opsi "Nama Berbeda"</small>
+                    </div>
+
+                    <style>
+                        .radio-card input[type="radio"]:checked + div ~ * {
+                            border-color: var(--primary);
+                        }
+                        .radio-card:has(input[type="radio"]:checked) {
+                            border-color: var(--primary);
+                            background-color: rgba(74, 155, 127, 0.08);
+                        }
+                        .radio-card:hover {
+                            border-color: var(--primary);
+                            background-color: rgba(74, 155, 127, 0.05);
+                        }
+                    </style>
+
+                    <!-- Alamat pada STNK/BPKB -->
+                    <div class="form-group" style="margin-bottom: var(--space-3);">
+                        <label class="form-label">Alamat pada BPKB/STNK</label>
+                        <textarea class="form-control" id="edit-alamat-surat" rows="2" placeholder="Alamat yang tertera di BPKB/STNK"></textarea>
+                    </div>
+
+                    <!-- Kelurahan, Kecamatan, Kabupaten -->
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                        <div class="form-group">
+                            <label class="form-label">Kelurahan</label>
+                            <input type="text" class="form-control" id="edit-kelurahan-surat" placeholder="Kelurahan">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Kecamatan</label>
+                            <input type="text" class="form-control" id="edit-kecamatan-surat" placeholder="Kecamatan">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Kabupaten</label>
+                        <input type="text" class="form-control" id="edit-kabupaten-surat" placeholder="Kabupaten">
+                    </div>
+                </div>
+
+                <!-- SECTION 2: Faktur Main Dealer -->
+                <div style="background-color: var(--bg-secondary); padding: var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-6);">
+                    <h5 style="margin-top: 0; margin-bottom: var(--space-4); color: var(--primary); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Surat Faktur Main Dealer</h5>
+
+                    <!-- No. Faktur & Tanggal Faktur -->
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
+                        <div class="form-group">
+                            <label class="form-label">No. Faktur</label>
+                            <input type="text" class="form-control" id="edit-faktur-no" placeholder="Nomor faktur">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tanggal Faktur</label>
+                            <input type="date" class="form-control" id="edit-faktur-tgl">
+                        </div>
+                    </div>
+
+                    <!-- File Faktur Info -->
+                    <div class="form-group">
+                        <label class="form-label">File Surat Faktur</label>
+                        <div id="edit-faktur-file-info" style="padding: var(--space-3); background-color: var(--bg-tertiary); border-radius: 4px; font-size: 0.9rem;">
+                            <small style="color: var(--text-secondary);">Belum ada file</small>
+                        </div>
+                        <small style="color: var(--text-secondary); display: block; margin-top: var(--space-2);">Untuk upload/ubah file, gunakan form Transaksi</small>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: Data STNK & Nomor Polisi -->
+                <div style="background-color: var(--bg-secondary); padding: var(--space-4); border-radius: var(--radius-md);">
+                    <h5 style="margin-top: 0; margin-bottom: var(--space-4); color: var(--primary); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Data STNK & Nomor Polisi</h5>
+
+                    <!-- No. Polisi -->
+                    <div class="form-group" style="margin-bottom: var(--space-3);">
+                        <label class="form-label">Nomor Polisi <span style="color: var(--danger);">*</span></label>
+                        <input type="text" class="form-control" id="edit-no-polisi" placeholder="Contoh: B1234AA" maxlength="20">
+                        <small style="color: var(--text-secondary);">Spasi otomatis dihapus, bersifat unik</small>
+                    </div>
+
+                    <!-- No. BPKB -->
+                    <div class="form-group" style="margin-bottom: var(--space-3);">
+                        <label class="form-label">No. BPKB</label>
+                        <input type="text" class="form-control" id="edit-no-bpkb" placeholder="Nomor BPKB" maxlength="50">
+                    </div>
+
+                    <!-- Tanggal Biro Jasa, Terima BPKB & Serah Terima Motor -->
+                    <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: var(--space-3);">
+                        <div class="form-group">
+                            <label class="form-label">Tgl. Dari Biro Jasa</label>
+                            <input type="date" class="form-control" id="edit-tgl-biro">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tgl. Terima BPKB</label>
+                            <input type="date" class="form-control" id="edit-tgl-terima-bpkb">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tgl. Serah Terima Motor</label>
+                            <input type="date" class="form-control" id="edit-tgl-serah-terima">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeEditSuratModal()">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

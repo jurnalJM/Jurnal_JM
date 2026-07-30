@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Laporan - JayaMotor - Honda{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Laporan Penjualan</h1>
+    <p class="page-subtitle">Buat dan analisis laporan penjualan motor Anda</p>
+</div>
+
+<!-- Report Filter -->
+<div class="card">
+    <div class="card-header">
+        <h5>Filter Laporan</h5>
+    </div>
+    <div class="card-body">
+        <div class="grid grid-3">
+            <div class="form-group">
+                <label class="form-label">Dari Tanggal</label>
+                <input type="date" class="form-control" id="report-start-date">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sampai Tanggal</label>
+                <input type="date" class="form-control" id="report-end-date">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="report-status">
+                    <option value="">Semua Status</option>
+                    <option value="Pending">Menunggu</option>
+                    <option value="Approved">Disetujui</option>
+                    <option value="Paid">Dibayar</option>
+                    <option value="Cancelled">Dibatalkan</option>
+                </select>
+            </div>
+        </div>
+        <div style="display: flex; gap: var(--space-3); margin-top: var(--space-4);">
+            <button class="btn btn-primary" onclick="generateReport()">Generate Laporan</button>
+            <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+        </div>
+    </div>
+</div>
+
+<!-- Report Summary -->
+<div class="stats-grid" style="margin-top: var(--space-8);">
+    <div class="stat-card">
+        <span class="stat-label">Total Transaksi</span>
+        <div class="stat-value" id="report-total">0</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Total DP (Rp)</span>
+        <div class="stat-value" id="report-dp" style="color: #06b6d4;">0</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Total Subsidi (Rp)</span>
+        <div class="stat-value" id="report-subsidi" style="color: #10b981;">0</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Total Diskon (Rp)</span>
+        <div class="stat-value" id="report-diskon" style="color: #f59e0b;">0</div>
+    </div>
+</div>
+
+<!-- Report Table -->
+<div class="card" style="margin-top: var(--space-8);">
+    <div class="card-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h5 style="margin: 0;">Detail Transaksi</h5>
+            <button class="btn btn-sm btn-secondary" onclick="printReport()">Cetak Laporan</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nota</th>
+                        <th>Tanggal</th>
+                        <th>Pelanggan</th>
+                        <th>Motor</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">DP (Rp)</th>
+                        <th style="text-align: right;">Subsidi (Rp)</th>
+                        <th style="text-align: right;">Diskon (Rp)</th>
+                    </tr>
+                </thead>
+                <tbody id="report-body">
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: var(--space-8);">Silakan generate laporan terlebih dahulu</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" style="text-align: right; font-weight: 600;">TOTAL:</td>
+                        <td style="text-align: right; font-weight: 600;" id="total-dp">0</td>
+                        <td style="text-align: right; font-weight: 600;" id="total-subsidi">0</td>
+                        <td style="text-align: right; font-weight: 600;" id="total-diskon">0</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('report-end-date').value = today;
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    document.getElementById('report-start-date').value = thirtyDaysAgo;
+});
+
+function generateReport() {
+    const startDate = document.getElementById('report-start-date').value;
+    const endDate = document.getElementById('report-end-date').value;
+    const status = document.getElementById('report-status').value;
+
+    let url = '/api/transaksi?';
+    if (startDate) url += `start_date=${startDate}&`;
+    if (endDate) url += `end_date=${endDate}&`;
+    if (status) url += `status=${status}&`;
+
+    axios.get(url)
+        .then(response => {
+            const transaksi = response.data.data;
+            displayReport(transaksi);
+            showToast('Laporan berhasil di-generate', 'success');
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function displayReport(data) {
+    const tbody = document.getElementById('report-body');
+    tbody.innerHTML = '';
+
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: var(--space-6);">Tidak ada data</td></tr>';
+        return;
+    }
+
+    let totalDp = 0;
+    let totalSubsidi = 0;
+    let totalDiskon = 0;
+
+    data.forEach(t => {
+        totalDp += t.dp;
+        totalSubsidi += t.subsidi;
+        totalDiskon += (t.diskon_ahm || 0) + (t.diskon_dealer || 0) + (t.diskon_leasing || 0);
+
+        const statusColor = getStatusColor(t.status);
+        const row = `
+            <tr>
+                <td><strong>${t.nota}</strong></td>
+                <td>${formatDate(t.tanggal_nota)}</td>
+                <td>${t.customer_name}</td>
+                <td>${t.motor_type}</td>
+                <td><span class="badge badge-${statusColor}">${t.status}</span></td>
+                <td style="text-align: right;">${formatCurrency(t.dp)}</td>
+                <td style="text-align: right;">${formatCurrency(t.subsidi)}</td>
+                <td style="text-align: right;">${formatCurrency((t.diskon_ahm || 0) + (t.diskon_dealer || 0) + (t.diskon_leasing || 0))}</td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+
+    // Update summary
+    document.getElementById('report-total').textContent = data.length;
+    document.getElementById('report-dp').textContent = formatCurrency(totalDp);
+    document.getElementById('report-subsidi').textContent = formatCurrency(totalSubsidi);
+    document.getElementById('report-diskon').textContent = formatCurrency(totalDiskon);
+
+    // Update footer totals
+    document.getElementById('total-dp').textContent = formatCurrency(totalDp);
+    document.getElementById('total-subsidi').textContent = formatCurrency(totalSubsidi);
+    document.getElementById('total-diskon').textContent = formatCurrency(totalDiskon);
+}
+
+function resetFilters() {
+    document.getElementById('report-status').value = '';
+    generateReport();
+}
+
+function printReport() {
+    const table = document.querySelector('table');
+    const startDate = document.getElementById('report-start-date').value;
+    const endDate = document.getElementById('report-end-date').value;
+
+    const printWindow = window.open('', '', 'height=600,width=900');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="id">
+        <head>
+            <meta charset="UTF-8">
+            <title>Laporan Transaksi - UCHAHUNT</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; padding: 20px; background: white; }
+                .print-header { text-align: center; margin-bottom: 30px; }
+                .print-header h2 { margin: 0 0 10px 0; }
+                .print-header p { margin: 5px 0; color: #666; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th { background-color: #f0f0f0; border: 1px solid #ddd; padding: 10px; text-align: left; font-weight: 600; }
+                td { border: 1px solid #ddd; padding: 8px 10px; }
+                tfoot tr { background-color: #f0f0f0; font-weight: 600; }
+                .text-right { text-align: right; }
+            </style>
+        </head>
+        <body>
+            <div class="print-header">
+                <h2>LAPORAN TRANSAKSI PENJUALAN MOTOR</h2>
+                <h3>JayaMotor - Honda</h3>
+                <p>Periode: ${formatDate(startDate)} sampai ${formatDate(endDate)}</p>
+                <p>Dicetak: ${new Date().toLocaleString('id-ID')}</p>
+            </div>
+            ${table.outerHTML}
+            <script>
+                window.print();
+                window.close();
+            <\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Master Broker - JayaMotor{% endblock %}
+
+{% block content %}
+<div class="actions-bar">
+    <div class="page-header" style="margin-bottom: 0;">
+        <h1 class="page-title">Master Broker/Sales</h1>
+        <p class="page-subtitle">Kelola data broker dan sales penjualan motor</p>
+    </div>
+    <button class="btn btn-primary btn-lg" onclick="openAddModal()" style="align-self: flex-start;">
+        Tambah Broker
+    </button>
+</div>
+
+<!-- Master Data Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nama Broker/Sales</th>
+                        <th>Tipe</th>
+                        <th>Alamat</th>
+                        <th>Telepon</th>
+                        <th>Status</th>
+                        <th style="width: 120px; text-align: center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="broker-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: var(--space-8);">Memuat...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="brokerModal">
+    <div class="modal" style="width: 90%; max-width: 700px;">
+        <div class="modal-header">
+            <h4 class="modal-title" id="modalTitle">Tambah Broker Baru</h4>
+            <button class="modal-close" onclick="closeModal('brokerModal')">×</button>
+        </div>
+        <form id="brokerForm" onsubmit="saveBroker(event)">
+            <div class="modal-body">
+                <input type="hidden" id="broker-id">
+
+                <div class="form-group">
+                    <label class="form-label required">Nama Broker/Sales</label>
+                    <input type="text" class="form-control" id="nama" placeholder="Nama broker atau sales" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tipe</label>
+                    <select class="form-select" id="tipe">
+                        <option value="B">Broker</option>
+                        <option value="S">Sales/Mitra</option>
+                        <option value="L">Leasing Partner</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Alamat</label>
+                    <textarea class="form-control" id="alamat" rows="3" placeholder="Alamat lengkap"></textarea>
+                </div>
+
+                <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label class="form-label">Kota</label>
+                        <input type="text" class="form-control" id="kota" placeholder="Kota">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Telepon</label>
+                        <input type="text" class="form-control" id="telp" placeholder="Nomor telepon">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Kontak Person</label>
+                    <input type="text" class="form-control" id="kontak_person" placeholder="Nama kontak person">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" placeholder="Email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="status">
+                        <option value="A">Aktif</option>
+                        <option value="I">Tidak Aktif</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('brokerModal')">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadBrokers();
+});
+
+function loadBrokers() {
+    axios.get('/api/broker')
+        .then(response => {
+            const brokers = response.data.data;
+            const tbody = document.getElementById('broker-body');
+            tbody.innerHTML = '';
+
+            if (brokers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: var(--space-8);">Tidak ada data broker</td></tr>';
+                return;
+            }
+
+            brokers.forEach(b => {
+                const statusBadge = b.status === 'A' ?
+                    '<span class="badge badge-success">Aktif</span>' :
+                    '<span class="badge badge-danger">Tidak Aktif</span>';
+
+                const tipeLabel = b.tipe === 'B' ? 'Broker' : (b.tipe === 'S' ? 'Sales' : 'Leasing');
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${b.nama}</strong></td>
+                        <td>${tipeLabel}</td>
+                        <td>${b.alamat || '-'}</td>
+                        <td>${b.telp || '-'}</td>
+                        <td>${statusBadge}</td>
+                        <td style="text-align: center;">
+                            <button class="btn btn-sm btn-info" onclick="editBroker(${b.id})" title="Edit">✎</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteBroker(${b.id})" title="Hapus">✕</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        })
+        .catch(error => {
+            showToast('Error memuat broker: ' + error.message, 'error');
+        });
+}
+
+function openAddModal() {
+    document.getElementById('broker-id').value = '';
+    document.getElementById('brokerForm').reset();
+    document.getElementById('modalTitle').textContent = 'Tambah Broker Baru';
+    document.getElementById('brokerModal').classList.add('show');
+}
+
+function editBroker(id) {
+    axios.get(`/api/broker/${id}`)
+        .then(response => {
+            const b = response.data.data;
+            document.getElementById('broker-id').value = b.id;
+            document.getElementById('nama').value = b.nama;
+            document.getElementById('tipe').value = b.tipe;
+            document.getElementById('alamat').value = b.alamat || '';
+            document.getElementById('kota').value = b.kota || '';
+            document.getElementById('telp').value = b.telp || '';
+            document.getElementById('kontak_person').value = b.kontak_person || '';
+            document.getElementById('email').value = b.email || '';
+            document.getElementById('status').value = b.status;
+
+            document.getElementById('modalTitle').textContent = 'Edit Broker';
+            document.getElementById('brokerModal').classList.add('show');
+        })
+        .catch(error => {
+            showToast('Error memuat broker: ' + error.message, 'error');
+        });
+}
+
+function saveBroker(event) {
+    event.preventDefault();
+
+    const id = document.getElementById('broker-id').value;
+    const data = {
+        nama: document.getElementById('nama').value,
+        tipe: document.getElementById('tipe').value,
+        alamat: document.getElementById('alamat').value,
+        kota: document.getElementById('kota').value,
+        telp: document.getElementById('telp').value,
+        kontak_person: document.getElementById('kontak_person').value,
+        email: document.getElementById('email').value,
+        status: document.getElementById('status').value,
+    };
+
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/broker/${id}` : '/api/broker';
+
+    axios({
+        method: method,
+        url: url,
+        data: data
+    })
+    .then(response => {
+        showToast('Broker berhasil disimpan', 'success');
+        closeModal('brokerModal');
+        loadBrokers();
+    })
+    .catch(error => {
+        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+    });
+}
+
+function deleteBroker(id) {
+    if (confirm('Yakin ingin menghapus broker ini?')) {
+        axios.delete(`/api/broker/${id}`)
+            .then(response => {
+                showToast('Broker berhasil dihapus', 'success');
+                loadBrokers();
+            })
+            .catch(error => {
+                showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+            });
+    }
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+}
+</script>
+{% endblock %}

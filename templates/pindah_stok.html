@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+
+{% block title %}Pemindahan Stok - JayaMotor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Pemindahan Stok Motor</h1>
+    <p class="page-subtitle">Kelola transfer stok motor antar dealer, broker, dan sales</p>
+</div>
+
+<!-- Form Section -->
+<div class="card">
+    <div class="card-header">
+        <h5>Form Pemindahan Stok</h5>
+    </div>
+    <div class="card-body">
+        <form id="pindahStokForm" onsubmit="submitPindahStok(event)">
+            <div class="grid grid-3">
+                <!-- Tanggal Transfer -->
+                <div class="form-group">
+                    <label class="form-label required">Tanggal Transfer</label>
+                    <input type="date" class="form-control" id="tgl-transfer" required>
+                </div>
+
+                <!-- Nomor Mesin (Dropdown) -->
+                <div class="form-group">
+                    <label class="form-label required">No. Mesin (Stok Ready)</label>
+                    <select class="form-select" id="no-mesin" onchange="lookupMotor()" required>
+                        <option value="">-- Pilih No. Mesin --</option>
+                    </select>
+                </div>
+
+                <!-- Nomor Rangka -->
+                <div class="form-group">
+                    <label class="form-label">No. Rangka</label>
+                    <input type="text" class="form-control" id="no-rangka" readonly>
+                </div>
+            </div>
+
+            <div class="grid grid-3">
+                <!-- Motor Info -->
+                <div class="form-group">
+                    <label class="form-label">Type Motor</label>
+                    <input type="text" class="form-control" id="motor-type" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Warna</label>
+                    <input type="text" class="form-control" id="motor-warna" readonly>
+                </div>
+
+                <!-- Dealer Asal -->
+                <div class="form-group">
+                    <label class="form-label">Dealer Asal (Gudang Induk)</label>
+                    <input type="text" class="form-control" id="dealer-asal" readonly style="font-weight: 600; color: var(--primary);">
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <!-- Tipe Transfer -->
+                <div class="form-group">
+                    <label class="form-label required">Tipe Transfer</label>
+                    <select class="form-select" id="tipe-transfer" required>
+                        <option value="">-- Pilih --</option>
+                        <option value="PINDAH">Pindah (Transfer Tetap)</option>
+                        <option value="PINJAM">Pinjam (Temporary)</option>
+                        <option value="SERAH">Serah (Handover)</option>
+                    </select>
+                </div>
+
+                <!-- Tujuan (Broker/Sales/Dealer) -->
+                <div class="form-group">
+                    <label class="form-label required">Tujuan Transfer (Broker/Sales/Dealer)</label>
+                    <select class="form-select" id="tujuan-id" required>
+                        <option value="">-- Pilih Tujuan --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <!-- Driver -->
+                <div class="form-group">
+                    <label class="form-label">Nama Driver</label>
+                    <input type="text" class="form-control" id="driver" placeholder="Nama driver/pengantar">
+                </div>
+
+                <!-- Catatan -->
+                <div class="form-group">
+                    <label class="form-label">Catatan</label>
+                    <textarea class="form-control" id="catatan" rows="2" placeholder="Catatan tambahan..."></textarea>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: var(--space-3); margin-top: var(--space-6);">
+                <button type="submit" class="btn btn-primary">Simpan Transfer</button>
+                <button type="reset" class="btn btn-secondary">Reset</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- History Table -->
+<div class="card" style="margin-top: var(--space-8);">
+    <div class="card-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h5 style="margin: 0;">History Pemindahan Stok</h5>
+            <div style="display: flex; gap: var(--space-2);">
+                <select class="form-select" id="filter-status" onchange="loadTransferHistory()" style="width: 150px;">
+                    <option value="">Semua Status</option>
+                    <option value="A">Aktif (Dipindahkan)</option>
+                    <option value="K">Kembali</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>No. Mesin</th>
+                        <th>Type Motor</th>
+                        <th>Dari Dealer</th>
+                        <th>Ke Tujuan</th>
+                        <th>Tipe</th>
+                        <th>Driver</th>
+                        <th>Status</th>
+                        <th style="text-align: center; width: 100px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="transfer-body">
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: var(--space-8);">Memuat data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Return Stok Modal -->
+<div class="modal-overlay" id="returnModal">
+    <div class="modal" style="width: 90%; max-width: 500px;">
+        <div class="modal-header">
+            <h4 class="modal-title">Kembalikan Stok ke Dealer Asal</h4>
+            <button class="modal-close" onclick="closeReturnModal()">×</button>
+        </div>
+        <form onsubmit="submitReturnStok(event)">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">No. Mesin</label>
+                    <input type="text" class="form-control" id="return-no-mesin" readonly>
+                    <input type="hidden" id="return-transfer-id">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Type Motor</label>
+                    <input type="text" class="form-control" id="return-motor-type" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required">Tanggal Kembali</label>
+                    <input type="date" class="form-control" id="return-tgl-kembali" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Catatan</label>
+                    <textarea class="form-control" id="return-catatan" rows="2" placeholder="Kondisi motor saat kembali..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeReturnModal()">Batal</button>
+                <button type="submit" class="btn btn-primary">Konfirmasi Pengembalian</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default date to today
+    document.getElementById('tgl-transfer').valueAsDate = new Date();
+    loadTransferHistory();
+    loadStokReady();
+    loadTujuanOptions();
+});
+
+function loadStokReady() {
+    // Load stok motor dengan status 'Ready' untuk dropdown
+    const select = document.getElementById('no-mesin');
+    select.innerHTML = '<option value="">Loading...</option>';
+
+    axios.get('/api/stok-motor-ready')
+        .then(response => {
+            const stoks = response.data.data || [];
+            select.innerHTML = '<option value="">-- Pilih No. Mesin --</option>';
+
+            if (stoks.length === 0) {
+                select.innerHTML = '<option value="">Tidak ada stok ready</option>';
+                return;
+            }
+
+            stoks.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.id;
+                const kodeText = s.dealer_kode ? `${s.dealer_kode} - ` : '';
+                option.textContent = `${s.no_mesin} - ${s.motor_type} (${kodeText}${s.dealer_name})`;
+                option.dataset.stok = JSON.stringify(s);
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading stok ready:', error);
+            select.innerHTML = '<option value="">Error loading stok</option>';
+        });
+}
+
+function lookupMotor() {
+    const noMesinSelect = document.getElementById('no-mesin');
+    const selectedOption = noMesinSelect.options[noMesinSelect.selectedIndex];
+
+    if (!selectedOption.value) {
+        clearMotorFields();
+        return;
+    }
+
+    try {
+        const stok = JSON.parse(selectedOption.dataset.stok);
+        document.getElementById('no-rangka').value = stok.no_rangka;
+        document.getElementById('motor-type').value = stok.motor_type;
+        document.getElementById('motor-warna').value = stok.warna;
+        document.getElementById('dealer-asal').value = stok.dealer_kode ? `${stok.dealer_kode} - ${stok.dealer_name}` : stok.dealer_name;
+    } catch (e) {
+        clearMotorFields();
+    }
+}
+
+function clearMotorFields() {
+    document.getElementById('no-rangka').value = '';
+    document.getElementById('motor-type').value = '';
+    document.getElementById('motor-warna').value = '';
+    document.getElementById('dealer-asal').value = '';
+}
+
+function loadTujuanOptions() {
+    // Load combined list: Dealers + Brokers
+    const tujuanSelect = document.getElementById('tujuan-id');
+    tujuanSelect.innerHTML = '<option value="">Loading...</option>';
+
+    // Load dealers (no query param)
+    axios.get('/api/dealers')
+        .then(dealersRes => {
+            let dealers = dealersRes.data.data || [];
+            // Filter active dealers only
+            dealers = dealers.filter(d => d.status === 'A');
+
+            // Load brokers
+            axios.get('/api/broker')
+                .then(brokersRes => {
+                    const brokers = brokersRes.data.data || [];
+
+                    tujuanSelect.innerHTML = '<option value="">-- Pilih Tujuan Transfer --</option>';
+
+                    // Add dealers as optgroup
+                    if (dealers.length > 0) {
+                        const dealerGroup = document.createElement('optgroup');
+                        dealerGroup.label = '📍 Dealer (Gudang)';
+
+                        dealers.forEach(d => {
+                            const option = document.createElement('option');
+                            option.value = `dealer_${d.id}`;
+                            const kodeText = d.kode_dealer ? `${d.kode_dealer} - ` : '';
+                            option.textContent = kodeText + d.nama;
+                            dealerGroup.appendChild(option);
+                        });
+                        tujuanSelect.appendChild(dealerGroup);
+                    }
+
+                    // Add brokers/sales as optgroup
+                    if (brokers.length > 0) {
+                        const brokerGroup = document.createElement('optgroup');
+                        brokerGroup.label = '🤝 Broker / Sales / Leasing';
+
+                        brokers.forEach(b => {
+                            const tipeLabel = b.tipe === 'B' ? 'Broker' : (b.tipe === 'S' ? 'Sales' : 'Leasing');
+                            const option = document.createElement('option');
+                            option.value = `broker_${b.id}`;
+                            option.textContent = `${b.nama} (${tipeLabel})`;
+                            brokerGroup.appendChild(option);
+                        });
+                        tujuanSelect.appendChild(brokerGroup);
+                    }
+
+                    if (dealers.length === 0 && brokers.length === 0) {
+                        tujuanSelect.innerHTML = '<option value="">Tidak ada data tujuan</option>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading brokers:', error);
+                    tujuanSelect.innerHTML = '<option value="">Error loading data</option>';
+                });
+        })
+        .catch(error => {
+            console.error('Error loading dealers:', error);
+            tujuanSelect.innerHTML = '<option value="">Error loading data</option>';
+        });
+}
+
+function submitPindahStok(event) {
+    event.preventDefault();
+
+    const stokId = document.getElementById('no-mesin').value;
+    const tglTransfer = document.getElementById('tgl-transfer').value;
+    const tipeTransfer = document.getElementById('tipe-transfer').value;
+    const tujuanId = document.getElementById('tujuan-id').value;
+    const driver = document.getElementById('driver').value;
+    const catatan = document.getElementById('catatan').value;
+
+    if (!stokId || !tglTransfer || !tipeTransfer || !tujuanId) {
+        showToast('Lengkapi semua field yang diperlukan', 'error');
+        return;
+    }
+
+    // Parse tujuan
+    const [tujuanType, tujuanTypeId] = tujuanId.split('_');
+
+    axios.post('/api/pindah-stok', {
+        stok_motor_id: parseInt(stokId),
+        tgl_transfer: tglTransfer,
+        tipe_transfer: tipeTransfer,
+        dealer_tujuan_id: tujuanType === 'dealer' ? parseInt(tujuanTypeId) : null,
+        broker_tujuan_id: tujuanType === 'broker' ? parseInt(tujuanTypeId) : null,
+        driver: driver,
+        catatan: catatan
+    })
+    .then(response => {
+        showToast('Stok berhasil dipindahkan', 'success');
+        document.getElementById('pindahStokForm').reset();
+        clearMotorFields();
+        document.getElementById('tgl-transfer').valueAsDate = new Date();
+        loadStokReady();
+        loadTransferHistory();
+    })
+    .catch(error => {
+        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+    });
+}
+
+function loadTransferHistory() {
+    const status = document.getElementById('filter-status').value;
+    const params = status ? `?status=${status}` : '';
+
+    axios.get(`/api/pindah-stok${params}`)
+        .then(response => {
+            const transfers = response.data.data;
+            const tbody = document.getElementById('transfer-body');
+            tbody.innerHTML = '';
+
+            if (transfers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: var(--space-8);">Tidak ada data pemindahan</td></tr>';
+                return;
+            }
+
+            transfers.forEach(t => {
+                const statusBadge = t.status === 'A'
+                    ? '<span class="badge badge-warning">Dipindahkan</span>'
+                    : '<span class="badge badge-success">Kembali</span>';
+
+                const tipeLabel = t.tipe_transfer === 'PINDAH' ? 'Pindah' : (t.tipe_transfer === 'PINJAM' ? 'Pinjam' : 'Serah');
+
+                const tujuan = t.dealer_tujuan_name || t.broker_tujuan_name || '-';
+
+                let aksiButton = '';
+                if (t.status === 'A') {
+                    aksiButton = `<button class="btn btn-sm btn-info" onclick="openReturnModal(${t.id}, '${t.no_mesin}', '${t.motor_type}')" title="Kembalikan">↩</button>`;
+                }
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${t.tgl_transfer}</td>
+                    <td><strong>${t.no_mesin}</strong></td>
+                    <td>${t.motor_type}</td>
+                    <td>${t.dealer_asal_name}</td>
+                    <td>${tujuan}</td>
+                    <td>${tipeLabel}</td>
+                    <td>${t.driver || '-'}</td>
+                    <td>${statusBadge}</td>
+                    <td style="text-align: center;">${aksiButton}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function openReturnModal(transferId, noMesin, motorType) {
+    document.getElementById('return-transfer-id').value = transferId;
+    document.getElementById('return-no-mesin').value = noMesin;
+    document.getElementById('return-motor-type').value = motorType;
+    document.getElementById('return-tgl-kembali').valueAsDate = new Date();
+    document.getElementById('return-catatan').value = '';
+    document.getElementById('returnModal').classList.add('show');
+}
+
+function closeReturnModal() {
+    document.getElementById('returnModal').classList.remove('show');
+}
+
+function submitReturnStok(event) {
+    event.preventDefault();
+
+    const transferId = document.getElementById('return-transfer-id').value;
+    const tglKembali = document.getElementById('return-tgl-kembali').value;
+    const catatan = document.getElementById('return-catatan').value;
+
+    if (!tglKembali) {
+        showToast('Tanggal kembali harus diisi', 'error');
+        return;
+    }
+
+    axios.post(`/api/pindah-stok/${transferId}/kembali`, {
+        tgl_kembali: tglKembali,
+        catatan: catatan
+    })
+    .then(response => {
+        showToast('Stok berhasil dikembalikan ke dealer asal', 'success');
+        closeReturnModal();
+        loadTransferHistory();
+    })
+    .catch(error => {
+        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+    });
+}
+</script>
+{% endblock %}

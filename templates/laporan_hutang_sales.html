@@ -1,0 +1,605 @@
+{% extends "base.html" %}
+
+{% block title %}Laporan Hutang Sales - JayaMotor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Laporan Hutang Sales</h1>
+    <p class="page-subtitle">Pantau sisa hutang kepada broker dan sales penjualan</p>
+</div>
+
+<!-- Filter Section -->
+<div class="card">
+    <div class="card-header">
+        <h5>Filter Laporan</h5>
+    </div>
+    <div class="card-body">
+        <div class="grid grid-3">
+            <div class="form-group">
+                <label class="form-label">Broker/Sales</label>
+                <select class="form-select" id="filter-broker">
+                    <option value="">Semua Broker/Sales</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Status Pembayaran</label>
+                <select class="form-select" id="filter-status-hutang">
+                    <option value="">Semua Status</option>
+                    <option value="unpaid">Belum Dibayar</option>
+                    <option value="paid">Sudah Dibayar</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Dari Tanggal</label>
+                <input type="date" class="form-control" id="filter-start-date">
+            </div>
+        </div>
+        <div style="display: flex; gap: var(--space-3); margin-top: var(--space-4);">
+            <button class="btn btn-primary" onclick="generateHutangReport()">Generate Laporan</button>
+            <button class="btn btn-secondary" onclick="resetHutangFilters()">Reset</button>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="stats-grid" style="margin-top: var(--space-8);">
+    <div class="stat-card">
+        <span class="stat-label">Total Hutang</span>
+        <div class="stat-value" id="total-hutang" style="color: #ef4444;">Rp 0</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Hutang Belum Dibayar</span>
+        <div class="stat-value" id="hutang-unpaid" style="color: #f59e0b;">Rp 0</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Hutang Sudah Dibayar</span>
+        <div class="stat-value" id="hutang-paid" style="color: #10b981;">Rp 0</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Jumlah Transaksi</span>
+        <div class="stat-value" id="total-transaksi">0</div>
+    </div>
+</div>
+
+<!-- Summary per Broker/Sales -->
+<div class="card" style="margin-top: var(--space-8);">
+    <div class="card-header">
+        <h5>Ringkasan Hutang per Broker/Sales</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nama Broker/Sales</th>
+                        <th>Tipe</th>
+                        <th style="text-align: right;">Jumlah Transaksi</th>
+                        <th style="text-align: right;">Total Hutang (Rp)</th>
+                        <th style="text-align: right;">Belum Dibayar (Rp)</th>
+                        <th style="text-align: right;">Sudah Dibayar (Rp)</th>
+                    </tr>
+                </thead>
+                <tbody id="broker-summary-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: var(--space-8);">Silakan generate laporan terlebih dahulu</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Transaksi dengan Hutang -->
+<div class="card" style="margin-top: var(--space-8);">
+    <div class="card-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h5 style="margin: 0;">Detail Transaksi dengan Hutang</h5>
+            <button class="btn btn-sm btn-secondary" onclick="printHutangReport()">Cetak Laporan</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nota</th>
+                        <th>Tanggal</th>
+                        <th>Pelanggan</th>
+                        <th>Broker/Sales</th>
+                        <th>Motor</th>
+                        <th style="text-align: right;">Hutang Sales (Rp)</th>
+                        <th style="text-align: center;">Status</th>
+                        <th style="text-align: center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="hutang-detail-body">
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: var(--space-8);">Silakan generate laporan terlebih dahulu</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+    <div class="modal" style="width: 90%; max-width: 600px;">
+        <div class="modal-header">
+            <h4 class="modal-title">Detail Transaksi</h4>
+            <button class="modal-close" onclick="closeDetailModal()">×</button>
+        </div>
+        <div class="modal-body" id="detailModalContent">
+            <!-- Content will be loaded here -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="closeDetailModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bayar Hutang Modal -->
+<div class="modal-overlay" id="bayarHutangModal">
+    <div class="modal" style="width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h4 class="modal-title">Bayar Hutang Sales</h4>
+            <button class="modal-close" onclick="closeBayarHutangForm()">×</button>
+        </div>
+        <form onsubmit="submitBayarHutang(event)">
+            <div class="modal-body">
+                <!-- Info Transaksi -->
+                <div style="background-color: var(--bg-tertiary); padding: var(--space-3); border-radius: 4px; margin-bottom: var(--space-4);">
+                    <p style="margin-bottom: var(--space-2);"><span class="text-muted">No. Transaksi:</span> <strong id="bayar-nota">-</strong></p>
+                    <p style="margin: 0;"><span class="text-muted">Pelanggan:</span> <strong id="bayar-customer">-</strong></p>
+                </div>
+
+                <!-- Hutang Calculation Breakdown -->
+                <div style="background-color: #f3f4f6; padding: var(--space-3); border-radius: 4px; margin-bottom: var(--space-4); border: 1px solid #e5e7eb;">
+                    <h6 style="margin-top: 0; margin-bottom: var(--space-3); color: #374151;">Perhitungan Hutang Sales</h6>
+                    <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: var(--space-3);">
+                        Hutang = OTR - DP (Dibayar) - Subsidi - Diskon - Diskon Tambahan
+                    </p>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                        <!-- Left Column -->
+                        <div>
+                            <p style="margin-bottom: 10px; font-size: 0.9rem;">
+                                <span class="text-muted">OTR Motor:</span>
+                                <br/><strong id="bayar-calc-otr" style="color: #10b981; font-size: 1rem;">Rp 0</strong>
+                            </p>
+                            <p style="margin-bottom: 10px; font-size: 0.9rem;">
+                                <span class="text-muted">- DP (Dibayar):</span>
+                                <br/><strong id="bayar-calc-dp" style="color: #1f2937;">Rp 0</strong>
+                            </p>
+                            <p style="margin-bottom: 10px; font-size: 0.9rem;">
+                                <span class="text-muted">- Subsidi:</span>
+                                <br/><strong id="bayar-calc-subsidi" style="color: #1f2937;">Rp 0</strong>
+                            </p>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div>
+                            <p style="margin-bottom: 10px; font-size: 0.9rem;">
+                                <span class="text-muted">- Diskon (AHM + Dealer + Leasing):</span>
+                                <br/><strong id="bayar-calc-diskon" style="color: #1f2937;">Rp 0</strong>
+                            </p>
+                            <p style="margin-top: 12px; padding-top: 12px; border-top: 2px solid #d97706; font-size: 0.9rem;">
+                                <span class="text-muted"><strong>= Hutang Beban Sales:</strong></span>
+                                <br/><strong id="bayar-calc-hutang" style="color: #dc2626; font-size: 1.05rem;">Rp 0</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hutang Status Info -->
+                <div style="background-color: #fef3c7; padding: var(--space-3); border-radius: 4px; margin-bottom: var(--space-4); border-left: 4px solid #f59e0b;">
+                    <p style="margin-bottom: var(--space-2);"><span class="text-muted">Sudah Dibayar:</span> <strong id="bayar-hutang-terbayar">Rp 0</strong></p>
+                    <p style="margin: 0;"><span class="text-muted">Sisa Hutang:</span> <strong id="bayar-hutang-sisa" style="color: #d97706; font-size: 1.1rem;">Rp 0</strong></p>
+                    <p style="margin-top: var(--space-2); margin-bottom: 0; font-size: 0.85rem;"><span class="text-muted">Status:</span> <span id="bayar-hutang-status" class="badge">-</span></p>
+                </div>
+
+                <!-- Pembayaran Form -->
+                <div class="form-group">
+                    <label class="form-label required">Nominal Pembayaran (Rp)</label>
+                    <input type="number" class="form-control" id="bayar-nominal" placeholder="Masukkan jumlah pembayaran" required min="1" step="1">
+                    <small id="bayar-nominal-note" style="color: var(--text-secondary);">Max: Rp 0</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Tanggal Pembayaran</label>
+                    <input type="date" class="form-control" id="bayar-tgl-pembayaran" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Metode Pembayaran</label>
+                    <select class="form-select" id="bayar-metode">
+                        <option value="Cash">Cash</option>
+                        <option value="Transfer">Transfer</option>
+                        <option value="Cek">Cek</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Keterangan (Optional)</label>
+                    <textarea class="form-control" id="bayar-keterangan" rows="2" placeholder="Catatan pembayaran..."></textarea>
+                </div>
+
+                <!-- History Pembayaran -->
+                <div id="bayar-history-section" style="display: none; margin-top: var(--space-6);">
+                    <h5 style="margin-bottom: var(--space-3);">History Pembayaran</h5>
+                    <div class="table-wrapper" style="max-height: 200px; overflow-y: auto;">
+                        <table class="table" style="font-size: 0.9rem;">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th style="text-align: right;">Nominal (Rp)</th>
+                                    <th style="text-align: right;">Sisa (Rp)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bayar-history-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeBayarHutangForm()">Batal</button>
+                <button type="submit" class="btn btn-success">Catat Pembayaran</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadBrokerFilter();
+});
+
+function loadBrokerFilter() {
+    axios.get('/api/broker')
+        .then(response => {
+            const brokers = response.data.data;
+            const select = document.getElementById('filter-broker');
+            select.innerHTML = '<option value="">Semua Broker/Sales</option>';
+
+            brokers.forEach(b => {
+                const option = document.createElement('option');
+                option.value = b.id;
+                option.textContent = b.nama;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading brokers:', error);
+        });
+}
+
+function generateHutangReport() {
+    const brokerId = document.getElementById('filter-broker').value;
+    const statusHutang = document.getElementById('filter-status-hutang').value;
+    const startDate = document.getElementById('filter-start-date').value;
+
+    axios.get('/api/laporan/hutang-sales', {
+        params: {
+            broker_id: brokerId || null,
+            status: statusHutang || null,
+            start_date: startDate || null
+        }
+    })
+    .then(response => {
+        const data = response.data.data;
+
+        // Update summary cards
+        document.getElementById('total-hutang').textContent = 'Rp ' + formatNumberDisplay(data.summary.total_hutang);
+        document.getElementById('hutang-unpaid').textContent = 'Rp ' + formatNumberDisplay(data.summary.hutang_belum_dibayar);
+        document.getElementById('hutang-paid').textContent = 'Rp ' + formatNumberDisplay(data.summary.hutang_sudah_dibayar);
+        document.getElementById('total-transaksi').textContent = data.summary.total_transaksi;
+
+        // Update broker summary table
+        const brokerBody = document.getElementById('broker-summary-body');
+        brokerBody.innerHTML = '';
+
+        if (data.broker_summary.length === 0) {
+            brokerBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: var(--space-8);">Tidak ada data hutang</td></tr>';
+        } else {
+            data.broker_summary.forEach(b => {
+                const row = document.createElement('tr');
+                const tipeLabel = b.broker_tipe === 'B' ? 'Broker' : (b.broker_tipe === 'S' ? 'Sales' : 'Leasing');
+
+                row.innerHTML = `
+                    <td><strong>${b.broker_nama}</strong></td>
+                    <td>${tipeLabel}</td>
+                    <td style="text-align: right;">${b.jumlah_transaksi}</td>
+                    <td style="text-align: right; color: #ef4444;">Rp ${formatNumberDisplay(b.total_hutang)}</td>
+                    <td style="text-align: right; color: #f59e0b;">Rp ${formatNumberDisplay(b.hutang_belum_dibayar)}</td>
+                    <td style="text-align: right; color: #10b981;">Rp ${formatNumberDisplay(b.hutang_sudah_dibayar)}</td>
+                `;
+                brokerBody.appendChild(row);
+            });
+        }
+
+        // Update detail transaksi table
+        const detailBody = document.getElementById('hutang-detail-body');
+        detailBody.innerHTML = '';
+
+        if (data.detail_transaksi.length === 0) {
+            detailBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: var(--space-8);">Tidak ada transaksi dengan hutang</td></tr>';
+        } else {
+            data.detail_transaksi.forEach(t => {
+                const statusBadge = t.tgl_hutang_dibayar
+                    ? '<span class="badge badge-success">Dibayar</span>'
+                    : '<span class="badge badge-warning">Belum Dibayar</span>';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${t.nota}</strong></td>
+                    <td>${t.tanggal_nota}</td>
+                    <td>${t.customer_name}</td>
+                    <td>${t.broker_nama}</td>
+                    <td>${t.motor_type}</td>
+                    <td style="text-align: right; color: #ef4444;"><strong>Rp ${formatNumberDisplay(t.hutang_sales)}</strong></td>
+                    <td style="text-align: center;">${statusBadge}</td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-sm btn-info" onclick="viewTransaksiDetail(${t.transaksi_id})" title="Lihat Detail">👁</button>
+                        ${!t.tgl_hutang_dibayar ? `<button class="btn btn-sm btn-success" onclick="openBayarHutangForm(${t.transaksi_id})" title="Bayar Hutang">💰</button>` : ''}
+                    </td>
+                `;
+                detailBody.appendChild(row);
+            });
+        }
+    })
+    .catch(error => {
+        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+    });
+}
+
+function resetHutangFilters() {
+    document.getElementById('filter-broker').value = '';
+    document.getElementById('filter-status-hutang').value = '';
+    document.getElementById('filter-start-date').value = '';
+    document.getElementById('broker-summary-body').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: var(--space-8);">Silakan generate laporan terlebih dahulu</td></tr>';
+    document.getElementById('hutang-detail-body').innerHTML = '<tr><td colspan="8" style="text-align: center; padding: var(--space-8);">Silakan generate laporan terlebih dahulu</td></tr>';
+}
+
+function printHutangReport() {
+    window.print();
+}
+
+function viewTransaksiDetail(transaksiId) {
+    axios.get(`/api/transaksi/${transaksiId}`)
+        .then(response => {
+            const t = response.data.data;
+            const statusHutang = t.tgl_hutang_dibayar
+                ? `<span class="badge badge-success">Sudah Dibayar (${t.tgl_hutang_dibayar})</span>`
+                : `<span class="badge badge-warning">Belum Dibayar</span>`;
+
+            const content = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+                    <div>
+                        <p style="margin: 0; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">No. Nota</p>
+                        <p style="margin: var(--space-2) 0 var(--space-4) 0; font-size: 1.1rem;"><strong>${t.nota}</strong></p>
+                    </div>
+                    <div>
+                        <p style="margin: 0; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Tanggal</p>
+                        <p style="margin: var(--space-2) 0 var(--space-4) 0; font-size: 1.1rem;"><strong>${t.tanggal_nota}</strong></p>
+                    </div>
+                    <div>
+                        <p style="margin: 0; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Pelanggan</p>
+                        <p style="margin: var(--space-2) 0 var(--space-4) 0;"><strong>${t.customer_name}</strong></p>
+                    </div>
+                    <div>
+                        <p style="margin: 0; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Motor</p>
+                        <p style="margin: var(--space-2) 0 var(--space-4) 0;"><strong>${t.motor_type}</strong></p>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-tertiary); border-radius: var(--radius-md); padding: var(--space-4); margin: var(--space-6) 0;">
+                    <h5 style="margin: 0 0 var(--space-4) 0; color: var(--text-secondary);">Detail Hutang</h5>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+                        <div>
+                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">OTR</p>
+                            <p style="margin: var(--space-1) 0 0 0; font-weight: 600; font-size: 1rem; color: var(--primary);">Rp ${formatNumberDisplay(t.otr)}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">Ketentuan DP</p>
+                            <p style="margin: var(--space-1) 0 0 0; font-weight: 600; font-size: 1rem; color: var(--primary);">Rp ${formatNumberDisplay(t.ketentuan_dp)}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">DP</p>
+                            <p style="margin: var(--space-1) 0 0 0; font-weight: 600; font-size: 1rem;">Rp ${formatNumberDisplay(t.dp)}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">Subsidi</p>
+                            <p style="margin: var(--space-1) 0 0 0; font-weight: 600; font-size: 1rem;">Rp ${formatNumberDisplay(t.subsidi)}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">Diskon AHM</p>
+                            <p style="margin: var(--space-1) 0 0 0; font-weight: 600; font-size: 1rem;">Rp ${formatNumberDisplay(t.diskon_ahm)}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">Diskon Dealer</p>
+                            <p style="margin: var(--space-1) 0 0 0; font-weight: 600; font-size: 1rem;">Rp ${formatNumberDisplay(t.diskon_dealer)}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">Diskon Leasing</p>
+                            <p style="margin: var(--space-1) 0 0 0; font-weight: 600; font-size: 1rem;">Rp ${formatNumberDisplay(t.diskon_leasing)}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-secondary); border-left: 4px solid var(--error); padding: var(--space-4); border-radius: var(--radius-md); margin: var(--space-6) 0 0 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">Hutang Sales</p>
+                            <p style="margin: var(--space-2) 0 0 0; font-weight: 700; font-size: 1.5rem; color: var(--error);">Rp ${formatNumberDisplay(t.hutang_sales)}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="margin: 0 0 var(--space-2) 0; font-size: 0.85rem; color: var(--text-secondary);">Status Pembayaran</p>
+                            ${statusHutang}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detailModalContent').innerHTML = content;
+            document.getElementById('detailModal').classList.add('show');
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').classList.remove('show');
+}
+
+let currentBayarHutangTransaksiId = null;
+
+function openBayarHutangForm(transaksiId) {
+    axios.get(`/api/transaksi/${transaksiId}`)
+        .then(response => {
+            const t = response.data.data;
+
+            currentBayarHutangTransaksiId = transaksiId;
+
+            // Display info
+            document.getElementById('bayar-nota').textContent = t.nota;
+            document.getElementById('bayar-customer').textContent = t.customer_name;
+
+            // Calculate sisa hutang
+            const totalHutang = parseFloat(t.hutang_sales) || 0;
+            const sudahBayar = parseFloat(t.total_terbayar) || 0;
+            const sisaHutang = totalHutang - sudahBayar;
+
+            // Extract detail values
+            const otr = parseFloat(t.otr) || 0;
+            const dp_dibayar = parseFloat(t.dp) || 0;  // DP yang sudah dibayar
+            const subsidi = parseFloat(t.subsidi) || 0;
+            const diskon_ahm = parseFloat(t.diskon_ahm) || 0;
+            const diskon_dealer = parseFloat(t.diskon_dealer) || 0;
+            const diskon_leasing = parseFloat(t.diskon_leasing) || 0;
+            const total_diskon = diskon_ahm + diskon_dealer + diskon_leasing;
+
+            // Display breakdown calculation
+            document.getElementById('bayar-calc-otr').textContent = 'Rp ' + formatNumberDisplay(otr);
+            document.getElementById('bayar-calc-dp').textContent = 'Rp ' + formatNumberDisplay(dp_dibayar);
+            document.getElementById('bayar-calc-subsidi').textContent = 'Rp ' + formatNumberDisplay(subsidi);
+            document.getElementById('bayar-calc-diskon').textContent = 'Rp ' + formatNumberDisplay(total_diskon);
+            document.getElementById('bayar-calc-hutang').textContent = 'Rp ' + formatNumberDisplay(totalHutang);
+
+            // Display hutang status info
+            document.getElementById('bayar-hutang-terbayar').textContent = 'Rp ' + formatNumberDisplay(sudahBayar);
+            document.getElementById('bayar-hutang-sisa').textContent = 'Rp ' + formatNumberDisplay(sisaHutang);
+
+            // Status badge
+            const statusEl = document.getElementById('bayar-hutang-status');
+            if (t.status_hutang === 'Lunas') {
+                statusEl.className = 'badge badge-success';
+                statusEl.textContent = 'Lunas';
+            } else if (t.status_hutang === 'Cicilan') {
+                statusEl.className = 'badge badge-warning';
+                statusEl.textContent = 'Cicilan';
+            } else {
+                statusEl.className = 'badge badge-danger';
+                statusEl.textContent = 'Belum Dibayar';
+            }
+
+            // Form fields
+            document.getElementById('bayar-nominal').max = sisaHutang;
+            document.getElementById('bayar-nominal').value = '';
+            document.getElementById('bayar-nominal-note').textContent = 'Max: Rp ' + formatNumberDisplay(sisaHutang);
+            document.getElementById('bayar-tgl-pembayaran').value = new Date().toISOString().split('T')[0];
+            document.getElementById('bayar-metode').value = 'Cash';
+            document.getElementById('bayar-keterangan').value = '';
+
+            // Show/hide history section
+            if (sudahBayar > 0) {
+                loadPembayaranHistory(transaksiId);
+                document.getElementById('bayar-history-section').style.display = 'block';
+            } else {
+                document.getElementById('bayar-history-section').style.display = 'none';
+            }
+
+            document.getElementById('bayarHutangModal').classList.add('show');
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function closeBayarHutangForm() {
+    document.getElementById('bayarHutangModal').classList.remove('show');
+    currentBayarHutangTransaksiId = null;
+}
+
+function loadPembayaranHistory(transaksiId) {
+    axios.get(`/api/transaksi/${transaksiId}/pembayaran-history`)
+        .then(response => {
+            const historyBody = document.getElementById('bayar-history-body');
+            historyBody.innerHTML = '';
+
+            const data = response.data.data;
+            if (data && data.length > 0) {
+                data.forEach(p => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${p.tgl_pembayaran}</td>
+                        <td style="text-align: right;">Rp ${formatNumberDisplay(p.nominal)}</td>
+                        <td style="text-align: right;">Rp ${formatNumberDisplay(p.sisa_hutang)}</td>
+                    `;
+                    historyBody.appendChild(row);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading pembayaran history:', error);
+        });
+}
+
+function submitBayarHutang(event) {
+    event.preventDefault();
+
+    const nominal = parseFloat(document.getElementById('bayar-nominal').value) || 0;
+    const tglPembayaran = document.getElementById('bayar-tgl-pembayaran').value;
+    const metode = document.getElementById('bayar-metode').value;
+    const keterangan = document.getElementById('bayar-keterangan').value;
+
+    if (!currentBayarHutangTransaksiId || !nominal || nominal <= 0 || !tglPembayaran) {
+        showToast('Error: Data tidak lengkap', 'error');
+        return;
+    }
+
+    axios.post(`/api/transaksi/${currentBayarHutangTransaksiId}/bayar-hutang`, {
+        nominal: nominal,
+        tgl_pembayaran: tglPembayaran,
+        metode: metode,
+        keterangan: keterangan || null
+    })
+    .then(response => {
+        const data = response.data.data;
+        let msg = response.data.message + '\n';
+        msg += `Nominal: Rp ${formatNumberDisplay(data.nominal)}\n`;
+        msg += `Sisa Hutang: Rp ${formatNumberDisplay(data.sisa_hutang)}\n`;
+        msg += `Status: ${data.status_hutang}`;
+
+        showToast(msg, 'success');
+        closeBayarHutangForm();
+        generateHutangReport();
+    })
+    .catch(error => {
+        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+    });
+}
+
+function formatNumberDisplay(value) {
+    return Math.round(value).toLocaleString('id-ID');
+}
+</script>
+{% endblock %}
