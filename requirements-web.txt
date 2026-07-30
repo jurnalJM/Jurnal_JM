@@ -1,0 +1,30 @@
+# Flask Web Framework
+Flask==3.0.0
+flask-cors==4.0.0
+
+# Database & ORM
+SQLAlchemy==2.0.23
+sqlalchemy-utils==0.41.1
+
+# Data Processing & Export
+openpyxl==3.1.2
+pandas==2.0.3
+python-dateutil==2.8.2
+
+# PDF & Image
+reportlab==4.0.7
+Pillow==10.0.1
+
+# Environment & Config
+python-dotenv==1.0.0
+pydantic==2.4.2
+
+# HTTP & Utilities
+requests==2.31.0
+pytz==2023.3
+
+# Logging
+colorlog==6.7.0
+
+# WSGI Server (for PythonAnywhere)
+gunicorn==21.2.0
