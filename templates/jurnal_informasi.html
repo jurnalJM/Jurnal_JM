@@ -508,6 +508,9 @@ function submitPembayaran(event) {
 
         // Refresh detail modal
         viewDetailJurnal(currentDetailTransaksiId);
+
+        // Refresh main table to show updated status
+        loadJurnalData();
     })
     .catch(error => {
         showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
