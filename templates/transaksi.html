@@ -346,42 +346,52 @@
             <div style="padding: 24px;">
                 <!-- Tab: Informasi Dasar -->
                 <div id="tab-info" class="detail-tab-content" style="display: block;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                        <!-- Left Column -->
-                        <div>
-                            <h5 style="color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Data Pelanggan</h5>
-                            <div style="display: flex; flex-direction: column; gap: 16px;">
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Nama Pelanggan</span>
-                                    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-top: 4px;" id="detailCustomerName">-</div>
-                                </div>
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">No. Handphone</span>
-                                    <div style="font-size: 15px; color: var(--text-primary); margin-top: 4px;" id="detailCustomerPhone">-</div>
-                                </div>
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Alamat</span>
-                                    <div style="font-size: 14px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5;" id="detailCustomerAddress">-</div>
-                                </div>
+                    <!-- Top Row: No. Nota & Tanggal -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+                        <div style="background-color: var(--bg-tertiary); border-left: 4px solid var(--primary); border-radius: 4px; padding: 16px;">
+                            <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">No. Nota</span>
+                            <div style="font-size: 18px; font-weight: 800; color: var(--primary); margin-top: 8px;" id="detailNota">-</div>
+                        </div>
+                        <div style="background-color: var(--bg-tertiary); border-left: 4px solid #3b82f6; border-radius: 4px; padding: 16px;">
+                            <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Tanggal Transaksi</span>
+                            <div style="font-size: 16px; font-weight: 700; color: #1f2937; margin-top: 8px;" id="detailTanggal">-</div>
+                        </div>
+                        <div style="background-color: var(--bg-tertiary); border-left: 4px solid #f59e0b; border-radius: 4px; padding: 16px;">
+                            <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Status</span>
+                            <div style="margin-top: 8px;" id="detailStatus">-</div>
+                        </div>
+                    </div>
+
+                    <!-- Data Pelanggan Section -->
+                    <div style="margin-bottom: 32px;">
+                        <h5 style="color: var(--primary); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid var(--primary);">👤 Data Pelanggan</h5>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                            <div>
+                                <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Nama Pelanggan</span>
+                                <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 6px;" id="detailCustomerName">-</div>
+                            </div>
+                            <div>
+                                <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">No. Handphone</span>
+                                <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-top: 6px;" id="detailCustomerPhone">-</div>
+                            </div>
+                            <div style="grid-column: 1 / -1;">
+                                <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Alamat Lengkap</span>
+                                <div style="font-size: 14px; color: var(--text-secondary); margin-top: 6px; line-height: 1.6; background-color: var(--bg-tertiary); padding: 12px; border-radius: 4px;" id="detailCustomerAddress">-</div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Right Column -->
-                        <div>
-                            <h5 style="color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Data Transaksi</h5>
-                            <div style="display: flex; flex-direction: column; gap: 16px;">
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">No. Transaksi</span>
-                                    <div style="font-size: 15px; font-weight: 600; color: var(--primary); margin-top: 4px;" id="detailNota">-</div>
-                                </div>
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Tanggal</span>
-                                    <div style="font-size: 15px; color: var(--text-primary); margin-top: 4px;" id="detailTanggal">-</div>
-                                </div>
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Status</span>
-                                    <div style="margin-top: 4px;" id="detailStatus">-</div>
-                                </div>
+                    <!-- Data Motor Section -->
+                    <div>
+                        <h5 style="color: var(--primary); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid var(--primary);">🏍️ Data Motor</h5>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                            <div>
+                                <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Tipe Motor</span>
+                                <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 6px;" id="detailMotorTypeInfo">-</div>
+                            </div>
+                            <div>
+                                <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Warna</span>
+                                <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 6px;" id="detailWarnaInfo">-</div>
                             </div>
                         </div>
                     </div>
@@ -1475,6 +1485,10 @@ function viewDetail(id) {
             safeSet('detailNota', t.nota || '-');
             safeSet('detailTanggal', formatDate(t.tanggal_nota) || '-');
             safeSetHTML('detailStatus', `<span class="badge badge-${getStatusColor(t.status)}">${t.status}</span>`);
+
+            // Tab: Informasi Dasar - Motor Info
+            safeSet('detailMotorTypeInfo', t.motor_type || '-');
+            safeSet('detailWarnaInfo', t.warna || '-');
 
             // Tab: Motor
             safeSet('detailMotorType', t.motor_type || '-');
