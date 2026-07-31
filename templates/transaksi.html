@@ -346,52 +346,60 @@
             <div style="padding: 24px;">
                 <!-- Tab: Informasi Dasar -->
                 <div id="tab-info" class="detail-tab-content" style="display: block;">
-                    <!-- Top Row: No. Nota & Tanggal -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 32px;">
-                        <div style="background-color: var(--bg-tertiary); border-left: 4px solid var(--primary); border-radius: 4px; padding: 16px;">
-                            <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">No. Nota</span>
-                            <div style="font-size: 18px; font-weight: 800; color: var(--primary); margin-top: 8px;" id="detailNota">-</div>
+                    <!-- Header Cards Row -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 28px;">
+                        <!-- No. Nota Card -->
+                        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);">
+                            <div style="font-size: 11px; color: #1e40af; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">📌 No. Nota</div>
+                            <div style="font-size: 22px; font-weight: 900; color: #1d4ed8; margin-top: 8px;" id="detailNota">-</div>
                         </div>
-                        <div style="background-color: var(--bg-tertiary); border-left: 4px solid #3b82f6; border-radius: 4px; padding: 16px;">
-                            <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Tanggal Transaksi</span>
-                            <div style="font-size: 16px; font-weight: 700; color: #1f2937; margin-top: 8px;" id="detailTanggal">-</div>
+
+                        <!-- Tanggal Card -->
+                        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);">
+                            <div style="font-size: 11px; color: #92400e; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">📅 Tanggal</div>
+                            <div style="font-size: 18px; font-weight: 900; color: #d97706; margin-top: 8px;" id="detailTanggal">-</div>
                         </div>
-                        <div style="background-color: var(--bg-tertiary); border-left: 4px solid #f59e0b; border-radius: 4px; padding: 16px;">
-                            <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Status</span>
+
+                        <!-- Status Card -->
+                        <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);">
+                            <div style="font-size: 11px; color: #7f1d1d; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">⚡ Status</div>
                             <div style="margin-top: 8px;" id="detailStatus">-</div>
                         </div>
                     </div>
 
-                    <!-- Data Pelanggan Section -->
-                    <div style="margin-bottom: 32px;">
-                        <h5 style="color: var(--primary); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid var(--primary);">👤 Data Pelanggan</h5>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <!-- Customer Data Card -->
+                    <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+                        <div style="font-size: 12px; color: var(--primary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 16px;">👤 Data Pelanggan</div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                             <div>
-                                <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Nama Pelanggan</span>
-                                <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 6px;" id="detailCustomerName">-</div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Nama</div>
+                                <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin-top: 6px;" id="detailCustomerName">-</div>
                             </div>
                             <div>
-                                <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">No. Handphone</span>
-                                <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-top: 6px;" id="detailCustomerPhone">-</div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Telepon</div>
+                                <div style="font-size: 16px; font-weight: 700; color: var(--primary); margin-top: 6px;" id="detailCustomerPhone">-</div>
                             </div>
-                            <div style="grid-column: 1 / -1;">
-                                <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Alamat Lengkap</span>
-                                <div style="font-size: 14px; color: var(--text-secondary); margin-top: 6px; line-height: 1.6; background-color: var(--bg-tertiary); padding: 12px; border-radius: 4px;" id="detailCustomerAddress">-</div>
-                            </div>
+                        </div>
+
+                        <div>
+                            <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Alamat Lengkap</div>
+                            <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.8; background-color: var(--bg-secondary); padding: 12px; border-radius: 6px; border-left: 3px solid var(--primary);" id="detailCustomerAddress">-</div>
                         </div>
                     </div>
 
-                    <!-- Data Motor Section -->
-                    <div>
-                        <h5 style="color: var(--primary); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid var(--primary);">🏍️ Data Motor</h5>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <!-- Motor Data Card -->
+                    <div style="background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%); border-radius: 8px; padding: 20px; border: 1px solid var(--border-color);">
+                        <div style="font-size: 12px; color: var(--primary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 16px;">🏍️ Data Motor</div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                             <div>
-                                <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Tipe Motor</span>
-                                <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 6px;" id="detailMotorTypeInfo">-</div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Tipe Motor</div>
+                                <div style="font-size: 16px; font-weight: 800; color: var(--primary); margin-top: 6px;" id="detailMotorTypeInfo">-</div>
                             </div>
                             <div>
-                                <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Warna</span>
-                                <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 6px;" id="detailWarnaInfo">-</div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Warna</div>
+                                <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin-top: 6px; padding: 8px; background-color: var(--bg-tertiary); border-radius: 4px;" id="detailWarnaInfo">-</div>
                             </div>
                         </div>
                     </div>
@@ -399,35 +407,38 @@
 
                 <!-- Tab: Motor -->
                 <div id="tab-motor" class="detail-tab-content" style="display: none;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                        <div>
-                            <h5 style="color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Spesifikasi Motor</h5>
-                            <div style="display: flex; flex-direction: column; gap: 16px;">
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Tipe Motor</span>
-                                    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-top: 4px;" id="detailMotorType">-</div>
-                                </div>
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Warna</span>
-                                    <div style="font-size: 15px; color: var(--text-primary); margin-top: 4px;" id="detailWarna">-</div>
-                                </div>
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">No. Mesin</span>
-                                    <div style="font-size: 14px; color: var(--text-secondary); font-family: monospace; margin-top: 4px;" id="detailNoMesin">-</div>
-                                </div>
+                    <!-- Spesifikasi Motor Card -->
+                    <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+                        <div style="font-size: 12px; color: var(--primary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 16px;">⚙️ Spesifikasi Motor</div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Tipe Motor</div>
+                                <div style="font-size: 16px; font-weight: 800; color: var(--primary); margin-top: 6px;" id="detailMotorType">-</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Warna</div>
+                                <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin-top: 6px; padding: 8px; background-color: var(--bg-secondary); border-radius: 4px;" id="detailWarna">-</div>
+                            </div>
+                            <div style="grid-column: 1 / -1;">
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">No. Mesin</div>
+                                <div style="font-size: 15px; color: var(--primary); font-weight: 700; font-family: monospace; background-color: var(--bg-secondary); padding: 10px; border-radius: 4px; border-left: 3px solid var(--primary);" id="detailNoMesin">-</div>
                             </div>
                         </div>
-                        <div>
-                            <h5 style="color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Identitas Motor</h5>
-                            <div style="display: flex; flex-direction: column; gap: 16px;">
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">No. Rangka</span>
-                                    <div style="font-size: 14px; color: var(--text-secondary); font-family: monospace; margin-top: 4px;" id="detailNoChassis">-</div>
-                                </div>
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">No. Polisi</span>
-                                    <div style="font-size: 15px; font-weight: 600; color: var(--primary); margin-top: 4px;" id="detailNoPolisi">-</div>
-                                </div>
+                    </div>
+
+                    <!-- Identitas Motor Card -->
+                    <div style="background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%); border-radius: 8px; padding: 20px; border: 1px solid var(--border-color);">
+                        <div style="font-size: 12px; color: var(--primary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 16px;">🔢 Identitas Motor</div>
+
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">No. Rangka</div>
+                                <div style="font-size: 15px; color: var(--primary); font-weight: 700; font-family: monospace; background-color: var(--bg-tertiary); padding: 10px; border-radius: 4px; border-left: 3px solid #f59e0b;" id="detailNoChassis">-</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">No. Polisi</div>
+                                <div style="font-size: 18px; font-weight: 900; color: #10b981; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 10px; border-radius: 4px; text-align: center;" id="detailNoPolisi">-</div>
                             </div>
                         </div>
                     </div>
@@ -518,28 +529,34 @@
 
                 <!-- Tab: STNK/BPKB -->
                 <div id="tab-stnk" class="detail-tab-content" style="display: none;">
-                    <div>
-                        <h5 style="color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Data STNK/BPKB</h5>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <!-- BPKB Data Card -->
+                    <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+                        <div style="font-size: 12px; color: var(--primary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 16px;">📄 Data BPKB</div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                             <div>
-                                <div style="margin-bottom: 16px;">
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">No. BPKB</span>
-                                    <div style="font-size: 15px; color: var(--text-primary); margin-top: 4px; font-family: monospace;" id="detailNoBPKB">-</div>
-                                </div>
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Tgl. Biro Jasa</span>
-                                    <div style="font-size: 15px; color: var(--text-primary); margin-top: 4px;" id="detailTglBiro">-</div>
-                                </div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">No. BPKB</div>
+                                <div style="font-size: 15px; color: var(--primary); font-weight: 700; font-family: monospace; background-color: var(--bg-secondary); padding: 10px; border-radius: 4px; border-left: 3px solid var(--primary);" id="detailNoBPKB">-</div>
                             </div>
                             <div>
-                                <div style="margin-bottom: 16px;">
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Nama Pemilik (STNK)</span>
-                                    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-top: 4px;" id="detailNamaSurat">-</div>
-                                </div>
-                                <div>
-                                    <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Tgl. Serah Terima Motor</span>
-                                    <div style="font-size: 15px; color: var(--text-primary); margin-top: 4px;" id="detailTglSerahTerima">-</div>
-                                </div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Tgl. Biro Jasa</div>
+                                <div style="font-size: 15px; font-weight: 700; color: #f59e0b; background-color: var(--bg-secondary); padding: 10px; border-radius: 4px;" id="detailTglBiro">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STNK & Serah Terima Card -->
+                    <div style="background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%); border-radius: 8px; padding: 20px; border: 1px solid var(--border-color);">
+                        <div style="font-size: 12px; color: var(--primary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 16px;">📋 Data STNK & Serah Terima</div>
+
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Nama Pemilik (STNK)</div>
+                                <div style="font-size: 16px; font-weight: 800; color: var(--primary); background-color: var(--bg-tertiary); padding: 10px; border-radius: 4px;" id="detailNamaSurat">-</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Tgl. Serah Terima Motor</div>
+                                <div style="font-size: 15px; font-weight: 700; color: #10b981; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 10px; border-radius: 4px;" id="detailTglSerahTerima">-</div>
                             </div>
                         </div>
                     </div>
