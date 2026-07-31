@@ -42,53 +42,49 @@
 </div>
 
 <!-- Summary Cards -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-4); margin-top: var(--space-8);">
-    <!-- Total Hutang Card -->
-    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b; border-radius: var(--radius-md); padding: var(--space-4); box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-        <p style="margin: 0 0 var(--space-2) 0; font-size: 0.9rem; color: #92400e; font-weight: 600;">📊 Total Hutang</p>
-        <p style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #d97706;" id="total-hutang">Rp 0</p>
+<div class="stats-grid" style="margin-top: var(--space-8);">
+    <div class="stat-card">
+        <span class="stat-label">Total Hutang</span>
+        <div class="stat-value" id="total-hutang" style="color: #ef4444;">Rp 0</div>
     </div>
 
-    <!-- Belum Dibayar Card -->
-    <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-left: 4px solid #ef4444; border-radius: var(--radius-md); padding: var(--space-4); box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-        <p style="margin: 0 0 var(--space-2) 0; font-size: 0.9rem; color: #7f1d1d; font-weight: 600;">⏳ Belum Dibayar</p>
-        <p style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #dc2626;" id="hutang-unpaid">Rp 0</p>
+    <div class="stat-card">
+        <span class="stat-label">Hutang Belum Dibayar</span>
+        <div class="stat-value" id="hutang-unpaid" style="color: #f59e0b;">Rp 0</div>
     </div>
 
-    <!-- Sudah Dibayar Card -->
-    <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-left: 4px solid #10b981; border-radius: var(--radius-md); padding: var(--space-4); box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-        <p style="margin: 0 0 var(--space-2) 0; font-size: 0.9rem; color: #065f46; font-weight: 600;">✅ Sudah Dibayar</p>
-        <p style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #059669;" id="hutang-paid">Rp 0</p>
+    <div class="stat-card">
+        <span class="stat-label">Hutang Sudah Dibayar</span>
+        <div class="stat-value" id="hutang-paid" style="color: #10b981;">Rp 0</div>
     </div>
 
-    <!-- Jumlah Transaksi Card -->
-    <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 4px solid #3b82f6; border-radius: var(--radius-md); padding: var(--space-4); box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-        <p style="margin: 0 0 var(--space-2) 0; font-size: 0.9rem; color: #1e3a8a; font-weight: 600;">📑 Jumlah Transaksi</p>
-        <p style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1d4ed8;" id="total-transaksi">0</p>
+    <div class="stat-card">
+        <span class="stat-label">Jumlah Transaksi</span>
+        <div class="stat-value" id="total-transaksi">0</div>
     </div>
 </div>
 
 <!-- Summary per Broker/Sales -->
 <div class="card" style="margin-top: var(--space-8);">
     <div class="card-header">
-        <h5>📋 Ringkasan Hutang per Broker/Sales</h5>
+        <h5>Ringkasan Hutang per Broker/Sales</h5>
     </div>
     <div class="card-body">
         <div class="table-wrapper">
-            <table class="table" style="font-size: 0.95rem;">
+            <table class="table">
                 <thead>
-                    <tr style="background-color: var(--bg-tertiary);">
-                        <th style="font-weight: 700; padding: var(--space-3);">Nama Broker/Sales</th>
-                        <th style="font-weight: 700; padding: var(--space-3); text-align: center;">Tipe</th>
-                        <th style="font-weight: 700; padding: var(--space-3); text-align: right;">Transaksi</th>
-                        <th style="font-weight: 700; padding: var(--space-3); text-align: right; color: #dc2626;">Total Hutang</th>
-                        <th style="font-weight: 700; padding: var(--space-3); text-align: right; color: #f59e0b;">Belum Bayar</th>
-                        <th style="font-weight: 700; padding: var(--space-3); text-align: right; color: #10b981;">Sudah Bayar</th>
+                    <tr>
+                        <th>Nama Broker/Sales</th>
+                        <th>Tipe</th>
+                        <th style="text-align: right;">Jumlah Transaksi</th>
+                        <th style="text-align: right;">Total Hutang (Rp)</th>
+                        <th style="text-align: right;">Belum Dibayar (Rp)</th>
+                        <th style="text-align: right;">Sudah Dibayar (Rp)</th>
                     </tr>
                 </thead>
                 <tbody id="broker-summary-body">
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: var(--space-6); color: var(--text-secondary);">Silakan generate laporan terlebih dahulu</td>
+                        <td colspan="6" style="text-align: center; padding: var(--space-8);">Silakan generate laporan terlebih dahulu</td>
                     </tr>
                 </tbody>
             </table>
@@ -100,28 +96,28 @@
 <div class="card" style="margin-top: var(--space-8);">
     <div class="card-header">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h5 style="margin: 0;">📑 Detail Transaksi dengan Hutang</h5>
-            <button class="btn btn-sm btn-secondary" onclick="printHutangReport()">🖨️ Cetak Laporan</button>
+            <h5 style="margin: 0;">Detail Transaksi dengan Hutang</h5>
+            <button class="btn btn-sm btn-secondary" onclick="printHutangReport()">Cetak Laporan</button>
         </div>
     </div>
     <div class="card-body">
         <div class="table-wrapper">
-            <table class="table" style="font-size: 0.95rem;">
+            <table class="table">
                 <thead>
-                    <tr style="background-color: var(--bg-tertiary);">
-                        <th style="font-weight: 700; padding: var(--space-3);">No. Nota</th>
-                        <th style="font-weight: 700; padding: var(--space-3);">Tanggal</th>
-                        <th style="font-weight: 700; padding: var(--space-3);">Pelanggan</th>
-                        <th style="font-weight: 700; padding: var(--space-3);">Broker/Sales</th>
-                        <th style="font-weight: 700; padding: var(--space-3);">Motor</th>
-                        <th style="font-weight: 700; padding: var(--space-3); text-align: right; color: #dc2626;">Hutang Sales</th>
-                        <th style="font-weight: 700; padding: var(--space-3); text-align: center;">Status</th>
-                        <th style="font-weight: 700; padding: var(--space-3); text-align: center;">Aksi</th>
+                    <tr>
+                        <th>Nota</th>
+                        <th>Tanggal</th>
+                        <th>Pelanggan</th>
+                        <th>Broker/Sales</th>
+                        <th>Motor</th>
+                        <th style="text-align: right;">Hutang Sales (Rp)</th>
+                        <th style="text-align: center;">Status</th>
+                        <th style="text-align: center;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="hutang-detail-body">
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: var(--space-6); color: var(--text-secondary);">Silakan generate laporan terlebih dahulu</td>
+                        <td colspan="8" style="text-align: center; padding: var(--space-8);">Silakan generate laporan terlebih dahulu</td>
                     </tr>
                 </tbody>
             </table>
@@ -315,17 +311,15 @@ function generateHutangReport() {
         } else {
             data.broker_summary.forEach(b => {
                 const row = document.createElement('tr');
-                const tipeLabel = b.broker_tipe === 'B' ? '🏢 Broker' : (b.broker_tipe === 'S' ? '👤 Sales' : '🏦 Leasing');
-                const typeBadgeColor = b.broker_tipe === 'B' ? '#3b82f6' : (b.broker_tipe === 'S' ? '#8b5cf6' : '#ec4899');
+                const tipeLabel = b.broker_tipe === 'B' ? 'Broker' : (b.broker_tipe === 'S' ? 'Sales' : 'Leasing');
 
-                row.style.borderBottom = '1px solid var(--border-color)';
                 row.innerHTML = `
-                    <td style="padding: var(--space-3);"><strong style="font-size: 1rem;">${b.broker_nama}</strong></td>
-                    <td style="padding: var(--space-3); text-align: center;"><span style="background-color: ${typeBadgeColor}20; color: ${typeBadgeColor}; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">${tipeLabel}</span></td>
-                    <td style="padding: var(--space-3); text-align: right; font-weight: 600;">${b.jumlah_transaksi}</td>
-                    <td style="padding: var(--space-3); text-align: right; color: #dc2626; font-weight: 700;">Rp ${formatNumberDisplay(b.total_hutang)}</td>
-                    <td style="padding: var(--space-3); text-align: right; color: #f59e0b; font-weight: 600;">Rp ${formatNumberDisplay(b.hutang_belum_dibayar)}</td>
-                    <td style="padding: var(--space-3); text-align: right; color: #10b981; font-weight: 600;">Rp ${formatNumberDisplay(b.hutang_sudah_dibayar)}</td>
+                    <td><strong>${b.broker_nama}</strong></td>
+                    <td>${tipeLabel}</td>
+                    <td style="text-align: right;">${b.jumlah_transaksi}</td>
+                    <td style="text-align: right; color: #ef4444;">Rp ${formatNumberDisplay(b.total_hutang)}</td>
+                    <td style="text-align: right; color: #f59e0b;">Rp ${formatNumberDisplay(b.hutang_belum_dibayar)}</td>
+                    <td style="text-align: right; color: #10b981;">Rp ${formatNumberDisplay(b.hutang_sudah_dibayar)}</td>
                 `;
                 brokerBody.appendChild(row);
             });
@@ -340,23 +334,21 @@ function generateHutangReport() {
         } else {
             data.detail_transaksi.forEach(t => {
                 const statusBadge = t.tgl_hutang_dibayar
-                    ? '<span style="background-color: #dcfce7; color: #065f46; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">✅ Sudah Dibayar</span>'
-                    : '<span style="background-color: #fee2e2; color: #7f1d1d; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">⏳ Belum Dibayar</span>';
+                    ? '<span class="badge badge-success">Dibayar</span>'
+                    : '<span class="badge badge-warning">Belum Dibayar</span>';
 
                 const row = document.createElement('tr');
-                row.style.borderBottom = '1px solid var(--border-color)';
-                row.style.hoverBackgroundColor = 'var(--bg-tertiary)';
                 row.innerHTML = `
-                    <td style="padding: var(--space-3);"><strong style="color: var(--primary); font-size: 1rem;">${t.nota}</strong></td>
-                    <td style="padding: var(--space-3); color: var(--text-secondary);">${t.tanggal_nota}</td>
-                    <td style="padding: var(--space-3);">${t.customer_name}</td>
-                    <td style="padding: var(--space-3); font-weight: 500;">${t.broker_nama}</td>
-                    <td style="padding: var(--space-3); color: var(--text-secondary);">${t.motor_type}</td>
-                    <td style="padding: var(--space-3); text-align: right; color: #dc2626; font-weight: 700; font-size: 1.05rem;">Rp ${formatNumberDisplay(t.hutang_sales)}</td>
-                    <td style="padding: var(--space-3); text-align: center;">${statusBadge}</td>
-                    <td style="padding: var(--space-3); text-align: center;">
-                        <button class="btn btn-sm btn-info" onclick="viewTransaksiDetail(${t.transaksi_id})" title="Lihat Detail" style="padding: 4px 8px; font-size: 0.9rem;">👁 Detail</button>
-                        ${!t.tgl_hutang_dibayar ? `<button class="btn btn-sm btn-success" onclick="openBayarHutangForm(${t.transaksi_id})" title="Bayar Hutang" style="padding: 4px 8px; font-size: 0.9rem; margin-left: 4px;">💰 Bayar</button>` : ''}
+                    <td><strong>${t.nota}</strong></td>
+                    <td>${t.tanggal_nota}</td>
+                    <td>${t.customer_name}</td>
+                    <td>${t.broker_nama}</td>
+                    <td>${t.motor_type}</td>
+                    <td style="text-align: right; color: #ef4444;"><strong>Rp ${formatNumberDisplay(t.hutang_sales)}</strong></td>
+                    <td style="text-align: center;">${statusBadge}</td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-sm btn-info" onclick="viewTransaksiDetail(${t.transaksi_id})" title="Lihat Detail">👁</button>
+                        ${!t.tgl_hutang_dibayar ? `<button class="btn btn-sm btn-success" onclick="openBayarHutangForm(${t.transaksi_id})" title="Bayar Hutang">💰</button>` : ''}
                     </td>
                 `;
                 detailBody.appendChild(row);
