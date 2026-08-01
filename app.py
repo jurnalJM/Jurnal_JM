@@ -78,6 +78,12 @@ def set_no_cache_headers(response):
 
 @app.route('/')
 def index():
+    """Landing page"""
+    return render_template('landing.html')
+
+
+@app.route('/dashboard')
+def dashboard():
     """Dashboard page"""
     return render_template('dashboard.html', app_title=APP_TITLE, app_version=APP_VERSION)
 

@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JayaMotor - Platform Manajemen Penjualan Motor Modern</title>
+    <meta name="description" content="Sistem manajemen penjualan motor yang revolusioner. Kelola inventori, transaksi, dan laporan dengan efisien.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1F2937;
+            background: #FFFFFF;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        :root {
+            --primary: #4A9B7F;
+            --primary-dark: #3D7F6A;
+            --primary-light: #6DB39C;
+            --secondary: #8B5A3C;
+            --accent: #C9A876;
+            --accent-light: #E8D7C3;
+            --success: #10B981;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --text-muted: #9CA3AF;
+            --bg-light: #F9F7F3;
+            --bg-lighter: #F3F1ED;
+            --border-color: #E5E7EB;
+        }
+
+        /* ===== HEADER & NAVIGATION ===== */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 20px;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        nav {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(74, 155, 127, 0.2);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 155, 127, 0.3);
+        }
+
+        /* ===== HERO SECTION ===== */
+        .hero {
+            margin-top: 60px;
+            padding: 80px 24px;
+            background: linear-gradient(135deg, #F9F7F3 0%, #F3F1ED 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(74, 155, 127, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: 5%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(201, 168, 118, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 10s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(30px); }
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            font-size: 56px;
+            font-weight: 900;
+            line-height: 1.2;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            letter-spacing: -1.5px;
+        }
+
+        .hero-text h1 .highlight {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-text p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.8;
+        }
+
+        .hero-ctas {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .hero-ctas .primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(74, 155, 127, 0.2);
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hero-ctas .primary:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(74, 155, 127, 0.35);
+        }
+
+        .hero-ctas .secondary {
+            background: white;
+            color: var(--primary);
+            padding: 16px 32px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            border: 2px solid var(--primary);
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .hero-ctas .secondary:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-4px);
+        }
+
+        .hero-visual {
+            position: relative;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dashboard-mockup {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mockup-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .mockup-content {
+            padding: 20px;
+        }
+
+        .mockup-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .mockup-item:last-child {
+            border-bottom: none;
+        }
+
+        .mockup-label {
+            color: var(--text-secondary);
+        }
+
+        .mockup-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* ===== FEATURES SECTION ===== */
+        .features {
+            padding: 80px 24px;
+            background: white;
+            position: relative;
+        }
+
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-header h2 {
+            font-size: 42px;
+            font-weight: 900;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .section-header p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+
+        .feature-card {
+            padding: 32px;
+            background: linear-gradient(135deg, #F9F7F3 0%, #F3F1ED 100%);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: 0 16px 32px rgba(74, 155, 127, 0.1);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ===== BENEFITS SECTION ===== */
+        .benefits {
+            padding: 80px 24px;
+            background: linear-gradient(135deg, #F9F7F3 0%, #F3F1ED 100%);
+            position: relative;
+        }
+
+        .benefits-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .benefits-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .benefits-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .benefit-item {
+            display: flex;
+            gap: 16px;
+        }
+
+        .benefit-check {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .benefit-text h4 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .benefit-text p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .benefits-image {
+            position: relative;
+            height: 400px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-mockup {
+            width: 90%;
+            height: 90%;
+            background: linear-gradient(135deg, #F9F7F3 0%, #F3F1ED 100%);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chart-bar {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            height: 80px;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 4px;
+            opacity: 0.7;
+            animation: growUp 1s ease-out forwards;
+        }
+
+        .bar:nth-child(1) { animation-delay: 0s; height: 40%; }
+        .bar:nth-child(2) { animation-delay: 0.1s; height: 70%; }
+        .bar:nth-child(3) { animation-delay: 0.2s; height: 85%; }
+        .bar:nth-child(4) { animation-delay: 0.3s; height: 60%; }
+        .bar:nth-child(5) { animation-delay: 0.4s; height: 90%; }
+
+        @keyframes growUp {
+            from { height: 0; }
+        }
+
+        /* ===== STATS SECTION ===== */
+        .stats {
+            padding: 60px 24px;
+            background: white;
+        }
+
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* ===== CTA SECTION ===== */
+        .cta-section {
+            padding: 80px 24px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .cta-content {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            color: white;
+        }
+
+        .cta-content h2 {
+            font-size: 42px;
+            font-weight: 900;
+            margin-bottom: 16px;
+            color: white;
+        }
+
+        .cta-content p {
+            font-size: 18px;
+            margin-bottom: 32px;
+            opacity: 0.95;
+            line-height: 1.8;
+        }
+
+        .cta-content .btn {
+            background: white;
+            color: var(--primary);
+            padding: 16px 40px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+        }
+
+        .cta-content .btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: var(--text-primary);
+            color: white;
+            padding: 60px 24px 40px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: white;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-section ul li a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section ul li a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 32px;
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            header {
+                padding: 12px 16px;
+            }
+
+            nav {
+                display: none;
+            }
+
+            .cta-button {
+                display: none;
+            }
+
+            .hero {
+                padding: 60px 16px;
+                margin-top: 60px;
+            }
+
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .hero-text h1 {
+                font-size: 36px;
+            }
+
+            .hero-text p {
+                font-size: 16px;
+            }
+
+            .hero-visual {
+                height: 300px;
+            }
+
+            .section-header h2 {
+                font-size: 32px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .benefits-layout {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .stat-number {
+                font-size: 36px;
+            }
+
+            .cta-content h2 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <a href="/" class="logo-section">
+            <div class="logo-icon">⚙️</div>
+            <span>JayaMotor</span>
+        </a>
+        <nav>
+            <a href="#features">Fitur</a>
+            <a href="#benefits">Manfaat</a>
+            <a href="#stats">Statistik</a>
+            <a href="/transaksi" class="cta-button">Masuk Aplikasi</a>
+        </nav>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>Kelola Penjualan Motor Anda dengan <span class="highlight">Lebih Mudah</span></h1>
+                <p>Platform manajemen penjualan motor yang revolusioner. Skalabilitas tanpa batas, kontrol penuh, dan laporan real-time untuk bisnis Anda.</p>
+                <div class="hero-ctas">
+                    <a href="/transaksi" class="primary">Mulai Sekarang</a>
+                    <a href="#features" class="secondary">Pelajari Lebih Lanjut</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="dashboard-mockup">
+                    <div class="mockup-header">📊 Dashboard Penjualan</div>
+                    <div class="mockup-content">
+                        <div class="mockup-item">
+                            <span class="mockup-label">Total Penjualan</span>
+                            <span class="mockup-value">145 Unit</span>
+                        </div>
+                        <div class="mockup-item">
+                            <span class="mockup-label">Pendapatan</span>
+                            <span class="mockup-value">Rp 2.3M</span>
+                        </div>
+                        <div class="mockup-item">
+                            <span class="mockup-label">Hutang Aktif</span>
+                            <span class="mockup-value">Rp 450K</span>
+                        </div>
+                        <div class="mockup-item">
+                            <span class="mockup-label">Status</span>
+                            <span class="mockup-value">✓ Aktif</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="features" id="features">
+        <div class="features-container">
+            <div class="section-header">
+                <h2>Fitur Unggulan</h2>
+                <p>Semua yang Anda butuhkan untuk mengelola bisnis motor Anda dengan efisien</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Dashboard Interaktif</h3>
+                    <p>Pantau penjualan, inventori, dan keuangan secara real-time dengan visualisasi data yang menarik dan mudah dipahami.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💳</div>
+                    <h3>Manajemen Pembayaran</h3>
+                    <p>Sistem pembayaran yang fleksibel dengan dukungan cash dan kredit. Kelola hutang dengan akurat dan transparan.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📦</div>
+                    <h3>Inventory Tracking</h3>
+                    <p>Kelola stok motor dengan mudah. Pantau ketersediaan, transfer stok, dan update status secara real-time.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3>Manajemen Broker</h3>
+                    <p>Kelola data broker dan leasing dengan efisien. Kelacak komisi, performa, dan riwayat transaksi setiap broker.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <h3>Laporan Komprehensif</h3>
+                    <p>Buat laporan penjualan, hutang, dan performa dengan mudah. Export data untuk analisis lebih lanjut.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Keamanan Data</h3>
+                    <p>Data Anda dilindungi dengan enkripsi tingkat enterprise. Backup otomatis dan akses kontrol yang ketat.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BENEFITS SECTION -->
+    <section class="benefits" id="benefits">
+        <div class="benefits-container">
+            <div class="benefits-layout">
+                <div class="benefits-list">
+                    <h2 style="font-size: 36px; font-weight: 900; margin-bottom: 32px;">Mengapa Memilih JayaMotor?</h2>
+
+                    <div class="benefit-item">
+                        <div class="benefit-check">✓</div>
+                        <div class="benefit-text">
+                            <h4>Hemat Waktu Operasional</h4>
+                            <p>Otomatisasi proses bisnis untuk fokus pada pertumbuhan penjualan Anda.</p>
+                        </div>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-check">✓</div>
+                        <div class="benefit-text">
+                            <h4>Perhitungan Akurat</h4>
+                            <p>Sistem kalkulasi hutang dan DP yang presisi menghilangkan kesalahan manual.</p>
+                        </div>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-check">✓</div>
+                        <div class="benefit-text">
+                            <h4>Transparansi Penuh</h4>
+                            <p>Laporan real-time memberikan visibilitas lengkap atas setiap transaksi dan hutang.</p>
+                        </div>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-check">✓</div>
+                        <div class="benefit-text">
+                            <h4>Skalabilitas Tanpa Batas</h4>
+                            <p>Sistem yang tumbuh bersama bisnis Anda, dari skala kecil hingga enterprise.</p>
+                        </div>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-check">✓</div>
+                        <div class="benefit-text">
+                            <h4>Support Profesional</h4>
+                            <p>Tim support yang responsif siap membantu Anda kapan saja.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="benefits-image">
+                    <div class="chart-mockup">
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Pertumbuhan Penjualan</div>
+                        <div class="chart-bar">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 12px;">Jan - Mei 2026</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS SECTION -->
+    <section class="stats" id="stats">
+        <div class="stats-container">
+            <div class="stat-box">
+                <div class="stat-number">500+</div>
+                <div class="stat-label">Pengguna Aktif</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">50K+</div>
+                <div class="stat-label">Transaksi Tercatat</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">99.9%</div>
+                <div class="stat-label">Uptime Sistem</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Support Tersedia</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA SECTION -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2>Siap Mengubah Bisnis Motor Anda?</h2>
+            <p>Bergabunglah dengan ratusan dealer motor yang telah mempercayai JayaMotor untuk mengelola penjualan mereka dengan lebih efisien dan menguntungkan.</p>
+            <a href="/transaksi" class="btn">Coba Sekarang Gratis</a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>JayaMotor</h4>
+                <ul>
+                    <li><a href="/">Beranda</a></li>
+                    <li><a href="#features">Fitur</a></li>
+                    <li><a href="#benefits">Manfaat</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Produk</h4>
+                <ul>
+                    <li><a href="/transaksi">Dashboard</a></li>
+                    <li><a href="/laporan">Laporan</a></li>
+                    <li><a href="/master-leasing">Manajemen</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Perusahaan</h4>
+                <ul>
+                    <li><a href="#">Tentang Kami</a></li>
+                    <li><a href="#">Tim</a></li>
+                    <li><a href="#">Karir</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="#">Kebijakan Privasi</a></li>
+                    <li><a href="#">Syarat Layanan</a></li>
+                    <li><a href="#">Hubungi Kami</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 JayaMotor - Honda by UCHAHUNT. Platform Manajemen Penjualan Motor Modern.</p>
+        </div>
+    </footer>
+</body>
+</html>
