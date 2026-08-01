@@ -74,15 +74,18 @@
                         <th>Tgl Lunas</th>
                         <th>Status</th>
                         <th>No Polisi</th>
+                        <th>No Surat Pemberitahuan</th>
+                        <th>Tgl Surat Pemberitahuan</th>
                         <th>Nama Pemilik (STNK/BPKB)</th>
                         <th>No BPKB</th>
                         <th>Tgl BIRO</th>
+                        <th>Tgl Terima BPKB</th>
                         <th>Tgl Serah Terima Motor</th>
                     </tr>
                 </thead>
                 <tbody id="jurnalBody">
                     <tr>
-                        <td colspan="28" style="text-align: center; padding: 40px; color: #9ca3af;">
+                        <td colspan="29" style="text-align: center; padding: 40px; color: #9ca3af;">
                             Tekan tombol "Cari Data" untuk memuat data jurnal informasi
                         </td>
                     </tr>
@@ -174,9 +177,12 @@ function loadJurnalData() {
                     <td>${row.tgl_hutang_dibayar || '-'}</td>
                     <td><span class="badge badge-${getStatusColor(row.status)}">${row.status || '-'}</span></td>
                     <td>${row.no_polisi || '-'}</td>
+                    <td>${row.no_surat_pemberitahuan || '-'}</td>
+                    <td>${row.tgl_surat_pemberitahuan || '-'}</td>
                     <td>${row.nama_surat || '-'}</td>
                     <td>${row.no_bpkb || '-'}</td>
                     <td>${row.tgl_biro || '-'}</td>
+                    <td>${row.tgl_terima_bpkb || '-'}</td>
                     <td>${row.tgl_serah_terima || '-'}</td>
                 `;
                 tbody.appendChild(tr);
@@ -222,10 +228,10 @@ function exportToExcel() {
         return;
     }
 
-    let csv = 'Tanggal,No Transaksi,Dealer,No Mesin,No Rangka,Type Motor,Warna,Nama Pemohon,Alamat,Handphone,Tgl Faktur,Link/Broker,Ket DP,DP,Subsidi,Diskon AHM,Diskon Dealer,Diskon Leasing,Insentif,Leasing,Tgl Lunas,Status,No Polisi,Nama Pemilik (STNK/BPKB),No BPKB,Tgl BIRO,Tgl Serah Terima\n';
+    let csv = 'Tanggal,No Transaksi,Dealer,No Mesin,No Rangka,Type Motor,Warna,Nama Pemohon,Alamat,Handphone,Tgl Faktur,Link/Broker,Ket DP,DP,Subsidi,Diskon AHM,Diskon Dealer,Diskon Leasing,Insentif,Leasing,Tgl Lunas,Status,No Polisi,No Surat Pemberitahuan,Tgl Surat Pemberitahuan,Nama Pemilik (STNK/BPKB),No BPKB,Tgl BIRO,Tgl Terima BPKB,Tgl Serah Terima\n';
 
     currentJurnalData.forEach(row => {
-        csv += `"${row.tanggal || ''}","${row.nota || ''}","${row.dealer_nama || ''}","${row.no_mesin || ''}","${row.no_rangka || ''}","${row.motor_type || ''}","${row.warna || ''}","${row.customer_name || ''}","${row.customer_alamat || ''}","${row.customer_phone || ''}","${row.tgl_faktur || ''}","${row.broker_nama || ''}","${row.ket_dp || ''}",${row.dp || 0},${row.subsidi || 0},${row.diskon_ahm || 0},${row.diskon_dealer || 0},${row.diskon_leasing || 0},${row.insentif || 0},"${row.leasing_nama || ''}","${row.tgl_hutang_dibayar || ''}","${row.status || ''}","${row.no_polisi || ''}","${row.nama_surat || ''}","${row.no_bpkb || ''}","${row.tgl_biro || ''}","${row.tgl_serah_terima || ''}"\n`;
+        csv += `"${row.tanggal || ''}","${row.nota || ''}","${row.dealer_nama || ''}","${row.no_mesin || ''}","${row.no_rangka || ''}","${row.motor_type || ''}","${row.warna || ''}","${row.customer_name || ''}","${row.customer_alamat || ''}","${row.customer_phone || ''}","${row.tgl_faktur || ''}","${row.broker_nama || ''}","${row.ket_dp || ''}",${row.dp || 0},${row.subsidi || 0},${row.diskon_ahm || 0},${row.diskon_dealer || 0},${row.diskon_leasing || 0},${row.insentif || 0},"${row.leasing_nama || ''}","${row.tgl_hutang_dibayar || ''}","${row.status || ''}","${row.no_polisi || ''}","${row.no_surat_pemberitahuan || ''}","${row.tgl_surat_pemberitahuan || ''}","${row.nama_surat || ''}","${row.no_bpkb || ''}","${row.tgl_biro || ''}","${row.tgl_terima_bpkb || ''}","${row.tgl_serah_terima || ''}"\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
