@@ -2059,7 +2059,7 @@ def create_pindah_stok():
             dealer_asal_id=motor.dealer_id,
             dealer_tujuan_id=data.get('dealer_tujuan_id'),
             broker_tujuan_id=data.get('broker_tujuan_id'),
-            tgl_transfer=dt.strptime(data['tgl_transfer'], '%Y-%m-%d').date(),
+            tgl_transfer=datetime.strptime(data['tgl_transfer'], '%Y-%m-%d').date(),
             tipe_transfer=data['tipe_transfer'],
             driver=data.get('driver'),
             catatan=data.get('catatan'),
@@ -2108,7 +2108,7 @@ def return_pindah_stok(transfer_id):
             return jsonify({'success': False, 'error': 'Stok sudah dikembalikan sebelumnya'}), 400
 
         # Mark as returned
-        transfer.tgl_kembali = dt.strptime(data['tgl_kembali'], '%Y-%m-%d').date()
+        transfer.tgl_kembali = datetime.strptime(data['tgl_kembali'], '%Y-%m-%d').date()
         transfer.status = 'K'
         if data.get('catatan'):
             transfer.catatan = data['catatan']
