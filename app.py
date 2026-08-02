@@ -491,6 +491,58 @@ def delete_leasing(leasing_id):
 # API - Transaksi (Transactions)
 # =====================================================================
 
+@app.route('/api/transaksi-draft/<int:transaksi_id>', methods=['GET'])
+def get_transaksi_draft_detail(transaksi_id):
+    """Get Draft transaksi detail for review (view-only)"""
+    try:
+        from database.models import Transaksi
+        from sqlalchemy.orm import joinedload
+
+        session = DatabaseManager.get_session()
+        transaksi = session.query(Transaksi).options(
+            joinedload(Transaksi.detail),
+            joinedload(Transaksi.broker),
+            joinedload(Transaksi.dealer),
+            joinedload(Transaksi.motor)
+        ).filter(Transaksi.id == transaksi_id).first()
+
+        if not transaksi:
+            return jsonify({'success': False, 'error': 'Transaksi tidak ditemukan'}), 404
+
+        # Only allow viewing Draft transaksi
+        if transaksi.status_transaksi != 'D':
+            return jsonify({'success': False, 'error': 'Hanya transaksi Draft yang bisa di-review'}), 400
+
+        detail = transaksi.detail
+        motor = transaksi.motor
+        motor_type = motor.type_motor.nama_type if motor and motor.type_motor else "N/A"
+
+        data = {
+            'id': transaksi.id,
+            'nota': transaksi.nota,
+            'tanggal': transaksi.tanggal.isoformat() if transaksi.tanggal else None,
+            'created_at': transaksi.created_at.isoformat(),
+            'nama_pembeli': transaksi.nama_pembeli,
+            'alamat_pembeli': transaksi.alamat_pembeli or '-',
+            'telp_pembeli': transaksi.telp_pembeli or '-',
+            'dealer_nama': transaksi.dealer.nama if transaksi.dealer else '-',
+            'broker_nama': transaksi.broker.nama if transaksi.broker else '-',
+            'motor_type': motor_type,
+            'no_mesin': motor.no_mesin if motor else '-',
+            'no_rangka': motor.no_rangka if motor else '-',
+            'warna': motor.warna if motor else '-',
+            'dp': float(detail.dp) if detail and detail.dp else 0,
+            'subsidi': float(detail.subsidi) if detail and detail.subsidi else 0,
+            'status': transaksi.status_transaksi,
+        }
+
+        return jsonify({'success': True, 'data': data})
+
+    except Exception as e:
+        logger.error(f"Error fetching draft detail: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/transaksi-draft', methods=['GET'])
 def get_transaksi_draft():
     """Get all draft transactions pending approval"""
