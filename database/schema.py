@@ -19,28 +19,28 @@ def initialize_database(database_url: str = None):
     Returns:
         True if successful
     """
-    print("🔧 Initializing database...")
+    print("[OK] Initializing database...")
 
     # Initialize connection
     DatabaseManager.initialize(database_url)
-    print("✓ Database connection established")
+    print("[OK] Database connection established")
 
     # Drop all tables first
-    print("📊 Dropping existing tables...")
+    print("[OK] Dropping existing tables...")
     DatabaseManager.drop_all_tables()
-    print("✓ All tables dropped")
+    print("[OK] All tables dropped")
 
     # Create all tables
-    print("📊 Creating tables...")
+    print("[OK] Creating tables...")
     DatabaseManager.create_all_tables()
-    print("✓ All tables created")
+    print("[OK] All tables created")
 
     # Seed initial data
-    print("🌱 Seeding initial data...")
+    print("[OK] Seeding initial data...")
     seed_master_data()
-    print("✓ Initial data seeded")
+    print("[OK] Initial data seeded")
 
-    print("✅ Database initialization complete!\n")
+    print(" Database initialization complete!\n")
     return True
 
 
@@ -88,7 +88,7 @@ def seed_master_data():
             existing = session.query(Dealer).filter_by(nama=dealer.nama).first()
             if not existing:
                 session.add(dealer)
-                print(f"  ✓ Added dealer: {dealer.nama}")
+                print(f"  [OK] Added dealer: {dealer.nama}")
 
         session.commit()
 
@@ -162,7 +162,7 @@ def seed_master_data():
             )
             if not existing:
                 session.add(motor_type)
-                print(f"  ✓ Added type: {motor_type.nama_type}")
+                print(f"  [OK] Added type: {motor_type.nama_type}")
 
         session.commit()
 
@@ -224,7 +224,7 @@ def seed_master_data():
             existing = session.query(Leasing).filter_by(kode=leasing.kode).first()
             if not existing:
                 session.add(leasing)
-                print(f"  ✓ Added leasing: {leasing.nama}")
+                print(f"  [OK] Added leasing: {leasing.nama}")
 
         session.commit()
 
@@ -268,7 +268,7 @@ def seed_master_data():
             existing = session.query(Broker).filter_by(nama=broker.nama).first()
             if not existing:
                 session.add(broker)
-                print(f"  ✓ Added broker: {broker.nama}")
+                print(f"  [OK] Added broker: {broker.nama}")
 
         session.commit()
 
@@ -327,11 +327,11 @@ def seed_master_data():
             existing = session.query(StokMotor).filter_by(no_mesin=stok.no_mesin).first()
             if not existing:
                 session.add(stok)
-                print(f"  ✓ Added stok: {stok.no_mesin}")
+                print(f"  [OK] Added stok: {stok.no_mesin}")
 
         session.commit()
 
-        print("\n✅ All seed data loaded successfully!")
+        print("\n All seed data loaded successfully!")
 
 
 def drop_all_tables():
@@ -344,9 +344,9 @@ def drop_all_tables():
 
     if response.lower() == "yes":
         DatabaseManager.drop_all_tables()
-        print("✓ All tables dropped")
+        print("[OK] All tables dropped")
     else:
-        print("❌ Operation cancelled")
+        print(" Operation cancelled")
 
 
 def reset_database(database_url: str = None):
