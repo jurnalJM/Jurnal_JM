@@ -639,6 +639,10 @@ def get_transaksi_detail(transaksi_id):
         if not transaksi:
             return jsonify({'success': False, 'error': 'Transaksi tidak ditemukan'}), 404
 
+        # Block access to Draft transaksi (must be approved first)
+        if transaksi.status_transaksi == 'D':
+            return jsonify({'success': False, 'error': 'Transaksi masih dalam status Draft. Harus di-approve terlebih dahulu di Transaksi Draft'}), 403
+
         detail = transaksi.detail
         motor_type = transaksi.motor.type_motor.nama_type if transaksi.motor and transaksi.motor.type_motor else "N/A"
 
@@ -882,6 +886,10 @@ def update_transaksi(transaksi_id):
         if not transaksi:
             return jsonify({'success': False, 'error': 'Transaksi tidak ditemukan'}), 404
 
+        # Block editing Draft transaksi
+        if transaksi.status_transaksi == 'D':
+            return jsonify({'success': False, 'error': 'Tidak bisa mengedit transaksi Draft. Harus di-approve terlebih dahulu di Transaksi Draft.'}), 403
+
         # Map field names for update
         update_data = {}
         if 'tanggal_nota' in data:
@@ -1082,6 +1090,10 @@ def bayar_hutang_sales(transaksi_id):
         if not transaksi or not transaksi.detail:
             return jsonify({'success': False, 'error': 'Transaksi atau detail tidak ditemukan'}), 404
 
+        # Block payment recording for Draft transaksi
+        if transaksi.status_transaksi == 'D':
+            return jsonify({'success': False, 'error': 'Tidak bisa mencatat pembayaran untuk transaksi Draft. Harus di-approve terlebih dahulu.'}), 403
+
         detail = transaksi.detail
         sisa_hutang = float(detail.hutang_sales or 0) - float(detail.total_terbayar or 0)
 
@@ -1177,6 +1189,8 @@ def get_jurnal_informasi():
             joinedload(Transaksi.dealer),
             joinedload(Transaksi.motor),
             joinedload(Transaksi.broker)
+        ).filter(
+            Transaksi.status_transaksi != 'D'  # Exclude Draft - not yet approved
         )
 
         # Apply date filters
