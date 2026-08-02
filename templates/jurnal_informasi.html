@@ -894,45 +894,76 @@ function initNamaSuratOption(namaSurat) {
         </div>
         <form onsubmit="submitPembayaran(event)">
             <div class="modal-body">
-                <!-- Info Section -->
-                <div style="background-color: var(--bg-tertiary); padding: var(--space-3); border-radius: 4px; margin-bottom: var(--space-4);">
-                    <p style="margin-bottom: var(--space-2);"><span class="text-muted">No. Transaksi:</span> <strong id="bayarNota">-</strong></p>
-                    <p style="margin: 0;"><span class="text-muted">Pelanggan:</span> <strong id="bayarCustomer">-</strong></p>
+                <!-- Header Info: Transaksi & Pelanggan -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-4);">
+                    <div style="background-color: var(--bg-tertiary); padding: var(--space-3); border-radius: var(--radius-md);">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--space-2);">No. Transaksi</div>
+                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary);" id="bayarNota">-</div>
+                    </div>
+                    <div style="background-color: var(--bg-tertiary); padding: var(--space-3); border-radius: var(--radius-md);">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--space-2);">Pelanggan</div>
+                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" id="bayarCustomer">-</div>
+                    </div>
                 </div>
 
-                <!-- Hutang Info -->
-                <div style="background-color: #fef3c7; padding: var(--space-3); border-radius: 4px; margin-bottom: var(--space-4); border-left: 4px solid #f59e0b;">
-                    <p style="margin-bottom: var(--space-2);"><span class="text-muted">Total Hutang:</span> <strong id="bayarTotalHutang" style="color: #ef4444;">Rp 0</strong></p>
-                    <p style="margin-bottom: var(--space-2);"><span class="text-muted">Sudah Dibayar:</span> <strong id="bayarTerbayar">Rp 0</strong></p>
-                    <p style="margin: 0;"><span class="text-muted">Sisa Hutang:</span> <strong id="bayarSisa" style="color: #d97706; font-size: 1.1rem;">Rp 0</strong></p>
-                    <p style="margin-top: var(--space-2); margin-bottom: 0; font-size: 0.85rem;"><span class="text-muted">Status:</span> <span id="bayarStatus" class="badge">-</span></p>
+                <!-- Hutang Summary: 3 Column Grid -->
+                <div style="background: linear-gradient(135deg, #fef3c7 0%, #fef08a 100%); padding: var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4); border-left: 5px solid #f59e0b;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-3);">
+                        <!-- Total Hutang -->
+                        <div>
+                            <div style="font-size: 0.75rem; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--space-2); font-weight: 600;">Total Hutang</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: #dc2626;" id="bayarTotalHutang">Rp 0</div>
+                        </div>
+                        <!-- Sudah Dibayar -->
+                        <div>
+                            <div style="font-size: 0.75rem; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--space-2); font-weight: 600;">Sudah Dibayar</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: #059669;" id="bayarTerbayar">Rp 0</div>
+                        </div>
+                        <!-- Sisa Hutang -->
+                        <div>
+                            <div style="font-size: 0.75rem; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--space-2); font-weight: 600;">Sisa Hutang</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: #d97706;" id="bayarSisa">Rp 0</div>
+                        </div>
+                    </div>
+                    <!-- Status Line -->
+                    <div style="border-top: 1px solid rgba(0,0,0,0.1); margin-top: var(--space-3); padding-top: var(--space-3);">
+                        <div style="font-size: 0.75rem; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--space-1); font-weight: 600;">Status Pembayaran</div>
+                        <span id="bayarStatus" class="badge" style="font-size: 0.9rem; padding: var(--space-2) var(--space-3);">-</span>
+                    </div>
                 </div>
 
-                <!-- Pembayaran Form -->
+                <!-- Divider -->
+                <div style="border-top: 2px solid var(--border-color); margin: var(--space-4) 0; padding-top: var(--space-4);">
+                    <h5 style="margin: 0 0 var(--space-3) 0; color: var(--text-primary); font-size: 14px; font-weight: 600;">Catat Pembayaran Baru</h5>
+                </div>
+
+                <!-- Payment Form -->
                 <div class="form-group">
                     <label class="form-label required">Nominal Pembayaran (Rp)</label>
-                    <input type="number" class="form-control" id="bayarNominal" placeholder="Masukkan jumlah pembayaran" required min="1" step="1">
-                    <small id="bayarNominalNote" style="color: var(--text-secondary);">Max: Rp 0</small>
+                    <input type="number" class="form-control" id="bayarNominal" placeholder="Masukkan jumlah pembayaran" required min="1" step="1" style="font-size: 1rem; padding: var(--space-3);">
+                    <small id="bayarNominalNote" style="color: var(--text-secondary); font-weight: 500;">Max: Rp 0</small>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label required">Tanggal Pembayaran</label>
-                    <input type="date" class="form-control" id="bayarTglPembayaran" required>
-                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                    <div class="form-group">
+                        <label class="form-label required">Tanggal Pembayaran</label>
+                        <input type="date" class="form-control" id="bayarTglPembayaran" required>
+                    </div>
 
-                <div class="form-group">
-                    <label class="form-label">Metode Pembayaran</label>
-                    <select class="form-select" id="bayarMetode">
-                        <option value="Cash">Cash</option>
-                        <option value="Transfer">Transfer</option>
-                        <option value="Cek">Cek</option>
-                        <option value="Lainnya">Lainnya</option>
-                    </select>
+                    <div class="form-group">
+                        <label class="form-label">Metode Pembayaran</label>
+                        <select class="form-select" id="bayarMetode">
+                            <option value="Cash">💵 Cash</option>
+                            <option value="Transfer">🏦 Transfer Bank</option>
+                            <option value="Cek">📋 Cek</option>
+                            <option value="Lainnya">📝 Lainnya</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Keterangan (Optional)</label>
-                    <textarea class="form-control" id="bayarKeterangan" rows="2" placeholder="Catatan pembayaran..."></textarea>
+                    <textarea class="form-control" id="bayarKeterangan" rows="2" placeholder="Catatan pembayaran (nomor referensi, bank, dll)..." style="font-size: 0.95rem;"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
