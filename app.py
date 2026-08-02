@@ -744,14 +744,15 @@ def create_transaksi():
 
         logger.info(f"[POST /api/transaksi] Creating with stok_id={stok_id}")
 
-        # Map status values
+        # Map status values - Default to DRAFT (D)
         status_map = {
+            'Draft': 'D',
             'Pending': 'P',
             'Approved': 'A',
             'Paid': 'L',
             'Cancelled': 'C'
         }
-        status_value = data.get('status', 'P')
+        status_value = data.get('status', 'D')  # Default: Draft
         status_code = status_map.get(status_value, status_value)  # Try map, fall back to original
 
         transaksi_data = {
