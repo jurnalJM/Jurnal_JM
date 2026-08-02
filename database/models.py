@@ -243,8 +243,8 @@ class Transaksi(Base):
 
     # Status
     status_transaksi = Column(
-        String(1), default="P", nullable=False, index=True
-    )  # P=Pending, A=Approved, L=Paid, C=Cancelled
+        String(1), default="D", nullable=False, index=True
+    )  # D=Draft, P=Pending Approval, A=Approved/Posted, L=Paid, C=Cancelled
     tanggal_po = Column(String(25))  # "Acc" or PO date
 
     # Audit
@@ -276,7 +276,7 @@ class Transaksi(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "status_transaksi IN ('P', 'A', 'L', 'C')", name="check_transaksi_status"
+            "status_transaksi IN ('D', 'P', 'A', 'L', 'C')", name="check_transaksi_status"
         ),
         Index("idx_transaksi_nota", "nota"),
         Index("idx_transaksi_tanggal", "tanggal"),

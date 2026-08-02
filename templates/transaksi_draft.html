@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}Transaksi Draft - {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Transaksi Draft - Menunggu Persetujuan</h1>
+    <p class="subtitle">Review dan approve transaksi yang masih dalam status draft sebelum posting ke sistem</p>
+</div>
+
+<!-- Filter Section -->
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h3>Filter Data</h3>
+    </div>
+    <div class="card-body">
+        <div style="display: flex; gap: 15px; align-items: end;">
+            <div class="form-group" style="flex: 1;">
+                <label class="form-label">Cari Nota / Pelanggan</label>
+                <input type="text" id="filterSearch" class="form-control" placeholder="Cari no nota atau nama pelanggan..." />
+            </div>
+            <button onclick="loadDraftData()" class="btn btn-primary">
+                <span>🔍 Cari</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-wrapper" style="overflow-x: auto;">
+            <table class="table" id="draftTable">
+                <thead>
+                    <tr>
+                        <th>Tanggal Input</th>
+                        <th>No Nota</th>
+                        <th>Dealer</th>
+                        <th>Pelanggan</th>
+                        <th>No Mesin</th>
+                        <th>Motor</th>
+                        <th>DP (Rp)</th>
+                        <th>Broker</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="draftBody">
+                    <tr>
+                        <td colspan="10" style="text-align: center; padding: 40px; color: #9ca3af;">
+                            Tekan tombol "Cari" untuk memuat transaksi draft
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+    <div class="modal" style="width: 90%; max-width: 700px; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h4 class="modal-title">Detail Transaksi Draft</h4>
+            <button class="modal-close" onclick="closeDetailModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div style="background-color: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="margin-bottom: 8px;"><span class="text-muted">No. Nota:</span> <strong id="detailNota">-</strong></p>
+                <p style="margin-bottom: 8px;"><span class="text-muted">Pelanggan:</span> <strong id="detailCustomer">-</strong></p>
+                <p style="margin-bottom: 8px;"><span class="text-muted">Dealer:</span> <strong id="detailDealer">-</strong></p>
+                <p style="margin: 0;"><span class="text-muted">Waktu Input:</span> <strong id="detailCreatedAt">-</strong></p>
+            </div>
+
+            <div style="background-color: var(--bg-secondary); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <h5 style="margin-top: 0; margin-bottom: 12px;">Data Motor</h5>
+                <p style="margin-bottom: 8px;"><span class="text-muted">No Mesin:</span> <strong id="detailNoMesin">-</strong></p>
+                <p style="margin-bottom: 8px;"><span class="text-muted">No Rangka:</span> <strong id="detailNoRangka">-</strong></p>
+                <p style="margin-bottom: 8px;"><span class="text-muted">Type Motor:</span> <strong id="detailMotorType">-</strong></p>
+                <p style="margin-bottom: 8px;"><span class="text-muted">Warna:</span> <strong id="detailWarna">-</strong></p>
+                <p style="margin: 0;"><span class="text-muted">Alamat Pelanggan:</span> <strong id="detailAlamat">-</strong></p>
+            </div>
+
+            <div style="background-color: var(--bg-secondary); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <h5 style="margin-top: 0; margin-bottom: 12px;">Data Finansial</h5>
+                <p style="margin-bottom: 8px;"><span class="text-muted">DP:</span> <strong id="detailDP">Rp 0</strong></p>
+                <p style="margin-bottom: 8px;"><span class="text-muted">Subsidi:</span> <strong id="detailSubsidi">Rp 0</strong></p>
+                <p style="margin-bottom: 8px;"><span class="text-muted">Broker:</span> <strong id="detailBroker">-</strong></p>
+                <p style="margin: 0;"><span class="text-muted">Status:</span> <span id="detailStatus" class="badge badge-secondary">DRAFT</span></p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeDetailModal()">Tutup</button>
+            <button type="button" class="btn btn-success" id="approveBtn" onclick="approveTransaksi(currentDetailId)" style="display: flex; align-items: center; gap: 8px;">
+                <span>✓</span>
+                <span>Approve Posting</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentDraftData = [];
+let currentDetailId = null;
+
+function loadDraftData() {
+    const search = document.getElementById('filterSearch').value;
+
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+
+    axios.get(`/api/transaksi-draft?${params.toString()}`)
+        .then(response => {
+            const data = response.data.data;
+            currentDraftData = data;
+
+            const tbody = document.getElementById('draftBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 40px; color: #9ca3af;">Tidak ada transaksi draft</td></tr>`;
+                return;
+            }
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.onclick = () => viewDetail(row.id);
+                tr.onmouseover = function() { this.style.backgroundColor = 'var(--bg-tertiary)'; };
+                tr.onmouseout = function() { this.style.backgroundColor = ''; };
+                tr.innerHTML = `
+                    <td>${formatDate(row.created_at)}</td>
+                    <td><strong>${row.nota}</strong></td>
+                    <td>${row.dealer_name}</td>
+                    <td>${row.customer_name}</td>
+                    <td>${row.no_mesin}</td>
+                    <td>${row.motor_type}</td>
+                    <td style="text-align: right;">${formatNumberDisplay(row.dp)}</td>
+                    <td>${row.broker_name || '-'}</td>
+                    <td><span class="badge badge-warning">DRAFT</span></td>
+                    <td>
+                        <button onclick="viewDetail(${row.id}); event.stopPropagation();" class="btn btn-sm btn-primary">
+                            Review
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function viewDetail(transaksiId) {
+    axios.get(`/api/transaksi/${transaksiId}`)
+        .then(response => {
+            const t = response.data.data;
+            currentDetailId = transaksiId;
+
+            document.getElementById('detailNota').textContent = t.nota;
+            document.getElementById('detailCustomer').textContent = t.nama_pembeli;
+            document.getElementById('detailDealer').textContent = t.dealer_nama || '-';
+            document.getElementById('detailCreatedAt').textContent = formatDate(t.created_at);
+
+            document.getElementById('detailNoMesin').textContent = t.no_mesin || '-';
+            document.getElementById('detailNoRangka').textContent = t.no_rangka || '-';
+            document.getElementById('detailMotorType').textContent = t.motor_type || '-';
+            document.getElementById('detailWarna').textContent = t.warna || '-';
+            document.getElementById('detailAlamat').textContent = t.alamat_pembeli || '-';
+
+            document.getElementById('detailDP').textContent = 'Rp ' + formatNumberDisplay(t.dp);
+            document.getElementById('detailSubsidi').textContent = 'Rp ' + formatNumberDisplay(t.subsidi);
+            document.getElementById('detailBroker').textContent = t.broker_nama || '-';
+            document.getElementById('detailStatus').textContent = 'DRAFT';
+
+            document.getElementById('detailModal').style.display = 'flex';
+        })
+        .catch(error => {
+            showToast('Error: ' + error.message, 'error');
+        });
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').style.display = 'none';
+}
+
+function approveTransaksi(transaksiId) {
+    if (!confirm('Yakin ingin approve transaksi ini? Data akan langsung posting ke sistem.')) {
+        return;
+    }
+
+    axios.post(`/api/transaksi/${transaksiId}/approve`)
+        .then(response => {
+            showToast('✓ Transaksi berhasil di-approve dan posting!', 'success');
+            closeDetailModal();
+            loadDraftData();
+        })
+        .catch(error => {
+            showToast('Error: ' + error.response?.data?.error || error.message, 'error');
+        });
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function formatNumberDisplay(value) {
+    if (!value) return '0';
+    return Math.round(parseFloat(value)).toLocaleString('id-ID');
+}
+
+function showToast(message, type = 'info') {
+    // Simple toast notification
+    alert(message);
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadDraftData();
+});
+</script>
+
+<style>
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table thead th {
+    background-color: var(--bg-tertiary);
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.table tbody td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-secondary {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.text-muted {
+    color: var(--text-secondary);
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn {
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #3D7F6A;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: #f3f4f6;
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background-color: #e5e7eb;
+}
+
+.btn-success {
+    background-color: #10B981;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #059669;
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

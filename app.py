@@ -94,6 +94,12 @@ def transaksi_page():
     return render_template('transaksi.html', app_title=APP_TITLE)
 
 
+@app.route('/transaksi-draft')
+def transaksi_draft_page():
+    """Transaction draft approval page"""
+    return render_template('transaksi_draft.html', app_title=APP_TITLE)
+
+
 @app.route('/laporan')
 def laporan_page():
     """Report page"""
@@ -485,6 +491,57 @@ def delete_leasing(leasing_id):
 # API - Transaksi (Transactions)
 # =====================================================================
 
+@app.route('/api/transaksi-draft', methods=['GET'])
+def get_transaksi_draft():
+    """Get all draft transactions pending approval"""
+    try:
+        from database.models import Transaksi
+        from sqlalchemy.orm import joinedload
+
+        # Query only draft transaksi
+        session = DatabaseManager.get_session()
+        query = session.query(Transaksi).options(
+            joinedload(Transaksi.detail),
+            joinedload(Transaksi.dealer),
+            joinedload(Transaksi.motor)
+        ).filter(
+            Transaksi.status_transaksi == 'D'
+        )
+
+        transaksi_list = query.order_by(Transaksi.created_at.desc()).all()
+
+        # Convert to dict
+        data = []
+        for t in transaksi_list:
+            detail = t.detail
+            motor = t.motor
+            motor_type = motor.type_motor.nama_type if motor and motor.type_motor else "N/A"
+            broker_name = t.broker.nama if t.broker else ''
+
+            data.append({
+                'id': t.id,
+                'nota': t.nota,
+                'tanggal': t.tanggal.isoformat(),
+                'created_at': t.created_at.isoformat(),
+                'customer_name': t.nama_pembeli,
+                'customer_phone': t.telp_pembeli,
+                'customer_alamat': t.alamat_pembeli or '-',
+                'motor_type': motor_type,
+                'no_mesin': motor.no_mesin if motor else '-',
+                'dealer_name': t.dealer.nama if t.dealer else '-',
+                'broker_name': broker_name,
+                'dp': float(detail.dp) if detail and detail.dp else 0,
+                'subsidi': float(detail.subsidi) if detail and detail.subsidi else 0,
+                'status': t.status_transaksi,
+            })
+
+        return jsonify({'success': True, 'data': data, 'count': len(data)})
+
+    except Exception as e:
+        logger.error(f"Error fetching draft transaksi: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/transaksi', methods=['GET'])
 def get_transaksi():
     """Get all transactions with optional filtering"""
@@ -517,6 +574,10 @@ def get_transaksi():
         ).filter(
             Transaksi.tanggal.between(start_date, end_date)
         )
+
+        # Exclude draft transaksi unless explicitly filtered
+        if not status:
+            query = query.filter(Transaksi.status_transaksi != 'D')
 
         if dealer_id:
             query = query.filter(Transaksi.dealer_id == int(dealer_id))
@@ -1202,6 +1263,45 @@ def delete_transaksi(transaksi_id):
 
     except Exception as e:
         logger.error(f"Error deleting transaksi: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/transaksi/<int:transaksi_id>/approve', methods=['POST'])
+def approve_transaksi(transaksi_id):
+    """Approve posting transaksi (Draft → Approved/Posted)"""
+    try:
+        from database.models import Transaksi
+
+        session = DatabaseManager.get_session()
+        transaksi = session.query(Transaksi).filter_by(id=transaksi_id).first()
+
+        if not transaksi:
+            return jsonify({'success': False, 'error': 'Transaksi tidak ditemukan'}), 404
+
+        if transaksi.status_transaksi != 'D':
+            return jsonify({'success': False, 'error': 'Hanya transaksi draft yang bisa di-approve'}), 400
+
+        # Update status ke Approved/Posted
+        transaksi.status_transaksi = 'A'
+        transaksi.updated_at = datetime.utcnow()
+        session.commit()
+
+        logger.info(f"Transaksi {transaksi_id} approved and posted by supervisor")
+
+        return jsonify({
+            'success': True,
+            'message': 'Transaksi berhasil di-approve dan posting ke sistem',
+            'data': {
+                'id': transaksi.id,
+                'status': transaksi.status_transaksi,
+                'updated_at': transaksi.updated_at.isoformat()
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error approving transaksi: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
