@@ -6,7 +6,7 @@
 <div class="actions-bar">
     <div class="page-header" style="margin-bottom: 0;">
         <h1 class="page-title">Import Stok Motor</h1>
-        <p class="page-subtitle">Import data stok motor dari file Excel format Distribusi</p>
+        <p class="page-subtitle">Import data stok motor dari file Excel format Distribusi (terintegrasi dengan Pindah Stok)</p>
     </div>
 </div>
 
@@ -19,8 +19,9 @@
         <div class="form-group">
             <label class="form-label">Format File</label>
             <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">
-                File harus berformat Excel dengan kolom:
-                <br>A: Nama Dealer | B: No. Rangka | C: No. Mesin | D: Kode Type | E: Kode Warna | F: Kode Dealer
+                File harus berformat Excel dengan kolom (sesuai stokmotor.xls):
+                <br><strong>A:</strong> Tanggal Masuk | <strong>B:</strong> Dealer (Asal) | <strong>C:</strong> No. Mesin | <strong>D:</strong> No. Rangka | <strong>E:</strong> Kode Type | <strong>F:</strong> Warna | <strong>G:</strong> Link/Ke Tujuan (Dealer/Broker)
+                <br><small style="color: #666;">Jika kolom Link diisi → otomatis buat transfer stok dengan status DIPINDAHKAN</small>
             </p>
         </div>
 
@@ -118,16 +119,6 @@
         <!-- Success Message -->
         <div id="successMessage" style="padding: var(--space-4); background: #f0fdf4; border-left: 4px solid var(--success); border-radius: var(--radius-xs); color: var(--success);">
         </div>
-
-        <!-- Type Motor Format Suggestions -->
-        <div id="suggestionsSection" style="display: none; margin-top: var(--space-6);">
-            <h6 style="color: var(--text-primary); margin-bottom: var(--space-3);">💡 Saran Format Master Type Motor:</h6>
-            <p style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: var(--space-4);">
-                Klik "Terapkan" untuk mengupdate format nomor mesin dan rangka di Master Type Motor
-            </p>
-            <div id="suggestionsList" style="display: grid; gap: var(--space-4);">
-            </div>
-        </div>
     </div>
 </div>
 
@@ -173,6 +164,7 @@
 
 {% block extra_js %}
 <script>
+
 // Set default tgl_datang to today
 document.getElementById('tglDatang').value = new Date().toISOString().split('T')[0];
 
@@ -265,75 +257,8 @@ function displayResults(data) {
         `).join('');
     }
 
-    // Show type motor format suggestions
-    if (data.type_motor_suggestions && data.type_motor_suggestions.length > 0) {
-        document.getElementById('suggestionsSection').style.display = 'block';
-        const suggestionsList = document.getElementById('suggestionsList');
-        suggestionsList.innerHTML = data.type_motor_suggestions.map(suggestion => `
-            <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-sm); border-left: 4px solid var(--info);">
-                <div style="display: flex; justify-content: space-between; align-items: start; gap: var(--space-4);">
-                    <div style="flex: 1;">
-                        <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
-                            <strong style="font-size: 1.1em;">${suggestion.type_kode}</strong>
-                            <span style="color: var(--text-secondary); font-size: 0.9em;">${suggestion.type_nama}</span>
-                        </div>
-                        <div style="margin-top: var(--space-3); font-size: 0.9em; font-family: monospace; background: var(--bg-primary); padding: var(--space-3); border-radius: var(--radius-xs); line-height: 1.8;">
-                            <div><strong>No. Mesin:</strong> <span style="color: var(--info);">${suggestion.prefix_nomesin}</span> <span style="color: var(--text-secondary);">(5 digit)</span></div>
-                            <div><strong>No. Rangka:</strong> <span style="color: var(--info);">${suggestion.prefix_norangka}</span> <span style="color: var(--text-secondary);">(7 digit)</span></div>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" id="btn-type-${suggestion.type_id}" style="white-space: nowrap; padding: var(--space-2) var(--space-4);" onclick="updateTypeFormat(event, ${suggestion.type_id}, '${suggestion.prefix_nomesin}', '${suggestion.prefix_norangka}')">
-                        ✓ Terapkan
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    } else {
-        document.getElementById('suggestionsSection').style.display = 'none';
-    }
-
     statusCard.style.display = 'block';
 }
 
-async function updateTypeFormat(event, typeId, prefixMesin, prefixRangka) {
-    const button = event.target;
-
-    // Prevent double-click
-    if (button.disabled) {
-        return;
-    }
-
-    button.disabled = true;
-    const originalText = button.innerHTML;
-    button.innerHTML = '⏳ Memproses...';
-
-    try {
-        const response = await axios.put(`/api/type-motor/${typeId}/update-format`, {
-            prefix_nomesin: prefixMesin,
-            prefix_norangka: prefixRangka
-        });
-
-        if (response.data.success) {
-            // Update button to show success state
-            button.innerHTML = '✅ Berhasil Diterapkan';
-            button.className = 'btn btn-secondary';
-            button.style.backgroundColor = 'var(--success)';
-            button.style.color = 'white';
-            button.style.cursor = 'default';
-
-            showToast('✓ Format Master Type Motor berhasil diupdate', 'success');
-        } else {
-            // Restore button on error
-            button.disabled = false;
-            button.innerHTML = originalText;
-            showToast('Error: ' + (response.data.error || 'Gagal mengupdate'), 'error');
-        }
-    } catch (error) {
-        // Restore button on error
-        button.disabled = false;
-        button.innerHTML = originalText;
-        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
-    }
-}
 </script>
 {% endblock %}

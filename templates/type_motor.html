@@ -3,14 +3,17 @@
 {% block title %}Master Type Motor - JayaMotor - Honda{% endblock %}
 
 {% block content %}
-<div class="actions-bar">
-    <div class="page-header" style="margin-bottom: 0;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; gap: 16px;">
+    <div class="page-header" style="margin-bottom: 0; flex: 1;">
         <h1 class="page-title">Master Type Motor</h1>
         <p class="page-subtitle">Kelola data tipe dan harga motor</p>
     </div>
-    <button class="btn btn-primary btn-lg" onclick="openAddModal()" style="align-self: flex-start;">
-        Tambah Type Motor
-    </button>
+    <div style="display: flex; gap: 8px; white-space: nowrap;">
+        <button class="btn btn-primary" onclick="openAddModal()">+ Tambah Type</button>
+        <button class="btn btn-secondary" onclick="openImportModal()">📥 Import Harga OTR</button>
+        <input type="file" id="importFile" accept=".xlsx,.xls" style="display: none;" onchange="handleImportFile(event)">
+    </div>
+
 </div>
 
 <!-- Data Table -->
@@ -25,6 +28,7 @@
                         <th>Ket. No. Mesin</th>
                         <th>Ket. No. Rangka</th>
                         <th style="text-align: right;">Harga OTR (Rp)</th>
+                        <th>Tgl Expired</th>
                         <th style="width: 120px; text-align: center;">Aksi</th>
                     </tr>
                 </thead>
@@ -75,11 +79,16 @@
                     </div>
                 </div>
 
-                <!-- Baris 3: Harga OTR -->
-                <div class="grid" style="grid-template-columns: 1fr;">
+                <!-- Baris 3: Harga OTR & Tanggal Expired -->
+                <div class="grid" style="grid-template-columns: 1fr 1fr;">
                     <div class="form-group">
                         <label class="form-label">Harga OTR (Rp)</label>
                         <input type="number" class="form-control" id="harga-otr" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tanggal Expired Harga</label>
+                        <input type="date" class="form-control" id="tgl-expired-harga">
+                        <small style="color: var(--text-muted);">Jika kosong, harga tidak pernah expired</small>
                     </div>
                 </div>
             </div>
@@ -95,6 +104,185 @@
 
 {% block extra_js %}
 <script>
+// Import modal
+let importModalElement = null;
+
+function openImportModal() {
+    const defaultDate = new Date();
+    defaultDate.setMonth(defaultDate.getMonth() + 1);
+    const dateStr = defaultDate.toISOString().split('T')[0];
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'importSetupModal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal" style="width: 90%; max-width: 500px;">
+            <div class="modal-header">
+                <h4 class="modal-title">Import Type Motor (Harga OTR)</h4>
+                <button class="modal-close" onclick="closeModal('importSetupModal')">×</button>
+            </div>
+            <form id="importSetupForm" onsubmit="submitImport(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label required">File Excel</label>
+                        <input type="file" id="importFile" class="form-control" accept=".xlsx,.xls" required>
+                        <small style="color: var(--text-secondary);">Format: Harga OTR.xlsx</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tanggal Expired Harga</label>
+                        <input type="date" id="importExpiredDate" class="form-control" value="${dateStr}">
+                        <small style="color: var(--text-secondary);">Default: 1 bulan dari hari ini</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('importSetupModal')">Batal</button>
+                    <button type="submit" class="btn btn-primary">Import</button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    importModalElement = modal;
+    document.body.appendChild(modal);
+}
+
+function submitImport(event) {
+    event.preventDefault();
+
+    // Get file from input inside modal
+    const fileInput = document.querySelector('#importSetupModal input[type="file"]');
+    const tglExpiredInput = document.querySelector('#importSetupModal input[type="date"]');
+
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        showToast('Pilih file terlebih dahulu', 'error');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const tglExpired = tglExpiredInput ? tglExpiredInput.value : '';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('tgl_expired', tglExpired);
+
+    axios.post('/api/type-motor/import/excel', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    .then(response => {
+        // Remove modal from DOM
+        const modal = document.getElementById('importSetupModal');
+        if (modal) modal.remove();
+        showImportResult(response.data);
+    })
+    .catch(error => {
+        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+    });
+}
+
+// Import handling (legacy)
+function handleImportFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    axios.post('/api/type-motor/import/excel', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    .then(response => {
+        const result = response.data;
+        showImportResult(result);
+    })
+    .catch(error => {
+        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+    })
+    .finally(() => {
+        event.target.value = '';  // Reset file input
+    });
+}
+
+function showImportResult(result) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'importModal';
+    modal.style.display = 'flex';
+
+    const content = `
+        <div class="modal" style="width: 90%; max-width: 600px;">
+            <div class="modal-header">
+                <h4 class="modal-title">Hasil Import Type Motor</h4>
+                <button class="modal-close" onclick="closeModal('importModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div style="padding: 16px; background: var(--bg-secondary); border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--success);">${result.updated}</div>
+                        <div style="color: var(--text-secondary); margin-top: 8px;">Updated/Created</div>
+                    </div>
+                    <div style="padding: 16px; background: var(--bg-secondary); border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--danger);">${result.errors.length}</div>
+                        <div style="color: var(--text-secondary); margin-top: 8px;">Error</div>
+                    </div>
+                </div>
+
+                ${result.errors.length > 0 ? `
+                    <div style="margin-bottom: 16px;">
+                        <h6 style="color: var(--danger); margin-bottom: 8px;">Errors:</h6>
+                        <div style="padding: 12px; background: #fff5f5; border-left: 4px solid var(--danger); border-radius: 4px; font-size: 0.9em; max-height: 150px; overflow-y: auto;">
+                            ${result.errors.map(e => `<div>• ${e}</div>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${result.warnings.length > 0 ? `
+                    <div style="margin-bottom: 16px;">
+                        <h6 style="color: var(--warning); margin-bottom: 8px;">Warnings:</h6>
+                        <div style="padding: 12px; background: #fffbf0; border-left: 4px solid var(--warning); border-radius: 4px; font-size: 0.9em; max-height: 150px; overflow-y: auto;">
+                            ${result.warnings.map(w => `<div>⚠ ${w}</div>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${result.success ? `
+                    <div style="padding: 12px; background: #f0fdf4; border-left: 4px solid var(--success); border-radius: 4px; color: var(--success);">
+                        ✓ Import berhasil! ${result.updated} type motor telah diperbarui.
+                    </div>
+                ` : ''}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="closeModal('importModal'); location.reload();">Tutup & Refresh</button>
+            </div>
+        </div>
+    `;
+
+    modal.innerHTML = content;
+    document.body.appendChild(modal);
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    // If it's a class-based modal (typeModal), hide with classList
+    if (modal.classList.contains('show')) {
+        modal.classList.remove('show');
+    } else {
+        // If it's a dynamically created modal, remove from DOM
+        modal.remove();
+    }
+}
+
+function showToast(message, type = 'info') {
+    alert(message);
+}
+
+function formatCurrency(value) {
+    if (!value) return 'Rp 0';
+    return 'Rp ' + parseInt(value).toLocaleString('id-ID');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadTypeMotor();
 });
@@ -107,18 +295,23 @@ function loadTypeMotor() {
             tbody.innerHTML = '';
 
             if (types.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: var(--space-6);">Tidak ada data type motor</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: var(--space-6);">Tidak ada data type motor</td></tr>';
                 return;
             }
 
             types.forEach(t => {
+                const today = new Date().toISOString().split('T')[0];
+                const isExpired = t.tgl_expired_harga && t.tgl_expired_harga < today;
+                const expiredBadge = isExpired ? '<span style="color: var(--danger); font-weight: bold; margin-left: 8px;">⚠ EXPIRED</span>' : '';
+
                 const row = `
-                    <tr>
+                    <tr style="${isExpired ? 'background-color: #fff5f5;' : ''}">
                         <td><strong>${t.kd_type}</strong></td>
                         <td>${t.nama_type}</td>
                         <td>${t.ket_nomesin || '-'}</td>
                         <td>${t.ket_norangka || '-'}</td>
                         <td style="text-align: right;">${formatCurrency(t.harga_otr)}</td>
+                        <td>${t.tgl_expired_harga ? t.tgl_expired_harga.split('-').reverse().join('-') : '-'}${expiredBadge}</td>
                         <td style="text-align: center;">
                             <div class="btn-group" style="gap: var(--space-1); justify-content: center;">
                                 <button class="btn btn-sm btn-secondary" onclick="editType(${t.id})">Edit</button>
@@ -133,7 +326,7 @@ function loadTypeMotor() {
         .catch(error => {
             console.error('Error loading type motor:', error);
             document.getElementById('type-body').innerHTML =
-                '<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: var(--space-6);">Gagal memuat data</td></tr>';
+                '<tr><td colspan="7" style="text-align: center; color: var(--danger); padding: var(--space-6);">Gagal memuat data</td></tr>';
         });
 }
 
@@ -142,10 +335,6 @@ function openAddModal() {
     document.getElementById('type-id').value = '';
     document.getElementById('modalTitle').textContent = 'Tambah Type Motor Baru';
     document.getElementById('typeModal').classList.add('show');
-}
-
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('show');
 }
 
 function editType(id) {
@@ -158,6 +347,7 @@ function editType(id) {
             document.getElementById('ket-nomesin').value = t.ket_nomesin || '';
             document.getElementById('ket-norangka').value = t.ket_norangka || '';
             document.getElementById('harga-otr').value = t.harga_otr;
+            document.getElementById('tgl-expired-harga').value = t.tgl_expired_harga || '';
 
             document.getElementById('modalTitle').textContent = 'Edit Type Motor';
             document.getElementById('typeModal').classList.add('show');
@@ -177,6 +367,7 @@ function saveType(event) {
         ket_nomesin: document.getElementById('ket-nomesin').value,
         ket_norangka: document.getElementById('ket-norangka').value,
         harga_otr: parseFloat(document.getElementById('harga-otr').value) || 0,
+        tgl_expired_harga: document.getElementById('tgl-expired-harga').value || null,
     };
 
     const method = id ? 'PUT' : 'POST';

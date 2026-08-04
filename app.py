@@ -1335,9 +1335,9 @@ def delete_transaksi(transaksi_id):
 
 @app.route('/api/transaksi/<int:transaksi_id>/approve', methods=['POST'])
 def approve_transaksi(transaksi_id):
-    """Approve posting transaksi (Draft → Approved/Posted)"""
+    """Approve posting transaksi (Draft → Approved/Posted) and update motor status to Sold"""
     try:
-        from database.models import Transaksi
+        from database.models import Transaksi, StokMotor
 
         session = DatabaseManager.get_session()
         transaksi = session.query(Transaksi).filter_by(id=transaksi_id).first()
@@ -1352,6 +1352,14 @@ def approve_transaksi(transaksi_id):
         transaksi.status_transaksi = 'A'
         transaksi.updated_at = datetime.utcnow()
         session.commit()
+
+        # Update motor status to 'S' (Sold) via TransaksiDetail
+        if transaksi.detail:
+            motor = session.query(StokMotor).filter_by(id=transaksi.detail.stok_motor_id).first()
+            if motor:
+                motor.status = 'S'  # Sold
+                session.commit()
+                logger.info(f"Motor {motor.no_mesin} status updated to Sold (transaksi {transaksi_id})")
 
         logger.info(f"Transaksi {transaksi_id} approved and posted by supervisor")
 
@@ -1510,6 +1518,7 @@ def get_type_motor():
             'ket_norangka': t.prefix_norangka or '',
             'harga_otr': float(t.otr) if t.otr else 0,
             'harga_dasar': float(t.harga_dasar) if t.harga_dasar else 0,
+            'tgl_expired_harga': t.tgl_expired_harga.isoformat() if t.tgl_expired_harga else None,
         } for t in types]
         session.close()
 
@@ -1540,6 +1549,7 @@ def get_type_motor_detail(type_id):
             'ket_norangka': type_motor.prefix_norangka or '',
             'harga_otr': float(type_motor.otr) if type_motor.otr else 0,
             'harga_dasar': float(type_motor.harga_dasar) if type_motor.harga_dasar else 0,
+            'tgl_expired_harga': type_motor.tgl_expired_harga.isoformat() if type_motor.tgl_expired_harga else None,
         }
 
         return jsonify({'success': True, 'data': data})
@@ -1561,12 +1571,21 @@ def create_type_motor():
         from database.models import TypeMotor
         session = DatabaseManager.get_session()
 
+        # Parse tgl_expired_harga if provided
+        tgl_expired = None
+        if data.get('tgl_expired_harga'):
+            try:
+                tgl_expired = datetime.strptime(data['tgl_expired_harga'], '%Y-%m-%d').date()
+            except:
+                pass
+
         type_motor = TypeMotor(
             kode_type=data['kd_type'],
             nama_type=data['nama_type'],
             prefix_nomesin=data.get('ket_nomesin', ''),
             prefix_norangka=data.get('ket_norangka', ''),
             otr=data.get('harga_otr', 0),
+            tgl_expired_harga=tgl_expired,
             status='A'
         )
 
@@ -1610,6 +1629,14 @@ def update_type_motor(type_id):
             type_motor.prefix_norangka = data['ket_norangka']
         if 'harga_otr' in data:
             type_motor.otr = data['harga_otr']
+        if 'tgl_expired_harga' in data:
+            if data['tgl_expired_harga']:
+                try:
+                    type_motor.tgl_expired_harga = datetime.strptime(data['tgl_expired_harga'], '%Y-%m-%d').date()
+                except:
+                    pass
+            else:
+                type_motor.tgl_expired_harga = None
 
         session.commit()
         session.close()
@@ -1651,6 +1678,63 @@ def delete_type_motor(type_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/type-motor/import/excel', methods=['POST'])
+def import_type_motor_excel():
+    """Import type motor from Excel file (Harga OTR format)"""
+    try:
+        from business.type_motor_import_service import TypeMotorImportService
+
+        # Check if file was uploaded
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'No file provided'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+        # Validate file extension
+        if not file.filename.lower().endswith(('xlsx', 'xls')):
+            return jsonify({'success': False, 'error': 'File harus berformat Excel (.xlsx atau .xls)'}), 400
+
+        # Save uploaded file temporarily
+        filename = secure_filename(file.filename)
+        temp_path = Path(app.config['UPLOAD_FOLDER']) / f"temp_{filename}"
+        file.save(str(temp_path))
+
+        # Get tgl_expired from form data if provided, otherwise default 1 month from today
+        from datetime import date
+        from dateutil.relativedelta import relativedelta
+
+        tgl_expired_str = request.form.get('tgl_expired')
+        tgl_expired = None
+        if tgl_expired_str:
+            try:
+                tgl_expired = datetime.strptime(tgl_expired_str, '%Y-%m-%d').date()
+            except:
+                pass
+
+        if tgl_expired is None:
+            tgl_expired = date.today() + relativedelta(months=1)
+
+        # Import using service
+        import_service = TypeMotorImportService()
+        result = import_service.import_from_excel(str(temp_path), tgl_expired)
+
+        # Clean up temp file
+        try:
+            temp_path.unlink()
+        except:
+            pass
+
+        return jsonify(result), (200 if result['success'] else 400)
+
+    except Exception as e:
+        logger.error(f"Error importing type motor: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # =====================================================================
 # API - Stok Motor (Inventory)
 # =====================================================================
@@ -1659,7 +1743,7 @@ def delete_type_motor(type_id):
 def get_stok_motor():
     """Get all stok motor with optional filters"""
     try:
-        from database.models import StokMotor, TypeMotor, Dealer
+        from database.models import StokMotor, TypeMotor, Dealer, StokTransfer, Broker
         from sqlalchemy import or_
         session = DatabaseManager.get_session()
 
@@ -1691,6 +1775,22 @@ def get_stok_motor():
         for s in stoks:
             type_name = s.type_motor.nama_type if s.type_motor else "N/A"
             dealer_name = s.dealer.nama if s.dealer else "-"
+
+            # Get transfer/tujuan info if exists (active transfer)
+            tujuan_name = None
+            transfer = session.query(StokTransfer).filter(
+                StokTransfer.stok_motor_id == s.id,
+                StokTransfer.status == 'A'  # Active only
+            ).first()
+
+            if transfer:
+                if transfer.dealer_tujuan_id:
+                    tujuan = session.query(Dealer).filter_by(id=transfer.dealer_tujuan_id).first()
+                    tujuan_name = tujuan.nama if tujuan else None
+                elif transfer.broker_tujuan_id:
+                    tujuan = session.query(Broker).filter_by(id=transfer.broker_tujuan_id).first()
+                    tujuan_name = tujuan.nama if tujuan else None
+
             data.append({
                 'id': s.id,
                 'tanggal_datang': s.tgl_datang.isoformat(),
@@ -1702,6 +1802,7 @@ def get_stok_motor():
                 'dealer_id': s.dealer_id,
                 'dealer_nama': dealer_name,
                 'status': s.status,
+                'tujuan_nama': tujuan_name,  # Link/Ke Tujuan
             })
 
         session.close()
@@ -1922,6 +2023,43 @@ def import_stok_motor_excel():
             except:
                 pass
 
+        # Auto-backup database before import (smart: skip if recent backup exists)
+        try:
+            from pathlib import Path as PathlibPath
+            import shutil
+            db_path = PathlibPath("database.db")
+            if db_path.exists():
+                backup_dir = PathlibPath("backups")
+                backup_dir.mkdir(exist_ok=True)
+
+                # Check if recent backup exists (within 5 minutes)
+                recent_backup_exists = False
+                current_time = datetime.now().timestamp()
+                for backup in backup_dir.glob("database_*.db"):
+                    backup_time = backup.stat().st_mtime
+                    if current_time - backup_time < 300:  # 5 minutes
+                        recent_backup_exists = True
+                        logger.info(f"[Import] Recent backup exists, skipping new backup")
+                        break
+
+                if not recent_backup_exists:
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    backup_path = backup_dir / f"database_{timestamp}.db"
+                    shutil.copy2(db_path, backup_path)
+                    logger.info(f"[Import] Backup created: {backup_path}")
+
+                    # Cleanup old backups - keep only last 5
+                    backups = sorted(backup_dir.glob("database_*.db"), reverse=True)
+                    for old_backup in backups[5:]:  # Delete backups beyond the 5th most recent
+                        try:
+                            old_backup.unlink()
+                            logger.info(f"[Import] Deleted old backup: {old_backup.name}")
+                        except:
+                            pass
+        except Exception as e:
+            logger.warning(f"[Import] Backup failed: {e}")
+            # Don't fail import if backup fails, just warn
+
         # Import using service
         import_service = ImportService()
         result = import_service.import_from_excel(str(temp_path), tgl_datang)
@@ -2135,10 +2273,11 @@ def get_pindah_stok():
             StokTransfer.tipe_transfer,
             StokTransfer.driver,
             StokTransfer.status,
+            StokTransfer.dealer_tujuan_id,
+            StokTransfer.broker_tujuan_id,
             StokMotor.no_mesin,
             TypeMotor.nama_type.label('motor_type'),
             Dealer.nama.label('dealer_asal_name'),
-            Dealer.id.label('dealer_asal_id'),
         ).outerjoin(
             Dealer, StokTransfer.dealer_asal_id == Dealer.id
         ).join(
@@ -2147,37 +2286,27 @@ def get_pindah_stok():
             TypeMotor, StokMotor.type_id == TypeMotor.id
         )
 
-        # Add tujuan info (either dealer or broker)
-        # We'll handle this in post-processing for simplicity
-
         if status:
             query = query.filter(StokTransfer.status == status)
 
         transfers = query.order_by(StokTransfer.tgl_transfer.desc()).all()
 
+        # Load all dealers and brokers upfront
+        dealer_ids = set(t.dealer_tujuan_id for t in transfers if t.dealer_tujuan_id)
+        broker_ids = set(t.broker_tujuan_id for t in transfers if t.broker_tujuan_id)
+
+        dealers_map = {}
+        if dealer_ids:
+            for dealer in session.query(Dealer).filter(Dealer.id.in_(dealer_ids)).all():
+                dealers_map[dealer.id] = dealer.nama
+
+        brokers_map = {}
+        if broker_ids:
+            for broker in session.query(Broker).filter(Broker.id.in_(broker_ids)).all():
+                brokers_map[broker.id] = broker.nama
+
         data = []
         for t in transfers:
-            # Get tujuan info
-            dealer_tujuan_name = None
-            broker_tujuan_name = None
-
-            if t.dealer_asal_id:
-                tujuan_dealer = session.query(Dealer).filter(
-                    Dealer.id == session.query(StokTransfer.dealer_tujuan_id).filter(
-                        StokTransfer.id == t.id
-                    ).scalar()
-                ).first()
-                if tujuan_dealer:
-                    dealer_tujuan_name = tujuan_dealer.nama
-
-            tujuan_broker = session.query(Broker).filter(
-                Broker.id == session.query(StokTransfer.broker_tujuan_id).filter(
-                    StokTransfer.id == t.id
-                ).scalar()
-            ).first()
-            if tujuan_broker:
-                broker_tujuan_name = tujuan_broker.nama
-
             data.append({
                 'id': t.id,
                 'tgl_transfer': t.tgl_transfer.isoformat(),
@@ -2188,8 +2317,8 @@ def get_pindah_stok():
                 'no_mesin': t.no_mesin,
                 'motor_type': t.motor_type,
                 'dealer_asal_name': t.dealer_asal_name,
-                'dealer_tujuan_name': dealer_tujuan_name,
-                'broker_tujuan_name': broker_tujuan_name,
+                'dealer_tujuan_name': dealers_map.get(t.dealer_tujuan_id),
+                'broker_tujuan_name': brokers_map.get(t.broker_tujuan_id),
             })
 
         session.close()
@@ -2245,6 +2374,10 @@ def create_pindah_stok():
         session.add(transfer)
         session.commit()
 
+        # Update motor status to 'T' (transferred)
+        motor.status = 'T'
+        session.commit()
+
         logger.info(f"[Pindah Stok] Motor {motor.no_mesin} dipindahkan")
 
         session.close()
@@ -2290,6 +2423,14 @@ def return_pindah_stok(transfer_id):
             transfer.catatan = data['catatan']
 
         session.commit()
+
+        # Update motor status back to 'R' (ready)
+        motor = session.query(StokMotor).filter(
+            StokMotor.id == transfer.stok_motor_id
+        ).first()
+        if motor:
+            motor.status = 'R'
+            session.commit()
 
         logger.info(f"[Pindah Stok] Motor (ID {transfer.stok_motor_id}) dikembalikan dari transfer")
 
@@ -2390,6 +2531,143 @@ def server_error(e):
     """Handle 500 errors"""
     logger.error(f"Server error: {e}")
     return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+
+# =====================================================================
+# Backup & Restore Routes
+# =====================================================================
+
+@app.route('/backup-restore', methods=['GET'])
+def backup_restore_page():
+    """Render backup/restore page"""
+    return render_template('backup_restore.html')
+
+
+@app.route('/api/backup-database', methods=['POST'])
+def backup_database():
+    """Manual backup database with custom destination"""
+    try:
+        data = request.get_json()
+        destination = data.get('destination', 'default')
+        custom_path = data.get('customPath', '')
+        notes = data.get('notes', '')
+
+        import shutil
+        from pathlib import Path as PathlibPath
+
+        db_path = PathlibPath("database.db")
+        if not db_path.exists():
+            return jsonify({'success': False, 'error': 'Database tidak ditemukan'}), 404
+
+        # Determine backup directory
+        if destination == 'custom':
+            if not custom_path:
+                return jsonify({'success': False, 'error': 'Custom path tidak boleh kosong'}), 400
+            backup_dir = PathlibPath(custom_path)
+        else:
+            backup_dir = PathlibPath("backups")
+
+        # Create backup directory if not exists
+        backup_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create backup file with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        notes_suffix = f"_{notes.replace(' ', '_')}" if notes else ""
+        backup_path = backup_dir / f"database_{timestamp}{notes_suffix}.db"
+
+        shutil.copy2(db_path, backup_path)
+        logger.info(f"[Backup] Created: {backup_path}")
+
+        return jsonify({
+            'success': True,
+            'backup_file': backup_path.name,
+            'message': f'Backup berhasil dibuat: {backup_path.name}'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"[Backup] Error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/list-backups', methods=['GET'])
+def list_backups():
+    """List 3 most recent backups with info"""
+    try:
+        from pathlib import Path as PathlibPath
+        backup_dir = PathlibPath("backups")
+
+        if not backup_dir.exists():
+            return jsonify({'backups': []}), 200
+
+        # Get all backups sorted by modification time (newest first)
+        backups = sorted(
+            backup_dir.glob("database_*.db"),
+            key=lambda x: x.stat().st_mtime,
+            reverse=True
+        )[:3]  # Get only 3 most recent
+
+        backup_list = []
+        for backup in backups:
+            size_mb = backup.stat().st_size / (1024 * 1024)
+            mod_time = datetime.fromtimestamp(backup.stat().st_mtime)
+            date_str = mod_time.strftime('%d-%m-%Y %H:%M:%S')
+
+            backup_list.append({
+                'filename': backup.name,
+                'size': f'{size_mb:.1f} MB',
+                'date': date_str,
+                'timestamp': mod_time.isoformat()
+            })
+
+        return jsonify({'backups': backup_list}), 200
+
+    except Exception as e:
+        logger.error(f"[List Backups] Error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/restore-database', methods=['POST'])
+def restore_database():
+    """Restore database from backup"""
+    try:
+        data = request.get_json()
+        backup_filename = data.get('backup_file')
+
+        if not backup_filename:
+            return jsonify({'success': False, 'error': 'Backup file tidak ditentukan'}), 400
+
+        import shutil
+        from pathlib import Path as PathlibPath
+
+        backup_path = PathlibPath("backups") / backup_filename
+        db_path = PathlibPath("database.db")
+
+        if not backup_path.exists():
+            return jsonify({'success': False, 'error': 'Backup file tidak ditemukan'}), 404
+
+        # Backup current database before restore
+        if db_path.exists():
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            current_backup = PathlibPath("backups") / f"database_current_{timestamp}.db"
+            current_backup.parent.mkdir(exist_ok=True)
+            shutil.copy2(db_path, current_backup)
+            logger.info(f"[Restore] Current database backed up to: {current_backup}")
+
+        # Restore from backup
+        shutil.copy2(backup_path, db_path)
+        logger.info(f"[Restore] Database restored from: {backup_path}")
+
+        # Close all database connections
+        DatabaseManager.close_all_connections()
+
+        return jsonify({
+            'success': True,
+            'message': 'Database berhasil di-restore'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"[Restore] Error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # =====================================================================

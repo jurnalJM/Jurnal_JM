@@ -14,33 +14,37 @@
         <h3>Filter Data</h3>
     </div>
     <div class="card-body">
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; align-items: end;">
-            <div class="form-group">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 15px; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0;">
                 <label class="form-label">Dari Tanggal</label>
-                <input type="date" id="filterTglAwal" class="form-control" />
+                <input type="date" id="filterTglAwal" class="form-control" style="height: 40px;" />
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 0;">
                 <label class="form-label">Sampai Tanggal</label>
-                <input type="date" id="filterTglAkhir" class="form-control" />
+                <input type="date" id="filterTglAkhir" class="form-control" style="height: 40px;" />
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 0;">
                 <label class="form-label">No. Mesin / Nota</label>
-                <input type="text" id="filterSearch" class="form-control" placeholder="Cari no mesin atau nota..." />
+                <input type="text" id="filterSearch" class="form-control" style="height: 40px;" placeholder="Cari no mesin atau nota..." />
             </div>
-            <button onclick="loadJurnalData()" class="btn btn-primary">
-                <span>Cari Data</span>
-            </button>
+            <button onclick="loadJurnalData()" class="btn btn-primary" style="height: 40px; white-space: nowrap;">Cari Data</button>
         </div>
     </div>
 </div>
 
 <!-- Export Buttons -->
 <div style="margin-bottom: 15px; display: flex; gap: 10px;">
-    <button onclick="exportToExcel()" class="btn btn-secondary">
-        <span>📊 Export ke Excel</span>
+    <button onclick="exportToExcel()" class="btn btn-secondary" style="display: flex; align-items: center; gap: 8px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2 2h8v2H2V2zm0 3h8v8H2V5zm2 2v4h4V7H4z"/>
+        </svg>
+        <span>Export ke Excel</span>
     </button>
-    <button onclick="printReport()" class="btn btn-secondary">
-        <span>🖨️ Cetak</span>
+    <button onclick="printReport()" class="btn btn-secondary" style="display: flex; align-items: center; gap: 8px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2 4h12v2H2V4zm0 4h12v6H2V8zm2 2v2h8v-2H4z"/>
+        </svg>
+        <span>Cetak</span>
     </button>
 </div>
 

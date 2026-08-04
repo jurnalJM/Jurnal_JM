@@ -136,6 +136,7 @@ class TypeMotor(Base):
     warna_tersedia = Column(String(200))  # Comma-separated list
     prefix_nomesin = Column(String(50))  # Format awal nomor mesin (prefix)
     prefix_norangka = Column(String(50))  # Format awal nomor rangka (prefix)
+    tgl_expired_harga = Column(Date)  # Tanggal expired harga OTR
     status = Column(String(1), default="A", nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

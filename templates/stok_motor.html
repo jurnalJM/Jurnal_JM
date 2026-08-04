@@ -3,14 +3,19 @@
 {% block title %}Stok Motor - JayaMotor - Honda{% endblock %}
 
 {% block content %}
-<div class="actions-bar">
-    <div class="page-header" style="margin-bottom: 0;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; gap: 16px;">
+    <div class="page-header" style="margin-bottom: 0; flex: 1;">
         <h1 class="page-title">Stok Motor</h1>
         <p class="page-subtitle">Kelola inventory unit motor</p>
     </div>
-    <button class="btn btn-primary btn-lg" onclick="openAddModal()" style="align-self: flex-start;">
-        Tambah Stok Motor
-    </button>
+    <div style="display: flex; gap: 8px;">
+        <button class="btn btn-primary" onclick="openAddModal()" style="white-space: nowrap; height: fit-content;">
+            + Tambah Stok
+        </button>
+        <button class="btn btn-secondary" onclick="window.location.href='/import-stok'" style="white-space: nowrap; height: fit-content;">
+            📥 Import Stok
+        </button>
+    </div>
 </div>
 
 <!-- Filter Panel -->
@@ -50,11 +55,12 @@
                 <thead>
                     <tr>
                         <th>Tanggal Masuk</th>
+                        <th>Dealer</th>
                         <th>No. Mesin</th>
                         <th>No. Rangka</th>
                         <th>Type</th>
                         <th>Warna</th>
-                        <th>Dealer</th>
+                        <th>Link/Ke Tujuan</th>
                         <th>Status</th>
                         <th style="width: 100px; text-align: center;">Aksi</th>
                     </tr>
@@ -201,21 +207,34 @@ function loadStok() {
             tbody.innerHTML = '';
 
             if (stoks.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: var(--space-6);">Tidak ada stok</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: var(--space-6);">Tidak ada stok</td></tr>';
                 return;
             }
 
             stoks.forEach(s => {
-                const statusBadge = s.status === 'R' ? 'success' : 'danger';
-                const statusText = s.status === 'R' ? 'Tersedia' : 'Terjual';
+                let statusBadge, statusText;
+                if (s.status === 'R') {
+                    statusBadge = 'success';
+                    statusText = 'Tersedia';
+                } else if (s.status === 'T') {
+                    statusBadge = 'warning';
+                    statusText = 'Dipindahkan';
+                } else if (s.status === 'S') {
+                    statusBadge = 'danger';
+                    statusText = 'Terjual';
+                } else {
+                    statusBadge = 'secondary';
+                    statusText = s.status;
+                }
                 const row = `
                     <tr>
                         <td>${formatDate(s.tanggal_datang)}</td>
+                        <td>${s.dealer_nama || '-'}</td>
                         <td><strong>${s.no_mesin}</strong></td>
                         <td><strong>${s.no_rangka}</strong></td>
                         <td>${s.type_nama}</td>
                         <td>${s.warna || '-'}</td>
-                        <td>${s.dealer_nama || '-'}</td>
+                        <td>${s.tujuan_nama || '-'}</td>
                         <td><span class="badge badge-${statusBadge}">${statusText}</span></td>
                         <td style="text-align: center;">
                             <div class="btn-group" style="gap: var(--space-1); justify-content: center;">
@@ -262,16 +281,29 @@ function filterStok() {
             }
 
             stoks.forEach(s => {
-                const statusBadge = s.status === 'R' ? 'success' : 'danger';
-                const statusText = s.status === 'R' ? 'Tersedia' : 'Terjual';
+                let statusBadge, statusText;
+                if (s.status === 'R') {
+                    statusBadge = 'success';
+                    statusText = 'Tersedia';
+                } else if (s.status === 'T') {
+                    statusBadge = 'warning';
+                    statusText = 'Dipindahkan';
+                } else if (s.status === 'S') {
+                    statusBadge = 'danger';
+                    statusText = 'Terjual';
+                } else {
+                    statusBadge = 'secondary';
+                    statusText = s.status;
+                }
                 const row = `
                     <tr>
                         <td>${formatDate(s.tanggal_datang)}</td>
+                        <td>${s.dealer_nama || '-'}</td>
                         <td><strong>${s.no_mesin}</strong></td>
                         <td><strong>${s.no_rangka}</strong></td>
                         <td>${s.type_nama}</td>
                         <td>${s.warna || '-'}</td>
-                        <td>${s.dealer_nama || '-'}</td>
+                        <td>${s.tujuan_nama || '-'}</td>
                         <td><span class="badge badge-${statusBadge}">${statusText}</span></td>
                         <td style="text-align: center;">
                             <div class="btn-group" style="gap: var(--space-1); justify-content: center;">

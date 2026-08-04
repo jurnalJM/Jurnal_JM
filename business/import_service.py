@@ -6,6 +6,8 @@ Handles parsing and validation of distribusi Excel files
 from datetime import date
 from typing import List, Dict, Any, Tuple
 import openpyxl
+import xlrd
+from pathlib import Path
 
 from database.connection import DatabaseManager
 from database.models import StokMotor, TypeMotor
@@ -41,18 +43,37 @@ class ImportService:
             tgl_datang = date.today()
 
         try:
-            # Read Excel file
-            wb = openpyxl.load_workbook(file_path)
-            ws = wb.active
+            # Determine file format and read accordingly
+            file_path_obj = Path(file_path)
+            is_old_format = file_path_obj.suffix.lower() == '.xls'
+
+            rows_data = []
+
+            if is_old_format:
+                # Use xlrd for old .xls format
+                wb = xlrd.open_workbook(file_path)
+                ws = wb.sheet_by_index(0)
+
+                for row_num in range(ws.nrows):
+                    values = [ws.cell_value(row_num, col_idx) for col_idx in range(ws.ncols)]
+                    # Skip empty rows
+                    if not any(values):
+                        continue
+                    rows_data.append((row_num + 1, values))
+            else:
+                # Use openpyxl for .xlsx format
+                wb = openpyxl.load_workbook(file_path)
+                ws = wb.active
+
+                for row_num, row in enumerate(ws.iter_rows(min_row=1, max_row=ws.max_row, values_only=False), 1):
+                    values = [cell.value for cell in row]
+                    # Skip empty rows
+                    if not any(values):
+                        continue
+                    rows_data.append((row_num, values))
 
             # Parse and validate rows
-            for row_num, row in enumerate(ws.iter_rows(min_row=1, max_row=ws.max_row, values_only=False), 1):
-                values = [cell.value for cell in row]
-
-                # Skip empty rows
-                if not any(values):
-                    continue
-
+            for row_num, values in rows_data:
                 result = self._parse_row(row_num, values, tgl_datang)
                 if result:
                     self.validated_rows.append(result)
@@ -100,45 +121,68 @@ class ImportService:
 
     def _parse_row(self, row_num: int, values: List, tgl_datang: date) -> Dict[str, Any]:
         """
-        Parse and validate a single row from Excel
+        Parse and validate a single row from Excel (stokmotor.xls format)
 
         Excel columns:
-        A: Nama Dealer
-        B: Nomor Rangka (tanpa prefix)
-        C: Nomor Mesin
-        D: Kode Type (ML1F, MJ1E, dll)
-        E: Kode Warna (BW, BL, BK, dll atau nama warna)
-        F: Kode Dealer (A0035, A0105, dll)
+        A: Tanggal Masuk (optional, uses default tgl_datang if empty)
+        B: Dealer (nama dealer dari database)
+        C: No. Mesin
+        D: No. Rangka
+        E: Kode Type (ML1F, MJ1E, dll)
+        F: Warna (nama warna atau kode)
+        G: Link (optional, unused)
         """
-        if len(values) < 6:
-            self.errors.append(f"Row {row_num}: Tidak cukup kolom (harus 6)")
+        # Skip header row
+        if row_num == 1:
             return None
 
-        nama_dealer = values[0]
-        no_rangka_base = values[1]
+        if len(values) < 6:
+            self.errors.append(f"Row {row_num}: Tidak cukup kolom (minimal 6)")
+            return None
+
+        tgl_masuk_val = values[0]
+        dealer_nama = values[1]
         no_mesin = values[2]
-        kode_type = values[3]
-        warna = values[4]
-        kode_dealer = values[5]
+        no_rangka = values[3]
+        kode_type = values[4]
+        warna = values[5]
 
         # Validate required fields
-        if not no_rangka_base:
-            self.errors.append(f"Row {row_num}: Nomor Rangka kosong")
-            return None
         if not no_mesin:
             self.errors.append(f"Row {row_num}: Nomor Mesin kosong")
+            return None
+        if not no_rangka:
+            self.errors.append(f"Row {row_num}: Nomor Rangka kosong")
             return None
         if not kode_type:
             self.errors.append(f"Row {row_num}: Kode Type kosong")
             return None
-        if not kode_dealer:
-            self.errors.append(f"Row {row_num}: Kode Dealer kosong")
+        if not dealer_nama:
+            self.errors.append(f"Row {row_num}: Nama Dealer kosong")
             return None
 
-        # Map dealer
-        dealer_id = get_dealer_id(str(kode_dealer).strip())
+        # Parse tanggal masuk if provided (handle Excel numeric date format)
+        tgl_masuk = tgl_datang
+        if tgl_masuk_val:
+            try:
+                from datetime import datetime, timedelta
+                if isinstance(tgl_masuk_val, (int, float)):
+                    # Excel numeric date format (days since 1900-01-01)
+                    # Excel starts from 1900-01-01 (with 1900 leap year bug)
+                    excel_epoch = datetime(1899, 12, 30)
+                    tgl_masuk = (excel_epoch + timedelta(days=int(tgl_masuk_val))).date()
+                elif isinstance(tgl_masuk_val, str):
+                    tgl_masuk = datetime.strptime(str(tgl_masuk_val), '%Y-%m-%d').date()
+                elif isinstance(tgl_masuk_val, date):
+                    tgl_masuk = tgl_masuk_val
+            except Exception as e:
+                # If parse fails, use default tgl_datang
+                pass
+
+        # Map dealer by name
+        dealer_id = self._get_dealer_id_by_name(str(dealer_nama).strip())
         if not dealer_id:
-            self.errors.append(f"Row {row_num}: Kode Dealer '{kode_dealer}' tidak dikenali")
+            self.errors.append(f"Row {row_num}: Dealer '{dealer_nama}' tidak ditemukan")
             return None
 
         # Get or create type motor based on kode_type
@@ -147,23 +191,69 @@ class ImportService:
             self.errors.append(f"Row {row_num}: Gagal memproses Type '{kode_type}'")
             return None
 
-        # Use warna value directly from Excel (no mapping needed)
+        # Use warna value directly from Excel
         warna_value = str(warna).strip() if warna else ''
 
-        # Format nomor rangka (tambah MH1 prefix)
-        no_rangka = f"MH1{no_rangka_base.strip()}"
+        # Parse Link/Ke Tujuan (optional - untuk terintegrasi pindah-stok)
+        link_tujuan = values[6] if len(values) > 6 else None
+        link_tujuan = str(link_tujuan).strip() if link_tujuan else None
 
         return {
             'row_num': row_num,
-            'nama_dealer': nama_dealer,
-            'no_mesin': no_mesin.strip(),
-            'no_rangka': no_rangka,
+            'nama_dealer': dealer_nama,
+            'no_mesin': str(no_mesin).strip(),
+            'no_rangka': str(no_rangka).strip(),
             'type_id': type_id,
             'warna': warna_value,
             'dealer_id': dealer_id,
-            'tgl_datang': tgl_datang,
-            'status': 'R',  # Ready
+            'tgl_datang': tgl_masuk,
+            'status': 'R',  # Ready (will be T if has Link/transfer)
+            'link_tujuan': link_tujuan,
         }
+
+    def _get_dealer_id_by_name(self, dealer_input: str) -> int:
+        """Get dealer ID by name or kode (code)"""
+        session = DatabaseManager.get_session()
+        try:
+            from database.models import Dealer
+
+            # Mapping kode dealer singkat ke nama dealer
+            dealer_mapping = {
+                'JM1': 'Jaya Motor 1',
+                'JM2': 'Jaya Motor 2',
+                'JM3': 'Jaya Motor Bekasi',
+                'A0035': 'Jaya Motor 1',
+                'A0105': 'Jaya Motor 2',
+                'A0210': 'Jaya Motor Bekasi',
+            }
+
+            # Try mapping first
+            if dealer_input in dealer_mapping:
+                dealer_input = dealer_mapping[dealer_input]
+
+            # Try exact match by name
+            dealer = session.query(Dealer).filter_by(nama=dealer_input).first()
+            if dealer:
+                return dealer.id
+
+            # Try case-insensitive match by name
+            dealer = session.query(Dealer).filter(
+                Dealer.nama.ilike(dealer_input)
+            ).first()
+            if dealer:
+                return dealer.id
+
+            # Try match by kode
+            dealer = session.query(Dealer).filter_by(kode_dealer=dealer_input).first()
+            if dealer:
+                return dealer.id
+
+            return None
+        except Exception as e:
+            self.errors.append(f"Error looking up dealer '{dealer_input}': {str(e)}")
+            return None
+        finally:
+            session.close()
 
     def _get_or_create_type_motor(self, kode_type: str) -> int:
         """
@@ -198,7 +288,9 @@ class ImportService:
             return None
 
     def _insert_to_database(self, rows: List[Dict]) -> int:
-        """Insert validated rows to database and collect type motor suggestions"""
+        """Insert validated rows to database and create StokTransfer if Link/Tujuan exists"""
+        from database.models import Dealer, Broker, StokTransfer
+
         session = DatabaseManager.get_session()
         imported = 0
 
@@ -233,9 +325,61 @@ class ImportService:
                     warna=row_data['warna'],
                     dealer_id=row_data['dealer_id'],
                     tgl_datang=row_data['tgl_datang'],
-                    status=row_data['status'],
+                    status='R',  # Initial status: Ready
                 )
                 session.add(stok)
+                session.flush()  # Flush to get stok.id
+
+                # If Link/Tujuan provided, create StokTransfer and update motor status to T
+                if row_data.get('link_tujuan'):
+                    tujuan_dealer_id = None
+                    tujuan_broker_id = None
+                    tujuan_nama = row_data['link_tujuan']
+
+                    # Try to find dealer by name (case-insensitive)
+                    tujuan_dealer = session.query(Dealer).filter(
+                        Dealer.nama.ilike(tujuan_nama)
+                    ).first()
+                    if tujuan_dealer:
+                        tujuan_dealer_id = tujuan_dealer.id
+                    else:
+                        # Try to find broker by name (case-insensitive)
+                        tujuan_broker = session.query(Broker).filter(
+                            Broker.nama.ilike(tujuan_nama)
+                        ).first()
+                        if tujuan_broker:
+                            tujuan_broker_id = tujuan_broker.id
+                        else:
+                            # Auto-create new dealer if not found
+                            new_dealer = Dealer(
+                                nama=tujuan_nama,
+                                kode_dealer=f"AUTO_{tujuan_nama.upper()[:10]}",
+                                status='A'
+                            )
+                            session.add(new_dealer)
+                            session.flush()
+                            tujuan_dealer_id = new_dealer.id
+                            self.warnings.append(
+                                f"Row {row_data['row_num']}: "
+                                f"Dealer '{tujuan_nama}' dibuat otomatis"
+                            )
+
+                    if tujuan_dealer_id or tujuan_broker_id:
+                        # Create transfer record
+                        transfer = StokTransfer(
+                            stok_motor_id=stok.id,
+                            dealer_asal_id=row_data['dealer_id'],
+                            dealer_tujuan_id=tujuan_dealer_id,
+                            broker_tujuan_id=tujuan_broker_id,
+                            tgl_transfer=row_data['tgl_datang'],
+                            tipe_transfer='DISTRIBUSI',
+                            status='A',  # Active transfer
+                        )
+                        session.add(transfer)
+
+                        # Update motor status to Transferred
+                        stok.status = 'T'
+
                 imported += 1
 
             session.commit()

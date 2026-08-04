@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>💾 Backup & Restore Database</h1>
+        <p>Kelola backup database untuk keamanan data</p>
+    </div>
+
+    <div class="backup-restore-grid">
+        <!-- BACKUP SECTION -->
+        <div class="backup-card card">
+            <div class="card-header">
+                <h2>📥 Backup Database</h2>
+                <p>Buat backup database saat ini</p>
+            </div>
+            <div class="card-body">
+                <form id="backupForm">
+                    <div class="form-group">
+                        <label for="destination">Lokasi Penyimpanan:</label>
+                        <select id="destination" name="destination" required>
+                            <option value="default">Default Folder (backups/)</option>
+                            <option value="custom">Custom Folder</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="customPathGroup" style="display: none;">
+                        <label for="customPath">Path Folder:</label>
+                        <input type="text" id="customPath" name="customPath" placeholder="Contoh: D:/MyBackups">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="backupNotes">Catatan (opsional):</label>
+                        <input type="text" id="backupNotes" name="backupNotes" placeholder="Catatan backup ini, misal: Sebelum import data xyz">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <span class="btn-icon">💾</span> Buat Backup Sekarang
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- RESTORE SECTION -->
+        <div class="restore-card card">
+            <div class="card-header">
+                <h2>📤 Restore Database</h2>
+                <p>Kembalikan database dari backup</p>
+            </div>
+            <div class="card-body">
+                <div id="restoreLoadingSpinner" class="spinner" style="display: none;">
+                    <div class="spinner-border"></div>
+                    <p>Memuat backup list...</p>
+                </div>
+
+                <div id="restoreContent" style="display: none;">
+                    <div class="form-group">
+                        <label for="backupList">Pilih Backup (3 Terakhir):</label>
+                        <select id="backupList" name="backupList" required>
+                            <option value="">-- Pilih Backup --</option>
+                        </select>
+                    </div>
+
+                    <div id="backupInfo" class="backup-info" style="display: none;">
+                        <p><strong>Ukuran:</strong> <span id="backupSize">-</span></p>
+                        <p><strong>Waktu Backup:</strong> <span id="backupDate">-</span></p>
+                    </div>
+
+                    <button type="button" class="btn btn-warning btn-block" id="restoreBtn" disabled>
+                        <span class="btn-icon">⚠️</span> Restore dari Backup
+                    </button>
+                </div>
+
+                <div id="restoreNoBackup" style="display: none;">
+                    <div class="alert alert-info">
+                        <p>❌ Tidak ada backup tersedia</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATUS MESSAGES -->
+    <div id="successMessage" class="alert alert-success" style="display: none;">
+        <strong>✓ Berhasil!</strong> <span id="successText"></span>
+    </div>
+
+    <div id="errorMessage" class="alert alert-danger" style="display: none;">
+        <strong>✗ Error:</strong> <span id="errorText"></span>
+    </div>
+</div>
+
+<style>
+.page-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.page-header h1 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.page-header p {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.backup-restore-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .backup-restore-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.card-header {
+    background: #f5f5f5;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.card-header h2 {
+    font-size: 1.3rem;
+    margin: 0 0 0.5rem 0;
+    color: #333;
+}
+
+.card-header p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #4A9B7F;
+    box-shadow: 0 0 0 3px rgba(74, 155, 127, 0.1);
+}
+
+.btn {
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-primary {
+    background: #4A9B7F;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #3a7b6b;
+}
+
+.btn-warning {
+    background: #ff9800;
+    color: white;
+}
+
+.btn-warning:hover:not(:disabled) {
+    background: #e68900;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+}
+
+.backup-info {
+    background: #f9f9f9;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #4A9B7F;
+}
+
+.backup-info p {
+    margin: 0.5rem 0;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.backup-info strong {
+    color: #333;
+}
+
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.alert-info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.spinner-border {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #4A9B7F;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spinner p {
+    color: #666;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const destinationSelect = document.getElementById('destination');
+    const customPathGroup = document.getElementById('customPathGroup');
+    const backupForm = document.getElementById('backupForm');
+    const restoreBtn = document.getElementById('restoreBtn');
+    const backupList = document.getElementById('backupList');
+
+    // Show/hide custom path input
+    destinationSelect.addEventListener('change', function() {
+        customPathGroup.style.display = this.value === 'custom' ? 'block' : 'none';
+    });
+
+    // Load backups on page load
+    loadBackups();
+
+    // Backup form submit
+    backupForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = this.querySelector('button[type="submit"]');
+        const destination = document.getElementById('destination').value;
+        const customPath = document.getElementById('customPath').value;
+        const notes = document.getElementById('backupNotes').value;
+
+        btn.disabled = true;
+        btn.textContent = '⏳ Sedang backup...';
+
+        try {
+            const response = await fetch('/api/backup-database', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    destination: destination,
+                    customPath: customPath,
+                    notes: notes
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showSuccess(`Backup berhasil dibuat: ${data.backup_file}`);
+                backupForm.reset();
+                loadBackups();
+            } else {
+                showError(data.error || 'Backup gagal');
+            }
+        } catch (error) {
+            showError(error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="btn-icon">💾</span> Buat Backup Sekarang';
+        }
+    });
+
+    // Backup list change
+    backupList.addEventListener('change', function() {
+        if (this.value) {
+            const [filename, size, date] = this.value.split('|');
+            document.getElementById('backupSize').textContent = size;
+            document.getElementById('backupDate').textContent = date;
+            document.getElementById('backupInfo').style.display = 'block';
+            restoreBtn.disabled = false;
+        } else {
+            document.getElementById('backupInfo').style.display = 'none';
+            restoreBtn.disabled = true;
+        }
+    });
+
+    // Restore button click
+    restoreBtn.addEventListener('click', async function() {
+        if (!confirm('⚠️ PERHATIAN: Database akan dikembalikan ke state backup yang dipilih.\n\nData setelah tanggal backup akan HILANG.\n\nLanjutkan?')) {
+            return;
+        }
+
+        const filename = backupList.value.split('|')[0];
+        const btn = this;
+        btn.disabled = true;
+        btn.textContent = '⏳ Sedang restore...';
+
+        try {
+            const response = await fetch('/api/restore-database', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ backup_file: filename })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showSuccess('Database berhasil di-restore. Server akan restart...');
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } else {
+                showError(data.error || 'Restore gagal');
+            }
+        } catch (error) {
+            showError(error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '⚠️ Restore dari Backup';
+        }
+    });
+
+    async function loadBackups() {
+        const restoreLoadingSpinner = document.getElementById('restoreLoadingSpinner');
+        const restoreContent = document.getElementById('restoreContent');
+        const restoreNoBackup = document.getElementById('restoreNoBackup');
+
+        restoreLoadingSpinner.style.display = 'flex';
+        restoreContent.style.display = 'none';
+        restoreNoBackup.style.display = 'none';
+
+        try {
+            const response = await fetch('/api/list-backups');
+            const data = await response.json();
+
+            restoreLoadingSpinner.style.display = 'none';
+
+            if (data.backups && data.backups.length > 0) {
+                backupList.innerHTML = '<option value="">-- Pilih Backup --</option>';
+                data.backups.forEach(backup => {
+                    const option = document.createElement('option');
+                    option.value = `${backup.filename}|${backup.size}|${backup.date}`;
+                    option.textContent = `${backup.filename} - ${backup.date}`;
+                    backupList.appendChild(option);
+                });
+                restoreContent.style.display = 'block';
+            } else {
+                restoreNoBackup.style.display = 'block';
+            }
+        } catch (error) {
+            restoreLoadingSpinner.style.display = 'none';
+            showError('Gagal memuat daftar backup: ' + error.message);
+        }
+    }
+
+    function showSuccess(message) {
+        const el = document.getElementById('successMessage');
+        document.getElementById('successText').textContent = message;
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    function showError(message) {
+        const el = document.getElementById('errorMessage');
+        document.getElementById('errorText').textContent = message;
+        el.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}
