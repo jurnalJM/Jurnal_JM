@@ -372,7 +372,7 @@ class ImportService:
                             dealer_tujuan_id=tujuan_dealer_id,
                             broker_tujuan_id=tujuan_broker_id,
                             tgl_transfer=row_data['tgl_datang'],
-                            tipe_transfer='DISTRIBUSI',
+                            tipe_transfer='PINDAH',
                             status='A',  # Active transfer
                         )
                         session.add(transfer)

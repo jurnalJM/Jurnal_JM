@@ -2027,7 +2027,7 @@ def import_stok_motor_excel():
         try:
             from pathlib import Path as PathlibPath
             import shutil
-            db_path = PathlibPath("database.db")
+            db_path = PathlibPath("data") / "jaya_motor.db"
             if db_path.exists():
                 backup_dir = PathlibPath("backups")
                 backup_dir.mkdir(exist_ok=True)
@@ -2035,7 +2035,7 @@ def import_stok_motor_excel():
                 # Check if recent backup exists (within 5 minutes)
                 recent_backup_exists = False
                 current_time = datetime.now().timestamp()
-                for backup in backup_dir.glob("database_*.db"):
+                for backup in backup_dir.glob("jaya_motor_*.db"):
                     backup_time = backup.stat().st_mtime
                     if current_time - backup_time < 300:  # 5 minutes
                         recent_backup_exists = True
@@ -2044,12 +2044,12 @@ def import_stok_motor_excel():
 
                 if not recent_backup_exists:
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    backup_path = backup_dir / f"database_{timestamp}.db"
+                    backup_path = backup_dir / f"jaya_motor_{timestamp}.db"
                     shutil.copy2(db_path, backup_path)
                     logger.info(f"[Import] Backup created: {backup_path}")
 
                     # Cleanup old backups - keep only last 5
-                    backups = sorted(backup_dir.glob("database_*.db"), reverse=True)
+                    backups = sorted(backup_dir.glob("jaya_motor_*.db"), reverse=True)
                     for old_backup in backups[5:]:  # Delete backups beyond the 5th most recent
                         try:
                             old_backup.unlink()
@@ -2555,7 +2555,7 @@ def backup_database():
         import shutil
         from pathlib import Path as PathlibPath
 
-        db_path = PathlibPath("database.db")
+        db_path = PathlibPath("data") / "jaya_motor.db"
         if not db_path.exists():
             return jsonify({'success': False, 'error': 'Database tidak ditemukan'}), 404
 
@@ -2573,7 +2573,7 @@ def backup_database():
         # Create backup file with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         notes_suffix = f"_{notes.replace(' ', '_')}" if notes else ""
-        backup_path = backup_dir / f"database_{timestamp}{notes_suffix}.db"
+        backup_path = backup_dir / f"jaya_motor_{timestamp}{notes_suffix}.db"
 
         shutil.copy2(db_path, backup_path)
         logger.info(f"[Backup] Created: {backup_path}")
@@ -2640,7 +2640,7 @@ def restore_database():
         from pathlib import Path as PathlibPath
 
         backup_path = PathlibPath("backups") / backup_filename
-        db_path = PathlibPath("database.db")
+        db_path = PathlibPath("data") / "jaya_motor.db"
 
         if not backup_path.exists():
             return jsonify({'success': False, 'error': 'Backup file tidak ditemukan'}), 404
@@ -2648,7 +2648,7 @@ def restore_database():
         # Backup current database before restore
         if db_path.exists():
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            current_backup = PathlibPath("backups") / f"database_current_{timestamp}.db"
+            current_backup = PathlibPath("backups") / f"jaya_motor_current_{timestamp}.db"
             current_backup.parent.mkdir(exist_ok=True)
             shutil.copy2(db_path, current_backup)
             logger.info(f"[Restore] Current database backed up to: {current_backup}")
