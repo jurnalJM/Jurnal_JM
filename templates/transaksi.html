@@ -1014,12 +1014,17 @@ function onMotorTypeChange(includeStokId) {
         return Promise.resolve();
     }
 
-    // Load available stok for this type (status = R for Ready)
+    // Load available stok for this type
+    // Stok tersedia jika status != 'S' (not SOLD)
+    // Status 'R', 'T', 'P' semuanya masih bisa di-transaksi
+    // Hanya 'S' (SOLD) yang tidak bisa
     // When editing, also include stok_id yang sedang dipakai (untuk backward compatibility)
     const currentStokId = includeStokId || document.getElementById('stok-id').value;
+
+    // Load ALL stok for this type (will filter out SOLD on client-side)
     const url = currentStokId
-        ? `/api/stok-motor?type_id=${typeId}&status=R&include_id=${currentStokId}`
-        : `/api/stok-motor?type_id=${typeId}&status=R`;
+        ? `/api/stok-motor?type_id=${typeId}&include_id=${currentStokId}`
+        : `/api/stok-motor?type_id=${typeId}`;
 
     console.log('🔍 Loading stok untuk type_id:', typeId, 'include_id:', currentStokId);
     return axios.get(url)
@@ -1036,12 +1041,21 @@ function onMotorTypeChange(includeStokId) {
             }
 
             stoks.forEach(s => {
+                // Filter: hanya tampil stok yang status != 'S' (SOLD)
+                // Stok dengan status 'R', 'T', 'P' masih bisa di-transaksi
+                if (s.status === 'S') {
+                    console.log(`  ⏭️ Skip stok id=${s.id} (status=SOLD, sudah tidak ada)`);
+                    return;  // Skip SOLD units
+                }
+
                 const option = document.createElement('option');
                 option.value = String(s.id);  // Ensure string
-                option.textContent = `${s.no_mesin}`;
+                const statusLabel = s.status === 'R' ? 'Ready' : s.status === 'T' ? 'Transferred' : s.status === 'P' ? 'Pinjam' : s.status;
+                option.textContent = `${s.no_mesin} (${statusLabel})`;
                 option.dataset.noRangka = s.no_rangka;
                 option.dataset.warna = s.warna;
                 option.dataset.stokId = s.id;
+                option.dataset.status = s.status;
                 mesinSelect.appendChild(option);
 
                 window.stokData[s.id] = {

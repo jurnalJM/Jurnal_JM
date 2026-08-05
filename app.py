@@ -1531,16 +1531,18 @@ def get_type_motor():
 
 @app.route('/api/type-motor/available', methods=['GET'])
 def get_type_motor_with_stock():
-    """Get only type motor that have available stock (status='R')"""
+    """Get only type motor that have available stock (status != 'S' = not sold)"""
     try:
         from database.models import TypeMotor, StokMotor
         session = DatabaseManager.get_session()
 
-        # Get all type motors that have stok with status='R'
+        # Get all type motors that have stok NOT SOLD (status != 'S')
+        # Stok masih ada jika: status='R' (Ready), 'T' (Transferred), 'P' (Pinjam)
+        # Hanya SOLD (status='S') yang berarti stok tidak ada lagi
         available_types = session.query(TypeMotor).join(
             StokMotor, StokMotor.type_id == TypeMotor.id
         ).filter(
-            StokMotor.status == 'R'
+            StokMotor.status != 'S'  # Tidak SOLD = masih ada
         ).distinct().all()
 
         session.close()
