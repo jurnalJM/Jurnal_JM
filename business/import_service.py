@@ -130,7 +130,7 @@ class ImportService:
         D: No. Rangka
         E: Kode Type (ML1F, MJ1E, dll)
         F: Warna (nama warna atau kode)
-        G: Link (optional, unused)
+        G: Link/Tujuan (optional, nama broker - akan dibuat jika belum ada)
         """
         # Skip header row
         if row_num == 1:
@@ -336,35 +336,31 @@ class ImportService:
                     tujuan_broker_id = None
                     tujuan_nama = row_data['link_tujuan']
 
-                    # Try to find dealer by name (case-insensitive)
-                    tujuan_dealer = session.query(Dealer).filter(
-                        Dealer.nama.ilike(tujuan_nama)
+                    # Try to find broker by name first (case-insensitive)
+                    tujuan_broker = session.query(Broker).filter(
+                        Broker.nama.ilike(tujuan_nama)
                     ).first()
-                    if tujuan_dealer:
-                        tujuan_dealer_id = tujuan_dealer.id
+                    if tujuan_broker:
+                        tujuan_broker_id = tujuan_broker.id
                     else:
-                        # Try to find broker by name (case-insensitive)
-                        tujuan_broker = session.query(Broker).filter(
-                            Broker.nama.ilike(tujuan_nama)
-                        ).first()
-                        if tujuan_broker:
-                            tujuan_broker_id = tujuan_broker.id
-                        else:
-                            # Auto-create new dealer if not found
-                            new_dealer = Dealer(
-                                nama=tujuan_nama,
-                                kode_dealer=f"AUTO_{tujuan_nama.upper()[:10]}",
-                                status='A'
-                            )
-                            session.add(new_dealer)
-                            session.flush()
-                            tujuan_dealer_id = new_dealer.id
-                            self.warnings.append(
-                                f"Row {row_data['row_num']}: "
-                                f"Dealer '{tujuan_nama}' dibuat otomatis"
-                            )
+                        # Auto-create new broker if not found (with validation for duplicate names)
+                        new_broker = Broker(
+                            nama=tujuan_nama,
+                            alamat='',  # Default kosong
+                            telpon='',  # Default kosong
+                            kontak_person='',
+                            tipe='B',  # Broker type
+                            status='A'
+                        )
+                        session.add(new_broker)
+                        session.flush()
+                        tujuan_broker_id = new_broker.id
+                        self.warnings.append(
+                            f"Row {row_data['row_num']}: "
+                            f"Broker '{tujuan_nama}' dibuat otomatis"
+                        )
 
-                    if tujuan_dealer_id or tujuan_broker_id:
+                    if tujuan_broker_id:
                         # Create transfer record
                         transfer = StokTransfer(
                             stok_motor_id=stok.id,
