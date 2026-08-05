@@ -184,6 +184,7 @@
 {% block extra_js %}
 <script>
 let allStokData = []; // Store all stok data for filtering
+let debounceTimer = null; // Debounce timer for search
 
 document.addEventListener('DOMContentLoaded', function() {
     const today = new Date().toISOString().split('T')[0];
@@ -214,7 +215,11 @@ function setupSearchInputs() {
     const searchInputs = document.querySelectorAll('.search-input');
     searchInputs.forEach(input => {
         input.addEventListener('input', function() {
-            applySearch();
+            // Debounce search: wait 300ms after user stops typing
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                applySearch();
+            }, 300);
         });
     });
 }
@@ -262,12 +267,14 @@ function clearAllSearch() {
 
 function renderStokTable(stoks) {
     const tbody = document.getElementById('stok-body');
-    tbody.innerHTML = '';
 
     if (stoks.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: var(--space-6);">Tidak ada data</td></tr>';
         return;
     }
+
+    // Build HTML string instead of appending (much faster)
+    let html = '';
 
     stoks.forEach(s => {
         let statusBadge, statusText;
@@ -284,7 +291,7 @@ function renderStokTable(stoks) {
             statusBadge = 'secondary';
             statusText = s.status;
         }
-        const row = `
+        html += `
             <tr>
                 <td>${formatDate(s.tanggal_datang)}</td>
                 <td>${s.dealer_nama || '-'}</td>
@@ -302,8 +309,10 @@ function renderStokTable(stoks) {
                 </td>
             </tr>
         `;
-        tbody.innerHTML += row;
     });
+
+    // Set innerHTML once instead of multiple times
+    tbody.innerHTML = html;
 }
 
 function loadTypeMotor() {
