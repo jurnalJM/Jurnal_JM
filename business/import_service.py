@@ -347,7 +347,7 @@ class ImportService:
                         new_broker = Broker(
                             nama=tujuan_nama,
                             alamat='',  # Default kosong
-                            telpon='',  # Default kosong
+                            telp='',  # Default kosong (correct field name)
                             kontak_person='',
                             tipe='B',  # Broker type
                             status='A'
