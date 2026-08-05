@@ -1529,6 +1529,40 @@ def get_type_motor():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/type-motor/available', methods=['GET'])
+def get_type_motor_with_stock():
+    """Get only type motor that have available stock (status='R')"""
+    try:
+        from database.models import TypeMotor, StokMotor
+        session = DatabaseManager.get_session()
+
+        # Get all type motors that have stok with status='R'
+        available_types = session.query(TypeMotor).join(
+            StokMotor, StokMotor.type_id == TypeMotor.id
+        ).filter(
+            StokMotor.status == 'R'
+        ).distinct().all()
+
+        session.close()
+
+        data = [{
+            'id': t.id,
+            'kd_type': t.kd_type,
+            'nama_type': t.nama_type,
+            'harga_otr': t.harga_otr,
+            'harga_dasar': t.harga_dasar,
+            'ket_nomesin': t.ket_nomesin,
+            'ket_norangka': t.ket_norangka,
+            'tgl_expired_harga': t.tgl_expired_harga.isoformat() if t.tgl_expired_harga else None,
+        } for t in available_types]
+
+        return jsonify({'data': data}), 200
+
+    except Exception as e:
+        logger.error(f"Error getting available type motors: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/type-motor/<int:type_id>', methods=['GET'])
 def get_type_motor_detail(type_id):
     """Get type motor detail"""

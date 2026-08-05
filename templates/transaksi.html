@@ -940,47 +940,35 @@ function setupCurrencyInputs() {
 }
 
 function loadTypeMotor() {
-    // First, get all available stok (status='R') to find which types have inventory
-    axios.get('/api/stok-motor?status=R')
-        .then(stokResponse => {
-            const availableStok = stokResponse.data.data;
+    // Load only type motor with available stock (status='R')
+    axios.get('/api/type-motor/available')
+        .then(response => {
+            const types = response.data.data;
+            const select = document.getElementById('motor-type');
+            select.innerHTML = '<option value="">-- Pilih Type Motor --</option>';
 
-            // Get unique type_id from available stok
-            const availableTypeIds = new Set(availableStok.map(s => s.type_id));
+            if (types.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '-- Tidak ada stok tersedia --';
+                option.disabled = true;
+                select.appendChild(option);
+                return;
+            }
 
-            // Then load all type motor
-            return axios.get('/api/type-motor')
-                .then(typeResponse => {
-                    const types = typeResponse.data.data;
-                    const select = document.getElementById('motor-type');
-                    select.innerHTML = '<option value="">-- Pilih Type Motor --</option>';
+            types.forEach(t => {
+                const option = document.createElement('option');
+                option.value = t.id;
+                option.textContent = `${t.kd_type} - ${t.nama_type} (Rp ${formatCurrency(t.harga_otr).replace('Rp ', '')})`;
+                select.appendChild(option);
 
-                    // Filter types to only show those with available stok
-                    const typesWithStok = types.filter(t => availableTypeIds.has(t.id));
-
-                    if (typesWithStok.length === 0) {
-                        const option = document.createElement('option');
-                        option.value = '';
-                        option.textContent = '-- Tidak ada stok tersedia --';
-                        option.disabled = true;
-                        select.appendChild(option);
-                        return;
-                    }
-
-                    typesWithStok.forEach(t => {
-                        const option = document.createElement('option');
-                        option.value = t.id;
-                        option.textContent = `${t.kd_type} - ${t.nama_type} (Rp ${formatCurrency(t.harga_otr).replace('Rp ', '')})`;
-                        select.appendChild(option);
-
-                        window.typeMotorData[t.id] = {
-                            nama_type: t.nama_type,
-                            kd_type: t.kd_type,
-                            harga_otr: t.harga_otr,
-                            harga_dasar: t.harga_dasar
-                        };
-                    });
-                });
+                window.typeMotorData[t.id] = {
+                    nama_type: t.nama_type,
+                    kd_type: t.kd_type,
+                    harga_otr: t.harga_otr,
+                    harga_dasar: t.harga_dasar
+                };
+            });
         })
         .catch(error => console.error('Error loading type motor:', error));
 }
