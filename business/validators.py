@@ -268,7 +268,7 @@ class TransaksiValidator(BaseValidator):
         # Status
         status = data.get("status_transaksi")
         if status:
-            self.validate_in_list(status, "Status", ["P", "A", "L", "C"])
+            self.validate_in_list(status, "Status", ["D", "P", "A", "L", "C"])
 
         self.raise_if_errors()
         return not self.has_errors()
