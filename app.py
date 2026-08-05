@@ -1353,9 +1353,9 @@ def approve_transaksi(transaksi_id):
         transaksi.updated_at = datetime.utcnow()
         session.commit()
 
-        # Update motor status to 'S' (Sold) via TransaksiDetail
-        if transaksi.detail:
-            motor = session.query(StokMotor).filter_by(id=transaksi.detail.stok_motor_id).first()
+        # Update motor status to 'S' (Sold)
+        if transaksi.motor_id:
+            motor = session.query(StokMotor).filter_by(id=transaksi.motor_id).first()
             if motor:
                 motor.status = 'S'  # Sold
                 session.commit()
