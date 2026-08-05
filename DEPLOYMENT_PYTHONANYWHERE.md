@@ -145,13 +145,35 @@ python
 >>> Base.metadata.create_all(engine)
 ```
 
-## Update Code dari GitHub
+## Quick Update - Pull Latest Code
 
+Untuk deploy updates terbaru dari GitHub:
+
+### Via PythonAnywhere Bash Console:
 ```bash
-cd /home/JurnalJM/Jurnal_JM
-git pull origin main
-# Reload web app di dashboard
+cd /home/boenkcha/Jurnal_JM  # Sesuaikan dengan path Anda
+source venv/bin/activate      # Activate virtual environment
+git pull origin main           # Pull latest code
+pip install -r requirements-web.txt  # Update dependencies (jika ada)
 ```
+
+### Via PythonAnywhere Dashboard:
+1. Buka tab **Web**
+2. Cari web app Anda
+3. Scroll down dan klik **Reload**
+4. Tunggu beberapa detik sampai reload selesai
+5. Akses aplikasi untuk verifikasi
+
+### Latest Deployment (2026-08-05)
+Commits yang di-deploy:
+- Auto-create broker dari Link column saat import stok
+- Fix transaksi approval validation dan prevent double-click
+- Fix motor availability check (R, T, P status)
+- Improved form validation
+- Database auto-backup sebelum import
+- Total: 18 commits
+
+**Note:** Database jangan di-delete, sudah ada auto-backup mechanism.
 
 ## Useful Commands
 
