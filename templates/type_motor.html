@@ -22,19 +22,28 @@
         <div class="table-wrapper">
             <table class="table">
                 <thead>
-                    <tr>
-                        <th>Kode Type</th>
-                        <th>Nama Type</th>
-                        <th>Ket. No. Mesin</th>
-                        <th>Ket. No. Rangka</th>
-                        <th style="text-align: right;">Harga OTR (Rp)</th>
-                        <th>Tgl Expired</th>
+                    <tr id="header-row" class="header-row">
+                        <th class="searchable-header" data-column="kd_type">Kode Type 🔍</th>
+                        <th class="searchable-header" data-column="nama_type">Nama Type 🔍</th>
+                        <th class="searchable-header" data-column="prefix_nomesin">Ket. No. Mesin 🔍</th>
+                        <th class="searchable-header" data-column="prefix_norangka">Ket. No. Rangka 🔍</th>
+                        <th class="searchable-header" data-column="harga_otr" style="text-align: right;">Harga OTR (Rp) 🔍</th>
+                        <th class="searchable-header" data-column="tgl_expired_harga">Tgl Expired 🔍</th>
                         <th style="width: 120px; text-align: center;">Aksi</th>
+                    </tr>
+                    <tr id="search-row" style="display: none; background: #f5f5f5;">
+                        <td><input type="text" class="search-input" data-column="kd_type" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="nama_type" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="prefix_nomesin" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="prefix_norangka" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="harga_otr" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="tgl_expired_harga" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td style="text-align: center;"><button class="btn btn-sm btn-secondary" onclick="clearAllSearch()">Bersihkan</button></td>
                     </tr>
                 </thead>
                 <tbody id="type-body">
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: var(--space-8);">Memuat...</td>
+                        <td colspan="7" style="text-align: center; padding: var(--space-8);">Memuat...</td>
                     </tr>
                 </tbody>
             </table>
@@ -103,7 +112,35 @@
 {% endblock %}
 
 {% block extra_js %}
+<style>
+.searchable-header {
+    cursor: pointer;
+    user-select: none;
+    padding: 12px !important;
+    transition: background-color 0.2s ease;
+}
+
+.searchable-header:hover {
+    background-color: #f0f0f0;
+}
+
+.search-input {
+    font-family: inherit;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #4A9B7F !important;
+    box-shadow: 0 0 0 2px rgba(74, 155, 127, 0.1);
+}
+</style>
+
 <script>
+// Search functionality
+let allTypeData = [];
+let debounceTimer = null;
+let lastSearchedColumn = null;
+
 // Import modal
 let importModalElement = null;
 
@@ -285,49 +322,155 @@ function formatCurrency(value) {
 
 document.addEventListener('DOMContentLoaded', function() {
     loadTypeMotor();
+    setupSearchHeaders();
+    setupSearchInputs();
 });
+
+function setupSearchHeaders() {
+    const headers = document.querySelectorAll('.searchable-header');
+    headers.forEach(header => {
+        header.addEventListener('click', function() {
+            const searchRow = document.getElementById('search-row');
+            const isHidden = searchRow.style.display === 'none';
+            searchRow.style.display = isHidden ? 'table-row' : 'none';
+        });
+    });
+}
+
+function setupSearchInputs() {
+    const searchInputs = document.querySelectorAll('.search-input');
+    searchInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.value.trim()) {
+                lastSearchedColumn = this.getAttribute('data-column');
+                updateSearchInputStyles();
+            }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                applySearch();
+            }, 300);
+        });
+    });
+}
+
+function updateSearchInputStyles() {
+    const searchInputs = document.querySelectorAll('.search-input');
+    searchInputs.forEach(input => {
+        const column = input.getAttribute('data-column');
+        if (column === lastSearchedColumn && input.value.trim()) {
+            input.style.borderColor = '#4A9B7F';
+            input.style.borderWidth = '2px';
+            input.style.boxShadow = '0 0 0 3px rgba(74, 155, 127, 0.2)';
+        } else {
+            input.style.borderColor = '#ddd';
+            input.style.borderWidth = '1px';
+            input.style.boxShadow = 'none';
+        }
+    });
+}
+
+function applySearch() {
+    const searchParams = {};
+    const searchInputs = document.querySelectorAll('.search-input');
+
+    searchInputs.forEach(input => {
+        const column = input.getAttribute('data-column');
+        const value = input.value.toLowerCase().trim();
+        if (value) {
+            searchParams[column] = value;
+        }
+    });
+
+    let filteredData = allTypeData.filter(type => {
+        return Object.keys(searchParams).every(column => {
+            let fieldValue = '';
+            if (type[column]) {
+                fieldValue = String(type[column]).toLowerCase();
+            }
+            return fieldValue.includes(searchParams[column]);
+        });
+    });
+
+    if (lastSearchedColumn && searchParams[lastSearchedColumn]) {
+        const searchValue = searchParams[lastSearchedColumn];
+        filteredData.sort((a, b) => {
+            const aValue = a[lastSearchedColumn] ? String(a[lastSearchedColumn]).toLowerCase() : '';
+            const bValue = b[lastSearchedColumn] ? String(b[lastSearchedColumn]).toLowerCase() : '';
+
+            const aStartsWith = aValue.startsWith(searchValue);
+            const bStartsWith = bValue.startsWith(searchValue);
+
+            if (aStartsWith && !bStartsWith) return -1;
+            if (!aStartsWith && bStartsWith) return 1;
+
+            const aIndex = aValue.indexOf(searchValue);
+            const bIndex = bValue.indexOf(searchValue);
+            return aIndex - bIndex;
+        });
+    }
+
+    renderTypeTable(filteredData);
+}
+
+function clearAllSearch() {
+    const searchInputs = document.querySelectorAll('.search-input');
+    searchInputs.forEach(input => {
+        input.value = '';
+        input.style.borderColor = '#ddd';
+        input.style.borderWidth = '1px';
+        input.style.boxShadow = 'none';
+    });
+    lastSearchedColumn = null;
+    renderTypeTable(allTypeData);
+}
 
 function loadTypeMotor() {
     axios.get('/api/type-motor')
         .then(response => {
-            const types = response.data.data;
-            const tbody = document.getElementById('type-body');
-            tbody.innerHTML = '';
-
-            if (types.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: var(--space-6);">Tidak ada data type motor</td></tr>';
-                return;
-            }
-
-            types.forEach(t => {
-                const today = new Date().toISOString().split('T')[0];
-                const isExpired = t.tgl_expired_harga && t.tgl_expired_harga < today;
-                const expiredBadge = isExpired ? '<span style="color: var(--danger); font-weight: bold; margin-left: 8px;">⚠ EXPIRED</span>' : '';
-
-                const row = `
-                    <tr style="${isExpired ? 'background-color: #fff5f5;' : ''}">
-                        <td><strong>${t.kd_type}</strong></td>
-                        <td>${t.nama_type}</td>
-                        <td>${t.ket_nomesin || '-'}</td>
-                        <td>${t.ket_norangka || '-'}</td>
-                        <td style="text-align: right;">${formatCurrency(t.harga_otr)}</td>
-                        <td>${t.tgl_expired_harga ? t.tgl_expired_harga.split('-').reverse().join('-') : '-'}${expiredBadge}</td>
-                        <td style="text-align: center;">
-                            <div class="btn-group" style="gap: var(--space-1); justify-content: center;">
-                                <button class="btn btn-sm btn-secondary" onclick="editType(${t.id})">Edit</button>
-                                <button class="btn btn-sm btn-secondary" onclick="deleteType(${t.id})">Hapus</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
+            allTypeData = response.data.data || [];
+            renderTypeTable(allTypeData);
         })
         .catch(error => {
             console.error('Error loading type motor:', error);
             document.getElementById('type-body').innerHTML =
                 '<tr><td colspan="7" style="text-align: center; color: var(--danger); padding: var(--space-6);">Gagal memuat data</td></tr>';
         });
+}
+
+function renderTypeTable(types) {
+    const tbody = document.getElementById('type-body');
+
+    if (types.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: var(--space-6);">Tidak ada data</td></tr>';
+        return;
+    }
+
+    let html = '';
+    const today = new Date().toISOString().split('T')[0];
+
+    types.forEach(t => {
+        const isExpired = t.tgl_expired_harga && t.tgl_expired_harga < today;
+        const expiredBadge = isExpired ? '<span style="color: var(--danger); font-weight: bold; margin-left: 8px;">⚠ EXPIRED</span>' : '';
+
+        html += `
+            <tr style="${isExpired ? 'background-color: #fff5f5;' : ''}">
+                <td><strong>${t.kd_type}</strong></td>
+                <td>${t.nama_type}</td>
+                <td>${t.ket_nomesin || '-'}</td>
+                <td>${t.ket_norangka || '-'}</td>
+                <td style="text-align: right;">${formatCurrency(t.harga_otr)}</td>
+                <td>${t.tgl_expired_harga ? t.tgl_expired_harga.split('-').reverse().join('-') : '-'}${expiredBadge}</td>
+                <td style="text-align: center;">
+                    <div class="btn-group" style="gap: var(--space-1); justify-content: center;">
+                        <button class="btn btn-sm btn-secondary" onclick="editType(${t.id})">Edit</button>
+                        <button class="btn btn-sm btn-secondary" onclick="deleteType(${t.id})">Hapus</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
 }
 
 function openAddModal() {

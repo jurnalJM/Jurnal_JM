@@ -54,38 +54,72 @@
         <div class="table-wrapper" style="overflow-x: auto;">
             <table class="table" id="jurnalTable">
                 <thead>
-                    <tr>
-                        <th>Tanggal</th>
-                        <th>No Transaksi</th>
-                        <th>Dealer</th>
-                        <th>No Mesin</th>
-                        <th>No Rangka</th>
-                        <th>Type Motor</th>
-                        <th>Warna</th>
-                        <th>Nama Pemohon</th>
-                        <th>Alamat</th>
-                        <th>Handphone</th>
-                        <th>No. Faktur</th>
-                        <th>Tgl Faktur</th>
-                        <th>Link/Broker</th>
-                        <th>Ket. DP</th>
-                        <th>DP (Rp)</th>
-                        <th>Subsidi (Rp)</th>
-                        <th>Diskon AHM (Rp)</th>
-                        <th>Diskon Dealer (Rp)</th>
-                        <th>Diskon Leasing (Rp)</th>
-                        <th>Insentif (Rp)</th>
-                        <th>Leasing</th>
-                        <th>Tgl Lunas</th>
-                        <th>Status</th>
-                        <th>No Polisi</th>
-                        <th>No. Surat Leasing</th>
-                        <th>Tgl. Surat Leasing</th>
-                        <th>Nama Pemilik (STNK/BPKB)</th>
-                        <th>No BPKB</th>
-                        <th>Tgl BIRO</th>
-                        <th>Tgl Terima BPKB</th>
-                        <th>Tgl Serah Terima Motor</th>
+                    <tr id="header-row">
+                        <th class="searchable-header" data-column="tanggal_transaksi">Tanggal 🔍</th>
+                        <th class="searchable-header" data-column="nota">No Transaksi 🔍</th>
+                        <th class="searchable-header" data-column="dealer_nama">Dealer 🔍</th>
+                        <th class="searchable-header" data-column="no_mesin">No Mesin 🔍</th>
+                        <th class="searchable-header" data-column="no_rangka">No Rangka 🔍</th>
+                        <th class="searchable-header" data-column="type_nama">Type Motor 🔍</th>
+                        <th class="searchable-header" data-column="warna">Warna 🔍</th>
+                        <th class="searchable-header" data-column="customer_name">Nama Pemohon 🔍</th>
+                        <th class="searchable-header" data-column="customer_alamat">Alamat 🔍</th>
+                        <th class="searchable-header" data-column="customer_phone">Handphone 🔍</th>
+                        <th class="searchable-header" data-column="no_faktur">No. Faktur 🔍</th>
+                        <th class="searchable-header" data-column="tgl_faktur">Tgl Faktur 🔍</th>
+                        <th class="searchable-header" data-column="broker_nama">Link/Broker 🔍</th>
+                        <th class="searchable-header" data-column="jenis_pembayaran">Ket. DP 🔍</th>
+                        <th class="searchable-header" data-column="dp">DP (Rp) 🔍</th>
+                        <th class="searchable-header" data-column="subsidi">Subsidi (Rp) 🔍</th>
+                        <th class="searchable-header" data-column="diskon_ahm">Diskon AHM (Rp) 🔍</th>
+                        <th class="searchable-header" data-column="diskon_dealer">Diskon Dealer (Rp) 🔍</th>
+                        <th class="searchable-header" data-column="diskon_leasing">Diskon Leasing (Rp) 🔍</th>
+                        <th class="searchable-header" data-column="insentif">Insentif (Rp) 🔍</th>
+                        <th class="searchable-header" data-column="leasing_nama">Leasing 🔍</th>
+                        <th class="searchable-header" data-column="tgl_lunas_hutang">Tgl Lunas 🔍</th>
+                        <th class="searchable-header" data-column="status_transaksi">Status 🔍</th>
+                        <th class="searchable-header" data-column="no_polisi">No Polisi 🔍</th>
+                        <th class="searchable-header" data-column="no_surat_leasing">No. Surat Leasing 🔍</th>
+                        <th class="searchable-header" data-column="tgl_surat_leasing">Tgl. Surat Leasing 🔍</th>
+                        <th class="searchable-header" data-column="nama_pemilik_bpkb">Nama Pemilik (STNK/BPKB) 🔍</th>
+                        <th class="searchable-header" data-column="no_bpkb">No BPKB 🔍</th>
+                        <th class="searchable-header" data-column="tgl_biro">Tgl BIRO 🔍</th>
+                        <th class="searchable-header" data-column="tgl_terima_bpkb">Tgl Terima BPKB 🔍</th>
+                        <th class="searchable-header" data-column="tgl_serah_motor">Tgl Serah Terima Motor 🔍</th>
+                    </tr>
+                    <tr id="search-row" style="display: none; background: #f5f5f5;">
+                        <td><input type="text" class="search-input" data-column="tanggal_transaksi" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="nota" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="dealer_nama" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="no_mesin" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="no_rangka" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="type_nama" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="warna" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="customer_name" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="customer_alamat" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="customer_phone" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="no_faktur" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="tgl_faktur" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="broker_nama" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="jenis_pembayaran" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="dp" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="subsidi" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="diskon_ahm" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="diskon_dealer" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="diskon_leasing" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="insentif" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="leasing_nama" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="tgl_lunas_hutang" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="status_transaksi" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="no_polisi" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="no_surat_leasing" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="tgl_surat_leasing" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="nama_pemilik_bpkb" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="no_bpkb" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="tgl_biro" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="tgl_terima_bpkb" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td><input type="text" class="search-input" data-column="tgl_serah_motor" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"></td>
+                        <td style="text-align: center;"><button class="btn btn-sm btn-secondary" onclick="clearAllSearch()">Bersihkan</button></td>
                     </tr>
                 </thead>
                 <tbody id="jurnalBody">
@@ -124,9 +158,138 @@
     </div>
 </div>
 
+<style>
+.searchable-header {
+    cursor: pointer;
+    user-select: none;
+    padding: 12px !important;
+    transition: background-color 0.2s ease;
+}
+
+.searchable-header:hover {
+    background-color: #f0f0f0;
+}
+
+.search-input {
+    font-family: inherit;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #4A9B7F !important;
+    box-shadow: 0 0 0 2px rgba(74, 155, 127, 0.1);
+}
+</style>
+
 <script>
 let currentJurnalData = [];
+let allJurnalData = [];
+let lastSearchedColumn = null;
+let debounceTimer = null;
 let currentDetailTransaksiId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    setupSearchHeaders();
+    setupSearchInputs();
+});
+
+function setupSearchHeaders() {
+    const headers = document.querySelectorAll('.searchable-header');
+    headers.forEach(header => {
+        header.addEventListener('click', function() {
+            const searchRow = document.getElementById('search-row');
+            const isHidden = searchRow.style.display === 'none';
+            searchRow.style.display = isHidden ? 'table-row' : 'none';
+        });
+    });
+}
+
+function setupSearchInputs() {
+    const searchInputs = document.querySelectorAll('.search-input');
+    searchInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.value.trim()) {
+                lastSearchedColumn = this.getAttribute('data-column');
+                updateSearchInputStyles();
+            }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                applyColumnSearch();
+            }, 300);
+        });
+    });
+}
+
+function updateSearchInputStyles() {
+    const searchInputs = document.querySelectorAll('.search-input');
+    searchInputs.forEach(input => {
+        const column = input.getAttribute('data-column');
+        if (column === lastSearchedColumn && input.value.trim()) {
+            input.style.borderColor = '#4A9B7F';
+            input.style.borderWidth = '2px';
+            input.style.boxShadow = '0 0 0 3px rgba(74, 155, 127, 0.2)';
+        } else {
+            input.style.borderColor = '#ddd';
+            input.style.borderWidth = '1px';
+            input.style.boxShadow = 'none';
+        }
+    });
+}
+
+function applyColumnSearch() {
+    const searchParams = {};
+    const searchInputs = document.querySelectorAll('.search-input');
+
+    searchInputs.forEach(input => {
+        const column = input.getAttribute('data-column');
+        const value = input.value.toLowerCase().trim();
+        if (value) {
+            searchParams[column] = value;
+        }
+    });
+
+    let filteredData = currentJurnalData.filter(row => {
+        return Object.keys(searchParams).every(column => {
+            let fieldValue = '';
+            if (row[column]) {
+                fieldValue = String(row[column]).toLowerCase();
+            }
+            return fieldValue.includes(searchParams[column]);
+        });
+    });
+
+    if (lastSearchedColumn && searchParams[lastSearchedColumn]) {
+        const searchValue = searchParams[lastSearchedColumn];
+        filteredData.sort((a, b) => {
+            const aValue = a[lastSearchedColumn] ? String(a[lastSearchedColumn]).toLowerCase() : '';
+            const bValue = b[lastSearchedColumn] ? String(b[lastSearchedColumn]).toLowerCase() : '';
+
+            const aStartsWith = aValue.startsWith(searchValue);
+            const bStartsWith = bValue.startsWith(searchValue);
+
+            if (aStartsWith && !bStartsWith) return -1;
+            if (!aStartsWith && bStartsWith) return 1;
+
+            const aIndex = aValue.indexOf(searchValue);
+            const bIndex = bValue.indexOf(searchValue);
+            return aIndex - bIndex;
+        });
+    }
+
+    renderJurnalTable(filteredData);
+}
+
+function clearAllSearch() {
+    const searchInputs = document.querySelectorAll('.search-input');
+    searchInputs.forEach(input => {
+        input.value = '';
+        input.style.borderColor = '#ddd';
+        input.style.borderWidth = '1px';
+        input.style.boxShadow = 'none';
+    });
+    lastSearchedColumn = null;
+    renderJurnalTable(currentJurnalData);
+}
 
 function loadJurnalData() {
     const tglAwal = document.getElementById('filterTglAwal').value;
@@ -142,63 +305,64 @@ function loadJurnalData() {
         .then(response => {
             const data = response.data.data;
             currentJurnalData = data;
-
-            const tbody = document.getElementById('jurnalBody');
-            tbody.innerHTML = '';
-
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="27" style="text-align: center; padding: 40px; color: #9ca3af;">Tidak ada data yang cocok dengan filter</td></tr>`;
-                updateSummary([]);
-                return;
-            }
-
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.style.cursor = 'pointer';
-                tr.onclick = () => viewDetailJurnal(row.id);
-                tr.onmouseover = function() { this.style.backgroundColor = 'var(--bg-tertiary)'; };
-                tr.onmouseout = function() { this.style.backgroundColor = ''; };
-                tr.innerHTML = `
-                    <td>${row.tanggal || '-'}</td>
-                    <td><strong>${row.nota || '-'}</strong></td>
-                    <td>${row.dealer_nama || '-'}</td>
-                    <td>${row.no_mesin || '-'}</td>
-                    <td>${row.no_rangka || '-'}</td>
-                    <td>${row.motor_type || '-'}</td>
-                    <td>${row.warna || '-'}</td>
-                    <td>${row.customer_name || '-'}</td>
-                    <td>${row.customer_alamat || '-'}</td>
-                    <td>${row.customer_phone || '-'}</td>
-                    <td>${row.no_faktur || '-'}</td>
-                    <td>${row.tgl_faktur || '-'}</td>
-                    <td>${row.broker_nama || '-'}</td>
-                    <td>${row.ket_dp || '-'}</td>
-                    <td style="text-align: right;">${formatNumberDisplay(row.dp)}</td>
-                    <td style="text-align: right;">${formatNumberDisplay(row.subsidi)}</td>
-                    <td style="text-align: right;">${formatNumberDisplay(row.diskon_ahm)}</td>
-                    <td style="text-align: right;">${formatNumberDisplay(row.diskon_dealer)}</td>
-                    <td style="text-align: right;">${formatNumberDisplay(row.diskon_leasing)}</td>
-                    <td style="text-align: right;">${formatNumberDisplay(row.insentif)}</td>
-                    <td>${row.leasing_nama || '-'}</td>
-                    <td>${row.tgl_hutang_dibayar || '-'}</td>
-                    <td><span class="badge badge-${getStatusColor(row.status)}">${row.status || '-'}</span></td>
-                    <td>${row.no_polisi || '-'}</td>
-                    <td>${row.no_surat_pemberitahuan || '-'}</td>
-                    <td>${row.tgl_surat_pemberitahuan || '-'}</td>
-                    <td>${row.nama_surat || '-'}</td>
-                    <td>${row.no_bpkb || '-'}</td>
-                    <td>${row.tgl_biro || '-'}</td>
-                    <td>${row.tgl_terima_bpkb || '-'}</td>
-                    <td>${row.tgl_serah_terima || '-'}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
+            renderJurnalTable(data);
             updateSummary(data);
         })
         .catch(error => {
             showToast('Error: ' + error.message, 'error');
         });
+}
+
+function renderJurnalTable(data) {
+    const tbody = document.getElementById('jurnalBody');
+    tbody.innerHTML = '';
+
+    if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="31" style="text-align: center; padding: 40px; color: #9ca3af;">Tidak ada data yang cocok dengan filter</td></tr>`;
+        return;
+    }
+
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.onclick = () => viewDetailJurnal(row.id);
+        tr.onmouseover = function() { this.style.backgroundColor = 'var(--bg-tertiary)'; };
+        tr.onmouseout = function() { this.style.backgroundColor = ''; };
+        tr.innerHTML = `
+            <td>${row.tanggal || '-'}</td>
+            <td><strong>${row.nota || '-'}</strong></td>
+            <td>${row.dealer_nama || '-'}</td>
+            <td>${row.no_mesin || '-'}</td>
+            <td>${row.no_rangka || '-'}</td>
+            <td>${row.motor_type || '-'}</td>
+            <td>${row.warna || '-'}</td>
+            <td>${row.customer_name || '-'}</td>
+            <td>${row.customer_alamat || '-'}</td>
+            <td>${row.customer_phone || '-'}</td>
+            <td>${row.no_faktur || '-'}</td>
+            <td>${row.tgl_faktur || '-'}</td>
+            <td>${row.broker_nama || '-'}</td>
+            <td>${row.ket_dp || '-'}</td>
+            <td style="text-align: right;">${formatNumberDisplay(row.dp)}</td>
+            <td style="text-align: right;">${formatNumberDisplay(row.subsidi)}</td>
+            <td style="text-align: right;">${formatNumberDisplay(row.diskon_ahm)}</td>
+            <td style="text-align: right;">${formatNumberDisplay(row.diskon_dealer)}</td>
+            <td style="text-align: right;">${formatNumberDisplay(row.diskon_leasing)}</td>
+            <td style="text-align: right;">${formatNumberDisplay(row.insentif)}</td>
+            <td>${row.leasing_nama || '-'}</td>
+            <td>${row.tgl_hutang_dibayar || '-'}</td>
+            <td><span class="badge badge-${getStatusColor(row.status)}">${row.status || '-'}</span></td>
+            <td>${row.no_polisi || '-'}</td>
+            <td>${row.no_surat_pemberitahuan || '-'}</td>
+            <td>${row.tgl_surat_pemberitahuan || '-'}</td>
+            <td>${row.nama_surat || '-'}</td>
+            <td>${row.no_bpkb || '-'}</td>
+            <td>${row.tgl_biro || '-'}</td>
+            <td>${row.tgl_terima_bpkb || '-'}</td>
+            <td>${row.tgl_serah_terima || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 function updateSummary(data) {
