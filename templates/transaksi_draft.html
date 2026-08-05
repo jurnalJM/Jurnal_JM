@@ -190,6 +190,12 @@ function approveTransaksi(transaksiId) {
         return;
     }
 
+    // Disable button to prevent double-click
+    const approveBtn = document.getElementById('approveBtn');
+    const originalText = approveBtn.innerHTML;
+    approveBtn.disabled = true;
+    approveBtn.innerHTML = '<span>⏳</span> <span>Sedang diproses...</span>';
+
     axios.post(`/api/transaksi/${transaksiId}/approve`)
         .then(response => {
             showToast('✓ Transaksi berhasil di-approve dan posting!', 'success');
@@ -198,6 +204,9 @@ function approveTransaksi(transaksiId) {
         })
         .catch(error => {
             showToast('Error: ' + error.response?.data?.error || error.message, 'error');
+            // Re-enable button on error
+            approveBtn.disabled = false;
+            approveBtn.innerHTML = originalText;
         });
 }
 
