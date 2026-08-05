@@ -1547,12 +1547,10 @@ def get_type_motor_with_stock():
 
         data = [{
             'id': t.id,
-            'kd_type': t.kd_type,
+            'kd_type': t.kode_type,
             'nama_type': t.nama_type,
-            'harga_otr': t.harga_otr,
-            'harga_dasar': t.harga_dasar,
-            'ket_nomesin': t.ket_nomesin,
-            'ket_norangka': t.ket_norangka,
+            'harga_otr': float(t.otr) if t.otr else None,
+            'harga_dasar': float(t.harga_dasar) if t.harga_dasar else None,
             'tgl_expired_harga': t.tgl_expired_harga.isoformat() if t.tgl_expired_harga else None,
         } for t in available_types]
 
