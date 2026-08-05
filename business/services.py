@@ -69,8 +69,10 @@ class TransaksiService:
         if not motor:
             raise RecordNotFound("Motor", motor_id)
 
-        if motor.status != "R":
-            raise InventoryException(f"Motor {motor.no_mesin} tidak siap dijual")
+        # Motor bisa di-transaksi jika status != 'S' (SOLD)
+        # Status 'R' (Ready), 'T' (Transferred), 'P' (Pinjam) semuanya masih bisa dijual
+        if motor.status == "S":
+            raise InventoryException(f"Motor {motor.no_mesin} sudah terjual (SOLD)")
 
         # Get OTR from motor BEFORE any database operations that might close session
         otr = float(motor.type_motor.otr or 0) if motor and motor.type_motor else 0
