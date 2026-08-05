@@ -185,6 +185,7 @@
 <script>
 let allStokData = []; // Store all stok data for filtering
 let debounceTimer = null; // Debounce timer for search
+let lastSearchedColumn = null; // Track column terakhir yang di-search
 
 document.addEventListener('DOMContentLoaded', function() {
     const today = new Date().toISOString().split('T')[0];
@@ -215,12 +216,35 @@ function setupSearchInputs() {
     const searchInputs = document.querySelectorAll('.search-input');
     searchInputs.forEach(input => {
         input.addEventListener('input', function() {
+            // Track which column was last searched
+            if (this.value.trim()) {
+                lastSearchedColumn = this.getAttribute('data-column');
+                // Visual indicator: highlight the input that was last used
+                updateSearchInputStyles();
+            }
+
             // Debounce search: wait 300ms after user stops typing
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 applySearch();
             }, 300);
         });
+    });
+}
+
+function updateSearchInputStyles() {
+    const searchInputs = document.querySelectorAll('.search-input');
+    searchInputs.forEach(input => {
+        const column = input.getAttribute('data-column');
+        if (column === lastSearchedColumn && input.value.trim()) {
+            input.style.borderColor = '#4A9B7F';
+            input.style.borderWidth = '2px';
+            input.style.boxShadow = '0 0 0 3px rgba(74, 155, 127, 0.2)';
+        } else {
+            input.style.borderColor = '#ddd';
+            input.style.borderWidth = '1px';
+            input.style.boxShadow = 'none';
+        }
     });
 }
 
@@ -236,7 +260,7 @@ function applySearch() {
         }
     });
 
-    // Filter allStokData based on search params
+    // Filter allStokData based on search params (AND logic)
     let filteredData = allStokData.filter(stok => {
         return Object.keys(searchParams).every(column => {
             let fieldValue = '';
@@ -254,6 +278,42 @@ function applySearch() {
         });
     });
 
+    // Sort by last searched column (order by ketikan terakhir)
+    if (lastSearchedColumn && searchParams[lastSearchedColumn]) {
+        const searchValue = searchParams[lastSearchedColumn];
+        filteredData.sort((a, b) => {
+            let aValue = '';
+            let bValue = '';
+
+            if (lastSearchedColumn === 'status') {
+                if (a.status === 'R') aValue = 'Tersedia'.toLowerCase();
+                else if (a.status === 'T') aValue = 'Dipindahkan'.toLowerCase();
+                else if (a.status === 'S') aValue = 'Terjual'.toLowerCase();
+                else aValue = a.status.toLowerCase();
+
+                if (b.status === 'R') bValue = 'Tersedia'.toLowerCase();
+                else if (b.status === 'T') bValue = 'Dipindahkan'.toLowerCase();
+                else if (b.status === 'S') bValue = 'Terjual'.toLowerCase();
+                else bValue = b.status.toLowerCase();
+            } else {
+                aValue = a[lastSearchedColumn] ? String(a[lastSearchedColumn]).toLowerCase() : '';
+                bValue = b[lastSearchedColumn] ? String(b[lastSearchedColumn]).toLowerCase() : '';
+            }
+
+            // Prioritize exact match at start
+            const aStartsWith = aValue.startsWith(searchValue);
+            const bStartsWith = bValue.startsWith(searchValue);
+
+            if (aStartsWith && !bStartsWith) return -1;
+            if (!aStartsWith && bStartsWith) return 1;
+
+            // Then by position of match
+            const aIndex = aValue.indexOf(searchValue);
+            const bIndex = bValue.indexOf(searchValue);
+            return aIndex - bIndex;
+        });
+    }
+
     renderStokTable(filteredData);
 }
 
@@ -261,7 +321,11 @@ function clearAllSearch() {
     const searchInputs = document.querySelectorAll('.search-input');
     searchInputs.forEach(input => {
         input.value = '';
+        input.style.borderColor = '#ddd';
+        input.style.borderWidth = '1px';
+        input.style.boxShadow = 'none';
     });
+    lastSearchedColumn = null;
     renderStokTable(allStokData);
 }
 
