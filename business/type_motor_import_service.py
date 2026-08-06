@@ -68,8 +68,30 @@ class TypeMotorImportService:
                         continue
                     rows_data.append((row_num, values))
 
-            # Parse and validate rows
-            for row_num, values in rows_data:
+            # Validate header row first
+            if not rows_data:
+                self.errors.append("File Excel kosong, tidak ada data untuk diimport")
+                return {
+                    'success': False,
+                    'updated': 0,
+                    'total': 0,
+                    'errors': self.errors,
+                    'warnings': self.warnings,
+                }
+
+            # Check if first row is header
+            header_row = rows_data[0][1] if rows_data else []
+            if not self._validate_header(header_row):
+                return {
+                    'success': False,
+                    'updated': 0,
+                    'total': 0,
+                    'errors': self.errors,
+                    'warnings': self.warnings,
+                }
+
+            # Parse and validate rows (skip header row)
+            for row_num, values in rows_data[1:]:
                 result = self._parse_row(row_num, values, tgl_expired)
                 if result:
                     self.updated_rows.append(result)
@@ -215,3 +237,65 @@ class TypeMotorImportService:
             session.close()
 
         return updated
+
+    def _validate_header(self, header_values: List) -> bool:
+        """
+        Validate that Excel file has correct headers for type motor import.
+
+        Expected columns (Harga OTR format):
+        A: Tgl Efektif
+        B: Kode Type
+        C: Kode Motor
+        D: Nama Type
+        E: Nosin (prefix mesin)
+        F: NoKa (prefix rangka)
+        G: Harga OTR
+
+        Returns True if valid, False if not
+        """
+        if not header_values or len(header_values) < 7:
+            self.errors.append(
+                "File tidak sesuai template Type Motor. Minimal 7 kolom diperlukan: "
+                "Tgl Efektif, Kode Type, Kode Motor, Nama Type, Nosin, NoKa, Harga OTR"
+            )
+            return False
+
+        # Expected headers (case-insensitive, flexible matching)
+        expected_keywords = [
+            'tgl',  # Tgl Efektif
+            'kode type',  # Kode Type
+            'kode motor',  # Kode Motor
+            'nama',  # Nama Type
+            'nosin',  # Nosin
+            'noka',  # NoKa
+            'otr'   # Harga OTR
+        ]
+
+        # Normalize header values
+        actual_headers = [
+            str(val).strip().lower() if val else ''
+            for val in header_values[:7]
+        ]
+
+        # Check if headers match (flexible matching)
+        mismatches = []
+        for i, expected in enumerate(expected_keywords):
+            actual = actual_headers[i]
+            # Check if expected word is in actual or actual is in expected
+            if not (expected in actual or actual.replace(' ', '') in expected or
+                    any(keyword in actual for keyword in expected.split())):
+                mismatches.append({
+                    'col': i + 1,
+                    'expected': expected,
+                    'actual': actual
+                })
+
+        if mismatches:
+            error_msg = "File tidak sesuai template Type Motor:\n"
+            for m in mismatches:
+                error_msg += f"Kolom {m['col']}: expected '{m['expected']}', got '{m['actual']}'\n"
+            error_msg += "Gunakan template 'Harga OTR.xlsx'"
+            self.errors.append(error_msg)
+            return False
+
+        return True
