@@ -807,15 +807,19 @@ function initNamaSuratOption(namaSurat) {
     const inputField = document.getElementById('edit-nama-surat');
     const customerName = document.getElementById('editSuratModal').dataset.customerName || '';
 
+    // Jangan auto-select radio button, biar user klik dulu
+    // Tapi tetap set state input field sesuai data yang ada
     if (!namaSurat || namaSurat.trim() === '') {
-        // Jika tidak ada nama_surat, berarti "Sama dengan Pemohon"
-        document.getElementById('option-sama').checked = true;
+        // Tidak ada nama_surat berbeda, jadi prepare untuk "Sama dengan Pemohon"
+        document.getElementById('option-sama').checked = false;
+        document.getElementById('option-berbeda').checked = false;
         inputField.disabled = true;
         inputField.value = customerName;
     } else {
-        // Jika ada nama_surat yang berbeda dengan pemohon
-        document.getElementById('option-berbeda').checked = true;
-        inputField.disabled = false;
+        // Ada nama_surat berbeda, jadi prepare untuk "Nama Berbeda"
+        document.getElementById('option-sama').checked = false;
+        document.getElementById('option-berbeda').checked = false;
+        inputField.disabled = true;
         inputField.value = namaSurat;
     }
 }
