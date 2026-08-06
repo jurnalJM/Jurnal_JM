@@ -867,6 +867,7 @@ def create_transaksi():
     except ValidationErrors as e:
         error_details = str(e)
         logger.error(f"Validation error: {error_details}")
+        logger.error(f"Validation errors detail: {e.errors}")
         # Return detailed error info
         return jsonify({
             'success': False,
