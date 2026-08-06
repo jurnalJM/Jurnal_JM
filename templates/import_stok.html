@@ -29,10 +29,10 @@
             <div class="grid" style="grid-template-columns: 1fr 1fr;">
                 <div class="form-group">
                     <label class="form-label required">File Excel</label>
-                    <div>
+                    <div style="position: relative; overflow: hidden;">
                         <input type="file" id="excelFile" name="file" accept=".xlsx,.xls" required
-                               style="display: none;">
-                        <button type="button" class="btn btn-secondary" id="chooseFileBtn"
+                               style="position: absolute; left: -9999px;">
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('excelFile').click()"
                                 style="width: 100%;">
                             Pilih File
                         </button>
@@ -165,150 +165,17 @@
 {% block extra_js %}
 <script>
 
-// Toast notification function with better styling
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 16px 20px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 500;
-        z-index: 10000;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        max-width: 400px;
-        word-wrap: break-word;
-        animation: slideIn 0.3s ease-out;
-    `;
+// Set default tgl_datang to today
+document.getElementById('tglDatang').value = new Date().toISOString().split('T')[0];
 
-    // Color scheme based on type
-    const styles = {
-        success: {
-            background: '#10b981',
-            color: '#fff'
-        },
-        error: {
-            background: '#ef4444',
-            color: '#fff'
-        },
-        info: {
-            background: '#3b82f6',
-            color: '#fff'
-        },
-        warning: {
-            background: '#f59e0b',
-            color: '#fff'
-        }
-    };
+// File selection handler
+document.getElementById('excelFile').addEventListener('change', function() {
+    const fileName = this.files[0]?.name || 'Belum ada file dipilih';
+    document.getElementById('fileName').textContent = fileName;
+});
 
-    const style = styles[type] || styles.info;
-    toast.style.backgroundColor = style.background;
-    toast.style.color = style.color;
-
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s ease-out';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-// Add CSS animation
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
-
-// Wrap everything in proper DOM ready check
-function setupFileHandlers() {
-    console.log('[Import Stok] Setting up handlers...');
-
-    const excelFile = document.getElementById('excelFile');
-    const fileName = document.getElementById('fileName');
-    const chooseFileBtn = document.getElementById('chooseFileBtn');
-    const tglInput = document.getElementById('tglDatang');
-
-    console.log('Elements found:', { excelFile: !!excelFile, fileName: !!fileName, chooseFileBtn: !!chooseFileBtn, tglInput: !!tglInput });
-
-    // Set default date
-    if (tglInput) {
-        tglInput.value = new Date().toISOString().split('T')[0];
-    }
-
-    // Button click handler
-    if (chooseFileBtn && excelFile) {
-        chooseFileBtn.onclick = function() {
-            console.log('[Import Stok] BUTTON CLICKED!');
-            excelFile.click();
-            return false;
-        };
-        console.log('✓ Button handler attached');
-    } else {
-        console.error('✗ ERROR: chooseFileBtn or excelFile not found!');
-    }
-
-    // File input change handler
-    if (excelFile && fileName) {
-        excelFile.onchange = function() {
-            console.log('[Import Stok] FILE CHANGED! Files:', this.files.length);
-
-            if (this.files && this.files.length > 0) {
-                const filename = this.files[0].name;
-                console.log('✓ File selected:', filename);
-                fileName.textContent = '✓ ' + filename;
-                fileName.style.color = '#000';
-            } else {
-                console.log('✗ No file selected');
-                fileName.textContent = 'Belum ada file dipilih';
-                fileName.style.color = 'var(--text-secondary)';
-            }
-        };
-        console.log('✓ File change handler attached');
-    }
-
-    // Form submit handler
-    const importForm = document.getElementById('importForm');
-    if (importForm) {
-        importForm.onsubmit = formSubmitHandler;
-    }
-
-    console.log('✓ SETUP COMPLETE');
-}
-
-// Ensure DOM is ready before setting up
-if (document.readyState === 'loading') {
-    console.log('[Import Stok] DOM loading, waiting for DOMContentLoaded...');
-    document.addEventListener('DOMContentLoaded', setupFileHandlers);
-} else {
-    console.log('[Import Stok] DOM already ready, setting up now...');
-    setupFileHandlers();
-}
-
-async function formSubmitHandler(e) {
+// Form submit handler
+document.getElementById('importForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const file = document.getElementById('excelFile').files[0];
@@ -346,7 +213,7 @@ async function formSubmitHandler(e) {
         }
         showToast('❌ ' + errorMsg, 'error');
     }
-}
+});
 
 function displayResults(data) {
     const statusCard = document.getElementById('statusCard');
