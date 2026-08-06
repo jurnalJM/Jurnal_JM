@@ -243,36 +243,65 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Wait for DOM to be ready
-document.addEventListener('DOMContentLoaded', function() {
+// Wait for DOM to be ready - use multiple approaches for reliability
+function setupEventListeners() {
+    console.log('[Import Stok] Setting up event listeners...');
+
     // Set default tgl_datang to today
     const tglDatangInput = document.getElementById('tglDatang');
     if (tglDatangInput) {
         tglDatangInput.value = new Date().toISOString().split('T')[0];
+        console.log('[Import Stok] Tanggal default set');
     }
 
     // File selection handler
     const excelFileInput = document.getElementById('excelFile');
     const fileNameDisplay = document.getElementById('fileName');
 
+    console.log('[Import Stok] excelFileInput:', excelFileInput);
+    console.log('[Import Stok] fileNameDisplay:', fileNameDisplay);
+
     if (excelFileInput && fileNameDisplay) {
+        // Change event handler
         excelFileInput.addEventListener('change', function() {
+            console.log('[Import Stok] File change event triggered');
+            console.log('[Import Stok] Files:', this.files);
             if (this.files && this.files.length > 0) {
                 fileNameDisplay.textContent = '✓ ' + this.files[0].name;
                 fileNameDisplay.style.color = 'var(--text-primary)';
+                console.log('[Import Stok] File selected:', this.files[0].name);
             } else {
                 fileNameDisplay.textContent = 'Belum ada file dipilih';
                 fileNameDisplay.style.color = 'var(--text-secondary)';
+                console.log('[Import Stok] No file selected');
             }
         });
+        console.log('[Import Stok] Change event listener attached');
+    } else {
+        console.error('[Import Stok] ERROR: Could not find excelFileInput or fileNameDisplay');
     }
 
     // Form submit handler
     const importForm = document.getElementById('importForm');
     if (importForm) {
         importForm.addEventListener('submit', formSubmitHandler);
+        console.log('[Import Stok] Form submit listener attached');
     }
-});
+}
+
+// Try multiple ways to ensure listeners are attached
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupEventListeners);
+    console.log('[Import Stok] DOMContentLoaded listener added');
+} else {
+    // DOM already loaded
+    setupEventListeners();
+    console.log('[Import Stok] DOM already loaded, setting up immediately');
+}
+
+// Also try immediately (in case DOM is ready before script runs)
+window.addEventListener('load', setupEventListeners);
+console.log('[Import Stok] Window load listener added');
 
 async function formSubmitHandler(e) {
     e.preventDefault();
