@@ -243,17 +243,38 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Set default tgl_datang to today
-document.getElementById('tglDatang').value = new Date().toISOString().split('T')[0];
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default tgl_datang to today
+    const tglDatangInput = document.getElementById('tglDatang');
+    if (tglDatangInput) {
+        tglDatangInput.value = new Date().toISOString().split('T')[0];
+    }
 
-// File selection handler
-document.getElementById('excelFile').addEventListener('change', function() {
-    const fileName = this.files[0]?.name || 'Belum ada file dipilih';
-    document.getElementById('fileName').textContent = fileName;
+    // File selection handler
+    const excelFileInput = document.getElementById('excelFile');
+    const fileNameDisplay = document.getElementById('fileName');
+
+    if (excelFileInput && fileNameDisplay) {
+        excelFileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                fileNameDisplay.textContent = '✓ ' + this.files[0].name;
+                fileNameDisplay.style.color = 'var(--text-primary)';
+            } else {
+                fileNameDisplay.textContent = 'Belum ada file dipilih';
+                fileNameDisplay.style.color = 'var(--text-secondary)';
+            }
+        });
+    }
+
+    // Form submit handler
+    const importForm = document.getElementById('importForm');
+    if (importForm) {
+        importForm.addEventListener('submit', formSubmitHandler);
+    }
 });
 
-// Form submit handler
-document.getElementById('importForm').addEventListener('submit', async function(e) {
+async function formSubmitHandler(e) {
     e.preventDefault();
 
     const file = document.getElementById('excelFile').files[0];
@@ -291,7 +312,7 @@ document.getElementById('importForm').addEventListener('submit', async function(
         }
         showToast('❌ ' + errorMsg, 'error');
     }
-});
+}
 
 function displayResults(data) {
     const statusCard = document.getElementById('statusCard');
