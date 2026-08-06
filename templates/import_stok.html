@@ -243,60 +243,70 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Setup file handling
-console.log('[Import Stok] Script loaded');
+// Wrap everything in proper DOM ready check
+function setupFileHandlers() {
+    console.log('[Import Stok] Setting up handlers...');
 
-const excelFile = document.getElementById('excelFile');
-const fileName = document.getElementById('fileName');
-const chooseFileBtn = document.getElementById('chooseFileBtn');
+    const excelFile = document.getElementById('excelFile');
+    const fileName = document.getElementById('fileName');
+    const chooseFileBtn = document.getElementById('chooseFileBtn');
+    const tglInput = document.getElementById('tglDatang');
 
-// Set default date
-const tglInput = document.getElementById('tglDatang');
-if (tglInput) {
-    tglInput.value = new Date().toISOString().split('T')[0];
-    console.log('[Import Stok] Date set');
+    console.log('Elements found:', { excelFile: !!excelFile, fileName: !!fileName, chooseFileBtn: !!chooseFileBtn, tglInput: !!tglInput });
+
+    // Set default date
+    if (tglInput) {
+        tglInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    // Button click handler
+    if (chooseFileBtn && excelFile) {
+        chooseFileBtn.onclick = function() {
+            console.log('[Import Stok] BUTTON CLICKED!');
+            excelFile.click();
+            return false;
+        };
+        console.log('✓ Button handler attached');
+    } else {
+        console.error('✗ ERROR: chooseFileBtn or excelFile not found!');
+    }
+
+    // File input change handler
+    if (excelFile && fileName) {
+        excelFile.onchange = function() {
+            console.log('[Import Stok] FILE CHANGED! Files:', this.files.length);
+
+            if (this.files && this.files.length > 0) {
+                const filename = this.files[0].name;
+                console.log('✓ File selected:', filename);
+                fileName.textContent = '✓ ' + filename;
+                fileName.style.color = '#000';
+            } else {
+                console.log('✗ No file selected');
+                fileName.textContent = 'Belum ada file dipilih';
+                fileName.style.color = 'var(--text-secondary)';
+            }
+        };
+        console.log('✓ File change handler attached');
+    }
+
+    // Form submit handler
+    const importForm = document.getElementById('importForm');
+    if (importForm) {
+        importForm.onsubmit = formSubmitHandler;
+    }
+
+    console.log('✓ SETUP COMPLETE');
 }
 
-// Button click handler
-if (chooseFileBtn && excelFile) {
-    chooseFileBtn.onclick = function(e) {
-        e.preventDefault();
-        console.log('[Import Stok] Button clicked, opening file picker');
-        excelFile.click();
-    };
-    console.log('[Import Stok] Button handler attached');
-}
-
-// File input change handler
-if (excelFile && fileName) {
-    excelFile.onchange = function(e) {
-        console.log('[Import Stok] File change event fired');
-        console.log('[Import Stok] Files count:', this.files.length);
-
-        if (this.files && this.files.length > 0) {
-            const filename = this.files[0].name;
-            console.log('[Import Stok] File selected:', filename);
-            fileName.textContent = '✓ ' + filename;
-            fileName.style.color = '#000';
-        } else {
-            console.log('[Import Stok] No file selected');
-            fileName.textContent = 'Belum ada file dipilih';
-            fileName.style.color = 'var(--text-secondary)';
-        }
-    };
-    console.log('[Import Stok] File change handler attached');
+// Ensure DOM is ready before setting up
+if (document.readyState === 'loading') {
+    console.log('[Import Stok] DOM loading, waiting for DOMContentLoaded...');
+    document.addEventListener('DOMContentLoaded', setupFileHandlers);
 } else {
-    console.error('[Import Stok] ERROR: Missing file input or display element');
+    console.log('[Import Stok] DOM already ready, setting up now...');
+    setupFileHandlers();
 }
-
-// Form submit handler
-const importForm = document.getElementById('importForm');
-if (importForm) {
-    importForm.onsubmit = formSubmitHandler;
-    console.log('[Import Stok] Form handler attached');
-}
-
-console.log('[Import Stok] All handlers setup complete');
 
 async function formSubmitHandler(e) {
     e.preventDefault();
