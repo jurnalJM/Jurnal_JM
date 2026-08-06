@@ -698,6 +698,9 @@ function openEditSuratModal(transaksiId) {
         .then(response => {
             const t = response.data.data;
             document.getElementById('edit-surat-transaksi-id').value = transaksiId;
+            // Store customer name untuk reference saat toggle "Sama dengan Pemohon"
+            document.getElementById('editSuratModal').dataset.customerName = t.customer_name || '';
+
             document.getElementById('edit-no-surat').value = t.no_surat_pemberitahuan || '';
             document.getElementById('edit-tgl-surat').value = t.tgl_surat_pemberitahuan || '';
             document.getElementById('edit-nama-surat').value = t.nama_surat || '';
@@ -743,10 +746,17 @@ function saveEditSurat(event) {
     event.preventDefault();
 
     const transaksiId = document.getElementById('edit-surat-transaksi-id').value;
+    const samaPilihan = document.getElementById('option-sama').checked;
+    const customerName = document.getElementById('editSuratModal').dataset.customerName || '';
+
+    // Jika "Sama dengan Pemohon" dipilih, gunakan customer_name
+    // Jika "Berbeda" dipilih, gunakan nilai dari input field
+    let namaSurat = samaPilihan ? customerName : document.getElementById('edit-nama-surat').value.trim();
+
     const data = {
         no_surat_pemberitahuan: document.getElementById('edit-no-surat').value.trim(),
         tgl_surat_pemberitahuan: document.getElementById('edit-tgl-surat').value,
-        nama_surat: document.getElementById('edit-nama-surat').value.trim() || null,
+        nama_surat: namaSurat || null,
         alamat_surat: document.getElementById('edit-alamat-surat').value.trim() || null,
         kelurahan_surat: document.getElementById('edit-kelurahan-surat').value.trim() || null,
         kecamatan_surat: document.getElementById('edit-kecamatan-surat').value.trim() || null,
@@ -781,23 +791,32 @@ function saveEditSurat(event) {
 function toggleNamaSuratField() {
     const samaPilihan = document.getElementById('option-sama').checked;
     const inputField = document.getElementById('edit-nama-surat');
+    const customerName = document.getElementById('editSuratModal').dataset.customerName || '';
 
     if (samaPilihan) {
         inputField.disabled = true;
-        inputField.value = '';
+        inputField.value = customerName;
     } else {
         inputField.disabled = false;
+        inputField.value = '';
         inputField.focus();
     }
 }
 
 function initNamaSuratOption(namaSurat) {
+    const inputField = document.getElementById('edit-nama-surat');
+    const customerName = document.getElementById('editSuratModal').dataset.customerName || '';
+
     if (!namaSurat || namaSurat.trim() === '') {
+        // Jika tidak ada nama_surat, berarti "Sama dengan Pemohon"
         document.getElementById('option-sama').checked = true;
-        document.getElementById('edit-nama-surat').disabled = true;
+        inputField.disabled = true;
+        inputField.value = customerName;
     } else {
+        // Jika ada nama_surat yang berbeda dengan pemohon
         document.getElementById('option-berbeda').checked = true;
-        document.getElementById('edit-nama-surat').disabled = false;
+        inputField.disabled = false;
+        inputField.value = namaSurat;
     }
 }
 </script>
