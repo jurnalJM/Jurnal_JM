@@ -72,8 +72,30 @@ class ImportService:
                         continue
                     rows_data.append((row_num, values))
 
-            # Parse and validate rows
-            for row_num, values in rows_data:
+            # Validate header row first
+            if not rows_data:
+                self.errors.append("File Excel kosong, tidak ada data untuk diimport")
+                return {
+                    'success': False,
+                    'imported': 0,
+                    'total': 0,
+                    'errors': self.errors,
+                    'warnings': self.warnings,
+                }
+
+            # Check if first row is header
+            header_row = rows_data[0][1] if rows_data else []
+            if not self._validate_header(header_row):
+                return {
+                    'success': False,
+                    'imported': 0,
+                    'total': 0,
+                    'errors': self.errors,
+                    'warnings': self.warnings,
+                }
+
+            # Parse and validate rows (skip header row)
+            for row_num, values in rows_data[1:]:
                 result = self._parse_row(row_num, values, tgl_datang)
                 if result:
                     self.validated_rows.append(result)
@@ -386,3 +408,54 @@ class ImportService:
             session.close()
 
         return imported
+
+    def _validate_header(self, header_values: List) -> bool:
+        """
+        Validate that Excel file has correct headers for stok motor import.
+
+        Expected columns:
+        A: Tanggal Masuk
+        B: Dealer
+        C: No. Mesin
+        D: No. Rangka
+        E: Kode Type
+        F: Warna
+        G: Link/Tujuan (optional)
+
+        Returns True if valid, False if not
+        """
+        if not header_values or len(header_values) < 6:
+            self.errors.append(
+                "File tidak sesuai template. Minimal 6 kolom diperlukan: "
+                "Tanggal Masuk, Dealer, No. Mesin, No. Rangka, Kode Type, Warna"
+            )
+            return False
+
+        # Expected headers (case-insensitive)
+        expected_headers = [
+            'tanggal masuk',
+            'dealer',
+            'no. mesin',
+            'no. rangka',
+            'kode type',
+            'warna'
+        ]
+
+        # Normalize header values (lowercase, strip whitespace)
+        actual_headers = [
+            str(val).strip().lower() if val else ''
+            for val in header_values[:6]
+        ]
+
+        # Check if all required headers present
+        for i, expected in enumerate(expected_headers):
+            actual = actual_headers[i]
+            # Allow some flexibility in naming
+            if not (expected in actual or actual in expected):
+                self.errors.append(
+                    f"Kolom {i+1} tidak sesuai. Expected: '{expected}', Got: '{actual}'. "
+                    f"Pastikan file menggunakan template import yang benar."
+                )
+                return False
+
+        return True
