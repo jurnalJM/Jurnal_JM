@@ -213,7 +213,17 @@ function submitImport(event) {
         showImportResult(response.data);
     })
     .catch(error => {
-        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+        let errorMsg = '';
+        if (error.response?.data?.error) {
+            errorMsg = error.response.data.error;
+        } else if (error.response?.data?.errors && error.response.data.errors.length > 0) {
+            errorMsg = error.response.data.errors[0];
+        } else if (error.message.includes('404')) {
+            errorMsg = 'File import tidak sesuai dengan format template';
+        } else {
+            errorMsg = error.message;
+        }
+        showToast('❌ ' + errorMsg, 'error');
     });
 }
 
@@ -233,7 +243,17 @@ function handleImportFile(event) {
         showImportResult(result);
     })
     .catch(error => {
-        showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
+        let errorMsg = '';
+        if (error.response?.data?.error) {
+            errorMsg = error.response.data.error;
+        } else if (error.response?.data?.errors && error.response.data.errors.length > 0) {
+            errorMsg = error.response.data.errors[0];
+        } else if (error.message.includes('404')) {
+            errorMsg = 'File import tidak sesuai dengan format template';
+        } else {
+            errorMsg = error.message;
+        }
+        showToast('❌ ' + errorMsg, 'error');
     })
     .finally(() => {
         event.target.value = '';  // Reset file input
