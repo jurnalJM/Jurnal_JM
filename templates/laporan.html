@@ -35,8 +35,8 @@
             </div>
         </div>
         <div style="display: flex; gap: var(--space-3); margin-top: var(--space-4);">
-            <button class="btn btn-primary" onclick="generateReport()">Generate Laporan</button>
-            <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+            <button class="btn btn-primary" id="btn-generate">Generate Laporan</button>
+            <button class="btn btn-secondary" id="btn-reset">Reset</button>
         </div>
     </div>
 </div>
@@ -79,7 +79,7 @@
     <div class="card-header">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h5 style="margin: 0;">Detail Transaksi</h5>
-            <button class="btn btn-sm btn-secondary" onclick="printReport()">Cetak Laporan</button>
+            <button class="btn btn-sm btn-secondary" id="btn-print">Cetak Laporan</button>
         </div>
     </div>
     <div class="card-body">
@@ -161,6 +161,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     document.getElementById('report-start-date').value = thirtyDaysAgo;
+
+    // Attach event listeners
+    document.getElementById('btn-generate').addEventListener('click', generateReport);
+    document.getElementById('btn-reset').addEventListener('click', resetFilters);
+    document.getElementById('btn-print').addEventListener('click', printReport);
 });
 
 function generateReport() {
