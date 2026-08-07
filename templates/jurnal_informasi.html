@@ -698,8 +698,14 @@ function openEditSuratModal(transaksiId) {
         .then(response => {
             const t = response.data.data;
             document.getElementById('edit-surat-transaksi-id').value = transaksiId;
-            // Store customer name untuk reference saat toggle "Sama dengan Pemohon"
-            document.getElementById('editSuratModal').dataset.customerName = t.customer_name || '';
+
+            // Store semua data pemohon untuk reference saat toggle "Sama dengan Pemohon"
+            const modal = document.getElementById('editSuratModal');
+            modal.dataset.customerName = t.customer_name || '';
+            modal.dataset.customerAlamat = t.customer_alamat || '';
+            modal.dataset.customerKelurahan = t.kelurahan_pembeli || '';
+            modal.dataset.customerKecamatan = t.kecamatan_pembeli || '';
+            modal.dataset.customerKabupaten = t.kabupaten_pembeli || '';
 
             document.getElementById('edit-no-surat').value = t.no_surat_pemberitahuan || '';
             document.getElementById('edit-tgl-surat').value = t.tgl_surat_pemberitahuan || '';
@@ -747,20 +753,23 @@ function saveEditSurat(event) {
 
     const transaksiId = document.getElementById('edit-surat-transaksi-id').value;
     const samaPilihan = document.getElementById('option-sama').checked;
-    const customerName = document.getElementById('editSuratModal').dataset.customerName || '';
+    const modal = document.getElementById('editSuratModal');
+    const customerName = modal.dataset.customerName || '';
+    const customerAlamat = modal.dataset.customerAlamat || '';
+    const customerKelurahan = modal.dataset.customerKelurahan || '';
+    const customerKecamatan = modal.dataset.customerKecamatan || '';
+    const customerKabupaten = modal.dataset.customerKabupaten || '';
 
-    // Jika "Sama dengan Pemohon" dipilih, gunakan customer_name
+    // Jika "Sama dengan Pemohon" dipilih, gunakan semua data pemohon
     // Jika "Berbeda" dipilih, gunakan nilai dari input field
-    let namaSurat = samaPilihan ? customerName : document.getElementById('edit-nama-surat').value.trim();
-
     const data = {
         no_surat_pemberitahuan: document.getElementById('edit-no-surat').value.trim(),
         tgl_surat_pemberitahuan: document.getElementById('edit-tgl-surat').value,
-        nama_surat: namaSurat || null,
-        alamat_surat: document.getElementById('edit-alamat-surat').value.trim() || null,
-        kelurahan_surat: document.getElementById('edit-kelurahan-surat').value.trim() || null,
-        kecamatan_surat: document.getElementById('edit-kecamatan-surat').value.trim() || null,
-        kabupaten_surat: document.getElementById('edit-kabupaten-surat').value.trim() || null,
+        nama_surat: samaPilihan ? customerName : (document.getElementById('edit-nama-surat').value.trim() || null),
+        alamat_surat: samaPilihan ? customerAlamat : (document.getElementById('edit-alamat-surat').value.trim() || null),
+        kelurahan_surat: samaPilihan ? customerKelurahan : (document.getElementById('edit-kelurahan-surat').value.trim() || null),
+        kecamatan_surat: samaPilihan ? customerKecamatan : (document.getElementById('edit-kecamatan-surat').value.trim() || null),
+        kabupaten_surat: samaPilihan ? customerKabupaten : (document.getElementById('edit-kabupaten-surat').value.trim() || null),
         no_faktur: document.getElementById('edit-faktur-no').value.trim() || null,
         tgl_faktur: document.getElementById('edit-faktur-tgl').value || null,
         no_polisi: document.getElementById('edit-no-polisi').value.trim().replace(/\s+/g, '') || null,
@@ -790,22 +799,57 @@ function saveEditSurat(event) {
 
 function toggleNamaSuratField() {
     const samaPilihan = document.getElementById('option-sama').checked;
-    const inputField = document.getElementById('edit-nama-surat');
-    const customerName = document.getElementById('editSuratModal').dataset.customerName || '';
+    const modal = document.getElementById('editSuratModal');
+    const customerName = modal.dataset.customerName || '';
+    const customerAlamat = modal.dataset.customerAlamat || '';
+    const customerKelurahan = modal.dataset.customerKelurahan || '';
+    const customerKecamatan = modal.dataset.customerKecamatan || '';
+    const customerKabupaten = modal.dataset.customerKabupaten || '';
 
     if (samaPilihan) {
-        inputField.disabled = true;
-        inputField.value = customerName;
+        // Auto-fill semua field dengan data pemohon
+        document.getElementById('edit-nama-surat').disabled = true;
+        document.getElementById('edit-nama-surat').value = customerName;
+
+        document.getElementById('edit-alamat-surat').disabled = true;
+        document.getElementById('edit-alamat-surat').value = customerAlamat;
+
+        document.getElementById('edit-kelurahan-surat').disabled = true;
+        document.getElementById('edit-kelurahan-surat').value = customerKelurahan;
+
+        document.getElementById('edit-kecamatan-surat').disabled = true;
+        document.getElementById('edit-kecamatan-surat').value = customerKecamatan;
+
+        document.getElementById('edit-kabupaten-surat').disabled = true;
+        document.getElementById('edit-kabupaten-surat').value = customerKabupaten;
     } else {
-        inputField.disabled = false;
-        inputField.value = '';
-        inputField.focus();
+        // Enable semua field untuk edit manual
+        document.getElementById('edit-nama-surat').disabled = false;
+        document.getElementById('edit-nama-surat').value = '';
+
+        document.getElementById('edit-alamat-surat').disabled = false;
+        document.getElementById('edit-alamat-surat').value = '';
+
+        document.getElementById('edit-kelurahan-surat').disabled = false;
+        document.getElementById('edit-kelurahan-surat').value = '';
+
+        document.getElementById('edit-kecamatan-surat').disabled = false;
+        document.getElementById('edit-kecamatan-surat').value = '';
+
+        document.getElementById('edit-kabupaten-surat').disabled = false;
+        document.getElementById('edit-kabupaten-surat').value = '';
+
+        document.getElementById('edit-nama-surat').focus();
     }
 }
 
 function initNamaSuratOption(namaSurat) {
-    const inputField = document.getElementById('edit-nama-surat');
-    const customerName = document.getElementById('editSuratModal').dataset.customerName || '';
+    const modal = document.getElementById('editSuratModal');
+    const customerName = modal.dataset.customerName || '';
+    const customerAlamat = modal.dataset.customerAlamat || '';
+    const customerKelurahan = modal.dataset.customerKelurahan || '';
+    const customerKecamatan = modal.dataset.customerKecamatan || '';
+    const customerKabupaten = modal.dataset.customerKabupaten || '';
 
     // Jangan auto-select radio button, biar user klik dulu
     // Tapi tetap set state input field sesuai data yang ada
@@ -813,14 +857,42 @@ function initNamaSuratOption(namaSurat) {
         // Tidak ada nama_surat berbeda, jadi prepare untuk "Sama dengan Pemohon"
         document.getElementById('option-sama').checked = false;
         document.getElementById('option-berbeda').checked = false;
-        inputField.disabled = true;
-        inputField.value = customerName;
+
+        // Disable semua field dan set nilai ke data pemohon
+        document.getElementById('edit-nama-surat').disabled = true;
+        document.getElementById('edit-nama-surat').value = customerName;
+
+        document.getElementById('edit-alamat-surat').disabled = true;
+        document.getElementById('edit-alamat-surat').value = customerAlamat;
+
+        document.getElementById('edit-kelurahan-surat').disabled = true;
+        document.getElementById('edit-kelurahan-surat').value = customerKelurahan;
+
+        document.getElementById('edit-kecamatan-surat').disabled = true;
+        document.getElementById('edit-kecamatan-surat').value = customerKecamatan;
+
+        document.getElementById('edit-kabupaten-surat').disabled = true;
+        document.getElementById('edit-kabupaten-surat').value = customerKabupaten;
     } else {
         // Ada nama_surat berbeda, jadi prepare untuk "Nama Berbeda"
         document.getElementById('option-sama').checked = false;
         document.getElementById('option-berbeda').checked = false;
-        inputField.disabled = true;
-        inputField.value = namaSurat;
+
+        // Disable semua field dan set nilai ke nilai yang ada
+        document.getElementById('edit-nama-surat').disabled = true;
+        document.getElementById('edit-nama-surat').value = namaSurat;
+
+        document.getElementById('edit-alamat-surat').disabled = true;
+        document.getElementById('edit-alamat-surat').value = document.getElementById('edit-alamat-surat').value;
+
+        document.getElementById('edit-kelurahan-surat').disabled = true;
+        document.getElementById('edit-kelurahan-surat').value = document.getElementById('edit-kelurahan-surat').value;
+
+        document.getElementById('edit-kecamatan-surat').disabled = true;
+        document.getElementById('edit-kecamatan-surat').value = document.getElementById('edit-kecamatan-surat').value;
+
+        document.getElementById('edit-kabupaten-surat').disabled = true;
+        document.getElementById('edit-kabupaten-surat').value = document.getElementById('edit-kabupaten-surat').value;
     }
 }
 </script>
