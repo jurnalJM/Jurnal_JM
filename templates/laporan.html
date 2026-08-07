@@ -242,22 +242,35 @@ function displayReport(data) {
         container.innerHTML += card;
     });
 
-    // Update summary
-    document.getElementById('report-total').textContent = data.length;
-    document.getElementById('report-otr').textContent = formatCurrency(totalOtr);
-    document.getElementById('report-harga-jual').textContent = formatCurrency(totalHargaJual);
-    document.getElementById('report-diskon').textContent = formatCurrency(totalDiskon);
-    document.getElementById('report-dp').textContent = formatCurrency(totalDp);
-    document.getElementById('report-hutang').textContent = formatCurrency(totalHutang);
+    // Update summary cards (top section)
+    const reportTotal = document.getElementById('report-total');
+    const reportOtr = document.getElementById('report-otr');
+    const reportHargaJual = document.getElementById('report-harga-jual');
+    const reportDiskon = document.getElementById('report-diskon');
+    const reportDp = document.getElementById('report-dp');
+    const reportHutang = document.getElementById('report-hutang');
 
-    // Update total row
-    document.getElementById('total-otr').textContent = formatCurrency(totalOtr);
-    document.getElementById('total-harga-jual').textContent = formatCurrency(totalHargaJual);
-    document.getElementById('total-diskon').textContent = formatCurrency(totalDiskon);
-    document.getElementById('total-dp').textContent = formatCurrency(totalDp);
-    document.getElementById('total-subsidi').textContent = formatCurrency(totalSubsidi);
-    document.getElementById('total-insentif').textContent = formatCurrency(totalInsentif);
-    document.getElementById('total-hutang').textContent = formatCurrency(totalHutang);
+    if (reportTotal) reportTotal.textContent = data.length;
+    if (reportOtr) reportOtr.textContent = formatCurrency(totalOtr);
+    if (reportHargaJual) reportHargaJual.textContent = formatCurrency(totalHargaJual);
+    if (reportDiskon) reportDiskon.textContent = formatCurrency(totalDiskon);
+    if (reportDp) reportDp.textContent = formatCurrency(totalDp);
+    if (reportHutang) reportHutang.textContent = formatCurrency(totalHutang);
+
+    // Update total row (summary section)
+    const totalOtrEl = document.getElementById('total-otr');
+    const totalHargaJualEl = document.getElementById('total-harga-jual');
+    const totalDiskonEl = document.getElementById('total-diskon');
+    const totalDpEl = document.getElementById('total-dp');
+    const totalSubsidiEl = document.getElementById('total-subsidi');
+    const totalHutangEl = document.getElementById('total-hutang');
+
+    if (totalOtrEl) totalOtrEl.textContent = formatCurrency(totalOtr);
+    if (totalHargaJualEl) totalHargaJualEl.textContent = formatCurrency(totalHargaJual);
+    if (totalDiskonEl) totalDiskonEl.textContent = formatCurrency(totalDiskon);
+    if (totalDpEl) totalDpEl.textContent = formatCurrency(totalDp);
+    if (totalSubsidiEl) totalSubsidiEl.textContent = formatCurrency(totalSubsidi);
+    if (totalHutangEl) totalHutangEl.textContent = formatCurrency(totalHutang);
 }
 
 function toggleDetail(cardId) {
