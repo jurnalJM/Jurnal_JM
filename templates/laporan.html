@@ -49,18 +49,28 @@
     </div>
 
     <div class="stat-card">
-        <span class="stat-label">Total DP (Rp)</span>
-        <div class="stat-value" id="report-dp" style="color: #06b6d4;">0</div>
+        <span class="stat-label">Total Harga OTR (Rp)</span>
+        <div class="stat-value" id="report-otr" style="color: #3b82f6; font-size: 1.1rem;">0</div>
     </div>
 
     <div class="stat-card">
-        <span class="stat-label">Total Subsidi (Rp)</span>
-        <div class="stat-value" id="report-subsidi" style="color: #10b981;">0</div>
+        <span class="stat-label">Total Harga Jual (Rp)</span>
+        <div class="stat-value" id="report-harga-jual" style="color: #10b981; font-size: 1.1rem;">0</div>
     </div>
 
     <div class="stat-card">
         <span class="stat-label">Total Diskon (Rp)</span>
         <div class="stat-value" id="report-diskon" style="color: #f59e0b;">0</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Total DP (Rp)</span>
+        <div class="stat-value" id="report-dp" style="color: #06b6d4;">0</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Total Hutang (Rp)</span>
+        <div class="stat-value" id="report-hutang" style="color: #ef4444;">0</div>
     </div>
 </div>
 
@@ -82,22 +92,30 @@
                         <th>Pelanggan</th>
                         <th>Motor</th>
                         <th>Status</th>
+                        <th style="text-align: right;">Harga OTR (Rp)</th>
+                        <th style="text-align: right;">Harga Jual (Rp)</th>
+                        <th style="text-align: right;">Diskon (Rp)</th>
                         <th style="text-align: right;">DP (Rp)</th>
                         <th style="text-align: right;">Subsidi (Rp)</th>
-                        <th style="text-align: right;">Diskon (Rp)</th>
+                        <th style="text-align: right;">Insentif (Rp)</th>
+                        <th style="text-align: right;">Hutang (Rp)</th>
                     </tr>
                 </thead>
                 <tbody id="report-body">
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: var(--space-8);">Silakan generate laporan terlebih dahulu</td>
+                        <td colspan="12" style="text-align: center; padding: var(--space-8);">Silakan generate laporan terlebih dahulu</td>
                     </tr>
                 </tbody>
                 <tfoot>
                     <tr>
                         <td colspan="5" style="text-align: right; font-weight: 600;">TOTAL:</td>
+                        <td style="text-align: right; font-weight: 600;" id="total-otr">0</td>
+                        <td style="text-align: right; font-weight: 600;" id="total-harga-jual">0</td>
+                        <td style="text-align: right; font-weight: 600;" id="total-diskon">0</td>
                         <td style="text-align: right; font-weight: 600;" id="total-dp">0</td>
                         <td style="text-align: right; font-weight: 600;" id="total-subsidi">0</td>
-                        <td style="text-align: right; font-weight: 600;" id="total-diskon">0</td>
+                        <td style="text-align: right; font-weight: 600;" id="total-insentif">0</td>
+                        <td style="text-align: right; font-weight: 600;" id="total-hutang">0</td>
                     </tr>
                 </tfoot>
             </table>
@@ -143,18 +161,32 @@ function displayReport(data) {
     tbody.innerHTML = '';
 
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: var(--space-6);">Tidak ada data</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: var(--space-6);">Tidak ada data</td></tr>';
         return;
     }
 
+    let totalOtr = 0;
+    let totalHargaJual = 0;
+    let totalDiskon = 0;
     let totalDp = 0;
     let totalSubsidi = 0;
-    let totalDiskon = 0;
+    let totalInsentif = 0;
+    let totalHutang = 0;
 
     data.forEach(t => {
+        // Calculate values
+        const otr = t.harga_dasar || 0;
+        const diskonTotal = (t.diskon_ahm || 0) + (t.diskon_dealer || 0) + (t.diskon_leasing || 0);
+        const hargaJual = otr - diskonTotal;
+        const hutangTotal = (t.hutang_sales || 0) + (t.hutang_leasing || 0);
+
+        totalOtr += otr;
+        totalHargaJual += hargaJual;
+        totalDiskon += diskonTotal;
         totalDp += t.dp;
         totalSubsidi += t.subsidi;
-        totalDiskon += (t.diskon_ahm || 0) + (t.diskon_dealer || 0) + (t.diskon_leasing || 0);
+        totalInsentif += t.insentif || 0;
+        totalHutang += hutangTotal;
 
         const statusColor = getStatusColor(t.status);
         const row = `
@@ -164,9 +196,13 @@ function displayReport(data) {
                 <td>${t.customer_name}</td>
                 <td>${t.motor_type}</td>
                 <td><span class="badge badge-${statusColor}">${t.status}</span></td>
+                <td style="text-align: right;">${formatCurrency(otr)}</td>
+                <td style="text-align: right;">${formatCurrency(hargaJual)}</td>
+                <td style="text-align: right;">${formatCurrency(diskonTotal)}</td>
                 <td style="text-align: right;">${formatCurrency(t.dp)}</td>
                 <td style="text-align: right;">${formatCurrency(t.subsidi)}</td>
-                <td style="text-align: right;">${formatCurrency((t.diskon_ahm || 0) + (t.diskon_dealer || 0) + (t.diskon_leasing || 0))}</td>
+                <td style="text-align: right;">${formatCurrency(t.insentif || 0)}</td>
+                <td style="text-align: right;">${formatCurrency(hutangTotal)}</td>
             </tr>
         `;
         tbody.innerHTML += row;
@@ -174,14 +210,20 @@ function displayReport(data) {
 
     // Update summary
     document.getElementById('report-total').textContent = data.length;
-    document.getElementById('report-dp').textContent = formatCurrency(totalDp);
-    document.getElementById('report-subsidi').textContent = formatCurrency(totalSubsidi);
+    document.getElementById('report-otr').textContent = formatCurrency(totalOtr);
+    document.getElementById('report-harga-jual').textContent = formatCurrency(totalHargaJual);
     document.getElementById('report-diskon').textContent = formatCurrency(totalDiskon);
+    document.getElementById('report-dp').textContent = formatCurrency(totalDp);
+    document.getElementById('report-hutang').textContent = formatCurrency(totalHutang);
 
     // Update footer totals
+    document.getElementById('total-otr').textContent = formatCurrency(totalOtr);
+    document.getElementById('total-harga-jual').textContent = formatCurrency(totalHargaJual);
+    document.getElementById('total-diskon').textContent = formatCurrency(totalDiskon);
     document.getElementById('total-dp').textContent = formatCurrency(totalDp);
     document.getElementById('total-subsidi').textContent = formatCurrency(totalSubsidi);
-    document.getElementById('total-diskon').textContent = formatCurrency(totalDiskon);
+    document.getElementById('total-insentif').textContent = formatCurrency(totalInsentif);
+    document.getElementById('total-hutang').textContent = formatCurrency(totalHutang);
 }
 
 function resetFilters() {
