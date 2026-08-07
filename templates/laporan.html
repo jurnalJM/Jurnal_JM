@@ -178,24 +178,42 @@ function generateReport() {
     if (endDate) url += `end_date=${endDate}&`;
     if (status) url += `status=${status}&`;
 
+    console.log('Generating report with URL:', url);
+
     axios.get(url)
         .then(response => {
-            const transaksi = response.data.data;
+            console.log('Response:', response.data);
+            const transaksi = response.data.data || [];
+            console.log('Transaksi data:', transaksi);
             window.lastReportData = transaksi;
             displayReport(transaksi);
-            showToast('Laporan berhasil di-generate', 'success');
+            showToast(`Laporan berhasil di-generate (${transaksi.length} data)`, 'success');
         })
         .catch(error => {
-            showToast('Error: ' + error.message, 'error');
+            console.error('Error detail:', error);
+            const errorMsg = error.response?.data?.error || error.message || 'Unknown error';
+            showToast('Error: ' + errorMsg, 'error');
         });
 }
 
 function displayReport(data) {
-    const tbody = document.getElementById('report-body');
-    tbody.innerHTML = '';
+    try {
+        console.log('displayReport called with:', data);
+        const tbody = document.getElementById('report-body');
+        if (!tbody) {
+            console.error('tbody element not found!');
+            showToast('Error: table body element not found', 'error');
+            return;
+        }
+        tbody.innerHTML = '';
 
-    if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: var(--space-8);">Tidak ada data</td></tr>';
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: var(--space-8);">Tidak ada data</td></tr>';
+            return;
+        }
+    } catch (e) {
+        console.error('Error in displayReport:', e);
+        showToast('Error: ' + e.message, 'error');
         return;
     }
 
