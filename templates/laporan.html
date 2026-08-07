@@ -138,6 +138,23 @@
 
 {% block extra_js %}
 <script>
+// Helper functions
+function formatCurrency(value) {
+    if (!value) return '0';
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function getStatusColor(status) {
+    const colors = { 'D': 'secondary', 'P': 'warning', 'A': 'info', 'L': 'success', 'C': 'danger' };
+    return colors[status] || 'secondary';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('report-end-date').value = today;
