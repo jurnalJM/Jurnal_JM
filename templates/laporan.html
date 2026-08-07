@@ -74,51 +74,48 @@
     </div>
 </div>
 
-<!-- Report Table -->
-<div class="card" style="margin-top: var(--space-8);">
-    <div class="card-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h5 style="margin: 0;">Detail Transaksi</h5>
-            <button class="btn btn-sm btn-secondary" onclick="printReport()">Cetak Laporan</button>
+<!-- Report Cards -->
+<div style="margin-top: var(--space-8);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+        <h5 style="margin: 0;">Detail Transaksi</h5>
+        <button class="btn btn-sm btn-secondary" onclick="printReport()">Cetak Laporan</button>
+    </div>
+    <div id="report-body" style="display: grid; gap: var(--space-4);">
+        <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+            Silakan generate laporan terlebih dahulu
         </div>
     </div>
+</div>
+
+<!-- Summary Totals -->
+<div class="card" style="margin-top: var(--space-8); background-color: var(--bg-secondary);">
     <div class="card-body">
-        <div class="table-wrapper">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Nota</th>
-                        <th>Tanggal</th>
-                        <th>Pelanggan</th>
-                        <th>Motor</th>
-                        <th>Status</th>
-                        <th style="text-align: right;">Harga OTR (Rp)</th>
-                        <th style="text-align: right;">Harga Jual (Rp)</th>
-                        <th style="text-align: right;">Diskon (Rp)</th>
-                        <th style="text-align: right;">DP (Rp)</th>
-                        <th style="text-align: right;">Subsidi (Rp)</th>
-                        <th style="text-align: right;">Insentif (Rp)</th>
-                        <th style="text-align: right;">Hutang (Rp)</th>
-                    </tr>
-                </thead>
-                <tbody id="report-body">
-                    <tr>
-                        <td colspan="12" style="text-align: center; padding: var(--space-8);">Silakan generate laporan terlebih dahulu</td>
-                    </tr>
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="5" style="text-align: right; font-weight: 600;">TOTAL:</td>
-                        <td style="text-align: right; font-weight: 600;" id="total-otr">0</td>
-                        <td style="text-align: right; font-weight: 600;" id="total-harga-jual">0</td>
-                        <td style="text-align: right; font-weight: 600;" id="total-diskon">0</td>
-                        <td style="text-align: right; font-weight: 600;" id="total-dp">0</td>
-                        <td style="text-align: right; font-weight: 600;" id="total-subsidi">0</td>
-                        <td style="text-align: right; font-weight: 600;" id="total-insentif">0</td>
-                        <td style="text-align: right; font-weight: 600;" id="total-hutang">0</td>
-                    </tr>
-                </tfoot>
-            </table>
+        <h5 style="margin-top: 0; margin-bottom: var(--space-4);">Total Ringkas</h5>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-4);">
+            <div>
+                <div style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: var(--space-2);">Total Harga OTR</div>
+                <div style="font-size: 1.3em; font-weight: 600; color: #3b82f6;" id="total-otr">0</div>
+            </div>
+            <div>
+                <div style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: var(--space-2);">Total Harga Jual</div>
+                <div style="font-size: 1.3em; font-weight: 600; color: #10b981;" id="total-harga-jual">0</div>
+            </div>
+            <div>
+                <div style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: var(--space-2);">Total Diskon</div>
+                <div style="font-size: 1.3em; font-weight: 600; color: #f59e0b;" id="total-diskon">0</div>
+            </div>
+            <div>
+                <div style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: var(--space-2);">Total DP</div>
+                <div style="font-size: 1.3em; font-weight: 600; color: #06b6d4;" id="total-dp">0</div>
+            </div>
+            <div>
+                <div style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: var(--space-2);">Total Subsidi</div>
+                <div style="font-size: 1.3em; font-weight: 600; color: #8b5cf6;" id="total-subsidi">0</div>
+            </div>
+            <div>
+                <div style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: var(--space-2);">Total Hutang</div>
+                <div style="font-size: 1.3em; font-weight: 600; color: #ef4444;" id="total-hutang">0</div>
+            </div>
         </div>
     </div>
 </div>
@@ -148,6 +145,7 @@ function generateReport() {
     axios.get(url)
         .then(response => {
             const transaksi = response.data.data;
+            window.lastReportData = transaksi; // Store untuk print
             displayReport(transaksi);
             showToast('Laporan berhasil di-generate', 'success');
         })
@@ -157,11 +155,11 @@ function generateReport() {
 }
 
 function displayReport(data) {
-    const tbody = document.getElementById('report-body');
-    tbody.innerHTML = '';
+    const container = document.getElementById('report-body');
+    container.innerHTML = '';
 
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: var(--space-6);">Tidak ada data</td></tr>';
+        container.innerHTML = '<div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">Tidak ada data</div>';
         return;
     }
 
@@ -173,7 +171,7 @@ function displayReport(data) {
     let totalInsentif = 0;
     let totalHutang = 0;
 
-    data.forEach(t => {
+    data.forEach((t, index) => {
         // Calculate values
         const otr = t.harga_dasar || 0;
         const diskonTotal = (t.diskon_ahm || 0) + (t.diskon_dealer || 0) + (t.diskon_leasing || 0);
@@ -189,23 +187,59 @@ function displayReport(data) {
         totalHutang += hutangTotal;
 
         const statusColor = getStatusColor(t.status);
-        const row = `
-            <tr>
-                <td><strong>${t.nota}</strong></td>
-                <td>${formatDate(t.tanggal_nota)}</td>
-                <td>${t.customer_name}</td>
-                <td>${t.motor_type}</td>
-                <td><span class="badge badge-${statusColor}">${t.status}</span></td>
-                <td style="text-align: right;">${formatCurrency(otr)}</td>
-                <td style="text-align: right;">${formatCurrency(hargaJual)}</td>
-                <td style="text-align: right;">${formatCurrency(diskonTotal)}</td>
-                <td style="text-align: right;">${formatCurrency(t.dp)}</td>
-                <td style="text-align: right;">${formatCurrency(t.subsidi)}</td>
-                <td style="text-align: right;">${formatCurrency(t.insentif || 0)}</td>
-                <td style="text-align: right;">${formatCurrency(hutangTotal)}</td>
-            </tr>
+        const cardId = `card-${index}`;
+
+        const card = `
+            <div class="card">
+                <div class="card-header" onclick="toggleDetail('${cardId}')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: grid; grid-template-columns: 80px 120px 180px auto 80px; gap: var(--space-4); flex: 1;">
+                        <div><strong>${t.nota}</strong></div>
+                        <div style="font-size: 0.9em; color: var(--text-secondary);">${formatDate(t.tanggal_nota)}</div>
+                        <div style="font-size: 0.9em; color: var(--text-secondary);">${t.customer_name}</div>
+                        <div style="font-size: 0.9em; color: var(--text-secondary);">${t.motor_type}</div>
+                        <span class="badge badge-${statusColor}">${t.status}</span>
+                    </div>
+                    <span id="toggle-icon-${cardId}" style="color: var(--text-secondary);">▼</span>
+                </div>
+                <div id="${cardId}" class="card-body" style="display: none; background-color: var(--bg-secondary); border-top: 1px solid var(--border-light);">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+                        <div>
+                            <div style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: var(--space-2);">Harga OTR</div>
+                            <div style="font-size: 1.1em; font-weight: 600; color: #3b82f6;">${formatCurrency(otr)}</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: var(--space-2);">Harga Jual</div>
+                            <div style="font-size: 1.1em; font-weight: 600; color: #10b981;">${formatCurrency(hargaJual)}</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: var(--space-2);">Diskon</div>
+                            <div style="font-size: 1.1em; font-weight: 600; color: #f59e0b;">${formatCurrency(diskonTotal)}</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: var(--space-2);">DP</div>
+                            <div style="font-size: 1.1em; font-weight: 600; color: #06b6d4;">${formatCurrency(t.dp)}</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: var(--space-2);">Subsidi</div>
+                            <div style="font-size: 1.1em; font-weight: 600; color: #8b5cf6;">${formatCurrency(t.subsidi)}</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: var(--space-2);">Insentif</div>
+                            <div style="font-size: 1.1em; font-weight: 600; color: #ec4899;">${formatCurrency(t.insentif || 0)}</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: var(--space-2);">Hutang Sales</div>
+                            <div style="font-size: 1.1em; font-weight: 600; color: #ef4444;">${formatCurrency(t.hutang_sales || 0)}</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: var(--space-2);">Hutang Leasing</div>
+                            <div style="font-size: 1.1em; font-weight: 600; color: #ef4444;">${formatCurrency(t.hutang_leasing || 0)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         `;
-        tbody.innerHTML += row;
+        container.innerHTML += card;
     });
 
     // Update summary
@@ -216,7 +250,7 @@ function displayReport(data) {
     document.getElementById('report-dp').textContent = formatCurrency(totalDp);
     document.getElementById('report-hutang').textContent = formatCurrency(totalHutang);
 
-    // Update footer totals
+    // Update total row
     document.getElementById('total-otr').textContent = formatCurrency(totalOtr);
     document.getElementById('total-harga-jual').textContent = formatCurrency(totalHargaJual);
     document.getElementById('total-diskon').textContent = formatCurrency(totalDiskon);
@@ -226,43 +260,117 @@ function displayReport(data) {
     document.getElementById('total-hutang').textContent = formatCurrency(totalHutang);
 }
 
+function toggleDetail(cardId) {
+    const detail = document.getElementById(cardId);
+    const icon = document.getElementById(`toggle-icon-${cardId}`);
+    detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
+    icon.textContent = detail.style.display === 'none' ? '▼' : '▲';
+}
+
 function resetFilters() {
     document.getElementById('report-status').value = '';
     generateReport();
 }
 
 function printReport() {
-    const table = document.querySelector('table');
     const startDate = document.getElementById('report-start-date').value;
     const endDate = document.getElementById('report-end-date').value;
+    const reportData = window.lastReportData || [];
 
-    const printWindow = window.open('', '', 'height=600,width=900');
+    if (reportData.length === 0) {
+        showToast('Tidak ada data untuk dicetak', 'warning');
+        return;
+    }
+
+    let tableRows = '';
+    let totalOtr = 0, totalHargaJual = 0, totalDiskon = 0, totalDp = 0, totalSubsidi = 0, totalHutang = 0;
+
+    reportData.forEach(t => {
+        const otr = t.harga_dasar || 0;
+        const diskonTotal = (t.diskon_ahm || 0) + (t.diskon_dealer || 0) + (t.diskon_leasing || 0);
+        const hargaJual = otr - diskonTotal;
+        const hutangTotal = (t.hutang_sales || 0) + (t.hutang_leasing || 0);
+
+        totalOtr += otr;
+        totalHargaJual += hargaJual;
+        totalDiskon += diskonTotal;
+        totalDp += t.dp;
+        totalSubsidi += t.subsidi;
+        totalHutang += hutangTotal;
+
+        tableRows += `
+            <tr>
+                <td>${t.nota}</td>
+                <td>${formatDate(t.tanggal_nota)}</td>
+                <td>${t.customer_name}</td>
+                <td>${t.motor_type}</td>
+                <td style="text-align: right;">${formatCurrency(otr)}</td>
+                <td style="text-align: right;">${formatCurrency(hargaJual)}</td>
+                <td style="text-align: right;">${formatCurrency(diskonTotal)}</td>
+                <td style="text-align: right;">${formatCurrency(t.dp)}</td>
+                <td style="text-align: right;">${formatCurrency(t.subsidi)}</td>
+                <td style="text-align: right;">${formatCurrency(hutangTotal)}</td>
+            </tr>
+        `;
+    });
+
+    const printWindow = window.open('', '', 'height=600,width=1200');
     printWindow.document.write(`
         <!DOCTYPE html>
         <html lang="id">
         <head>
             <meta charset="UTF-8">
-            <title>Laporan Transaksi - UCHAHUNT</title>
+            <title>Laporan Penjualan Motor</title>
             <style>
                 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; padding: 20px; background: white; }
                 .print-header { text-align: center; margin-bottom: 30px; }
-                .print-header h2 { margin: 0 0 10px 0; }
-                .print-header p { margin: 5px 0; color: #666; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th { background-color: #f0f0f0; border: 1px solid #ddd; padding: 10px; text-align: left; font-weight: 600; }
-                td { border: 1px solid #ddd; padding: 8px 10px; }
+                .print-header h2 { margin: 0 0 5px 0; }
+                .print-header h3 { margin: 0 0 10px 0; color: #666; }
+                .print-header p { margin: 3px 0; color: #666; font-size: 0.9em; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
+                th { background-color: #f0f0f0; border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: 600; }
+                td { border: 1px solid #ddd; padding: 6px 8px; }
                 tfoot tr { background-color: #f0f0f0; font-weight: 600; }
                 .text-right { text-align: right; }
             </style>
         </head>
         <body>
             <div class="print-header">
-                <h2>LAPORAN TRANSAKSI PENJUALAN MOTOR</h2>
+                <h2>LAPORAN PENJUALAN MOTOR</h2>
                 <h3>JayaMotor - Honda</h3>
                 <p>Periode: ${formatDate(startDate)} sampai ${formatDate(endDate)}</p>
                 <p>Dicetak: ${new Date().toLocaleString('id-ID')}</p>
             </div>
-            ${table.outerHTML}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nota</th>
+                        <th>Tanggal</th>
+                        <th>Pelanggan</th>
+                        <th>Motor</th>
+                        <th style="text-align: right;">Harga OTR</th>
+                        <th style="text-align: right;">Harga Jual</th>
+                        <th style="text-align: right;">Diskon</th>
+                        <th style="text-align: right;">DP</th>
+                        <th style="text-align: right;">Subsidi</th>
+                        <th style="text-align: right;">Hutang</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" style="text-align: right;">TOTAL:</td>
+                        <td style="text-align: right;">${formatCurrency(totalOtr)}</td>
+                        <td style="text-align: right;">${formatCurrency(totalHargaJual)}</td>
+                        <td style="text-align: right;">${formatCurrency(totalDiskon)}</td>
+                        <td style="text-align: right;">${formatCurrency(totalDp)}</td>
+                        <td style="text-align: right;">${formatCurrency(totalSubsidi)}</td>
+                        <td style="text-align: right;">${formatCurrency(totalHutang)}</td>
+                    </tr>
+                </tfoot>
+            </table>
             <script>
                 window.print();
                 window.close();
