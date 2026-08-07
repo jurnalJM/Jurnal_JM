@@ -306,104 +306,20 @@ function resetFilters() {
 }
 
 function printReport() {
-    const startDate = document.getElementById('report-start-date').value;
-    const endDate = document.getElementById('report-end-date').value;
-    const reportData = window.lastReportData || [];
-
-    if (reportData.length === 0) {
+    if (!window.lastReportData || window.lastReportData.length === 0) {
         showToast('Tidak ada data untuk dicetak', 'warning');
         return;
     }
 
-    let tableRows = '';
-    let totals = { otr: 0, hj: 0, diskon: 0, dp: 0, subsidi: 0, hutang: 0 };
+    const startDate = document.getElementById('report-start-date').value;
+    const endDate = document.getElementById('report-end-date').value;
 
-    reportData.forEach(t => {
-        const otr = t.harga_dasar || 0;
-        const diskon = (t.diskon_ahm || 0) + (t.diskon_dealer || 0) + (t.diskon_leasing || 0);
-        const hj = otr - diskon;
-        const hutang = (t.hutang_sales || 0) + (t.hutang_leasing || 0);
+    showToast('Membuka window print...', 'info');
 
-        totals.otr += otr;
-        totals.hj += hj;
-        totals.diskon += diskon;
-        totals.dp += t.dp;
-        totals.subsidi += t.subsidi;
-        totals.hutang += hutang;
-
-        tableRows += `
-            <tr>
-                <td>${t.nota}</td>
-                <td>${formatDate(t.tanggal_nota)}</td>
-                <td>${t.customer_name}</td>
-                <td>${t.motor_type}</td>
-                <td style="text-align: right;">${formatCurrency(otr)}</td>
-                <td style="text-align: right;">${formatCurrency(hj)}</td>
-                <td style="text-align: right;">${formatCurrency(diskon)}</td>
-                <td style="text-align: right;">${formatCurrency(t.dp)}</td>
-                <td style="text-align: right;">${formatCurrency(t.subsidi)}</td>
-                <td style="text-align: right;">${formatCurrency(hutang)}</td>
-            </tr>
-        `;
-    });
-
-    const printWindow = window.open('', '', 'height=600,width=1200');
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html lang="id">
-        <head>
-            <meta charset="UTF-8">
-            <title>Laporan Penjualan Motor</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                .header { text-align: center; margin-bottom: 30px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
-                th { background: #f0f0f0; border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: 600; }
-                td { border: 1px solid #ddd; padding: 6px 8px; }
-                tfoot tr { background: #f0f0f0; font-weight: 600; }
-                .text-right { text-align: right; }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h2>LAPORAN PENJUALAN MOTOR</h2>
-                <h3>JayaMotor - Honda</h3>
-                <p>Periode: ${formatDate(startDate)} sampai ${formatDate(endDate)}</p>
-                <p>Dicetak: ${new Date().toLocaleString('id-ID')}</p>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nota</th>
-                        <th>Tanggal</th>
-                        <th>Pelanggan</th>
-                        <th>Motor</th>
-                        <th class="text-right">OTR</th>
-                        <th class="text-right">Harga Jual</th>
-                        <th class="text-right">Diskon</th>
-                        <th class="text-right">DP</th>
-                        <th class="text-right">Subsidi</th>
-                        <th class="text-right">Hutang</th>
-                    </tr>
-                </thead>
-                <tbody>${tableRows}</tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="4" class="text-right">TOTAL:</td>
-                        <td class="text-right">${formatCurrency(totals.otr)}</td>
-                        <td class="text-right">${formatCurrency(totals.hj)}</td>
-                        <td class="text-right">${formatCurrency(totals.diskon)}</td>
-                        <td class="text-right">${formatCurrency(totals.dp)}</td>
-                        <td class="text-right">${formatCurrency(totals.subsidi)}</td>
-                        <td class="text-right">${formatCurrency(totals.hutang)}</td>
-                    </tr>
-                </tfoot>
-            </table>
-            <script>window.print(); window.close();</script>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
+    // Cukup print current page dengan table yang sudah ada
+    setTimeout(() => {
+        window.print();
+    }, 500);
 }
 </script>
 {% endblock %}
