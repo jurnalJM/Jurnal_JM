@@ -9,9 +9,9 @@
 </div>
 
 <!-- Report Filter -->
-<div class="card">
-    <div class="card-header">
-        <h5>Filter Laporan</h5>
+<div class="card" style="border-left: 5px solid transparent; border-image: linear-gradient(180deg, #4a9b7f, #10b981, #f59e0b, #d97706) 0 0 0 1;">
+    <div class="card-header" style="background: linear-gradient(90deg, rgba(74, 155, 127, 0.05) 0%, transparent 100%);">
+        <h5 style="margin: 0; color: #333;">Filter Laporan</h5>
     </div>
     <div class="card-body">
         <div class="grid grid-3">
@@ -41,36 +41,48 @@
     </div>
 </div>
 
-<!-- Report Summary -->
-<div class="stats-grid" style="margin-top: var(--space-8);">
-    <div class="stat-card">
-        <span class="stat-label">Total Transaksi</span>
-        <div class="stat-value" id="report-total">0</div>
+<!-- Report Summary - Compact Single Row -->
+<div style="margin-top: var(--space-8); display: flex; align-items: center; gap: 20px; padding: 12px 16px; background: linear-gradient(90deg, #f9fafb 0%, #ffffff 50%, #f9fafb 100%); border-radius: 10px; overflow-x: auto; border-left: 5px solid transparent; border-image: linear-gradient(180deg, #4a9b7f, #10b981, #f59e0b, #d97706) 0 0 0 1; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+    <div style="display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap;">
+        <div style="font-size: 0.65rem; color: #999; font-weight: 600; text-transform: uppercase;">Transaksi</div>
+        <div style="font-size: 1.3rem; font-weight: 700; color: #4a9b7f;" id="report-total">0</div>
     </div>
 
-    <div class="stat-card">
-        <span class="stat-label">Total Harga OTR (Rp)</span>
-        <div class="stat-value" id="report-otr" style="color: #3b82f6; font-size: 1.1rem;">0</div>
+    <div style="width: 2px; height: 40px; background: linear-gradient(to bottom, transparent, #d0d8e0, transparent); border-radius: 1px;"></div>
+
+    <div style="display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap;">
+        <div style="font-size: 0.65rem; color: #999; font-weight: 600; text-transform: uppercase;">OTR</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #10b981;" id="report-otr">0</div>
     </div>
 
-    <div class="stat-card">
-        <span class="stat-label">Total Harga Jual (Rp)</span>
-        <div class="stat-value" id="report-harga-jual" style="color: #10b981; font-size: 1.1rem;">0</div>
+    <div style="display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap;">
+        <div style="font-size: 0.65rem; color: #999; font-weight: 600; text-transform: uppercase;">Jual</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #10b981;" id="report-harga-jual">0</div>
     </div>
 
-    <div class="stat-card">
-        <span class="stat-label">Total Diskon (Rp)</span>
-        <div class="stat-value" id="report-diskon" style="color: #f59e0b;">0</div>
+    <div style="display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap;">
+        <div style="font-size: 0.65rem; color: #999; font-weight: 600; text-transform: uppercase;">Diskon</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #f59e0b;" id="report-diskon">0</div>
     </div>
 
-    <div class="stat-card">
-        <span class="stat-label">Total DP (Rp)</span>
-        <div class="stat-value" id="report-dp" style="color: #06b6d4;">0</div>
+    <div style="display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap;">
+        <div style="font-size: 0.65rem; color: #999; font-weight: 600; text-transform: uppercase;">DP</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #ef4444;" id="report-dp">0</div>
     </div>
 
-    <div class="stat-card">
-        <span class="stat-label">Total Hutang (Rp)</span>
-        <div class="stat-value" id="report-hutang" style="color: #ef4444;">0</div>
+    <div style="display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap;">
+        <div style="font-size: 0.65rem; color: #999; font-weight: 600; text-transform: uppercase;">Subsidi</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #ef4444;" id="report-subsidi">0</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap;">
+        <div style="font-size: 0.65rem; color: #999; font-weight: 600; text-transform: uppercase;">H. Sales</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #d97706;" id="report-hutang-sales">0</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap;">
+        <div style="font-size: 0.65rem; color: #999; font-weight: 600; text-transform: uppercase;">H. Leasing</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #d97706;" id="report-hutang-leasing">0</div>
     </div>
 </div>
 
@@ -87,49 +99,95 @@
             <table class="table" style="font-size: 0.9em; width: 100%;">
                 <!-- Group Headers -->
                 <thead>
-                    <tr style="background-color: var(--bg-secondary);">
-                        <th colspan="5" style="text-align: center; font-weight: 600; border-bottom: 2px solid var(--border-default); padding: 12px 8px;">Transaksi</th>
-                        <th colspan="2" style="text-align: center; font-weight: 600; border-bottom: 2px solid var(--border-default); padding: 12px 8px;">Harga (Rp)</th>
-                        <th colspan="1" style="text-align: center; font-weight: 600; border-bottom: 2px solid var(--border-default); padding: 12px 8px;">Diskon (Rp)</th>
-                        <th colspan="3" style="text-align: center; font-weight: 600; border-bottom: 2px solid var(--border-default); padding: 12px 8px;">Pembayaran (Rp)</th>
-                        <th colspan="2" style="text-align: center; font-weight: 600; border-bottom: 2px solid var(--border-default); padding: 12px 8px;">Hutang (Rp)</th>
+                    <tr>
+                        <th colspan="7" style="text-align: center; font-weight: 600; border-bottom: 2px solid var(--border-default); padding: 12px 8px; background-color: #e8f4f8;">Info Transaksi & Motor</th>
+                        <th colspan="2" style="text-align: center; font-weight: 600; border-bottom: 2px solid var(--border-default); padding: 12px 8px; background-color: #f0e8f8;">Pihak-Pihak</th>
+                        <th colspan="2" style="text-align: center; font-weight: 600; border-bottom: 2px solid var(--border-default); padding: 12px 8px; background-color: #e8f8e8;">Harga (Rp)</th>
+                        <th colspan="3" style="text-align: center; font-weight: 600; border-bottom: 2px solid var(--border-default); padding: 12px 8px; background-color: #fff3e8;">Diskon (Rp)</th>
+                        <th colspan="3" style="text-align: center; font-weight: 600; border-bottom: 2px solid var(--border-default); padding: 12px 8px; background-color: #fde8e8;">Pembayaran (Rp)</th>
+                        <th colspan="4" style="text-align: center; font-weight: 600; border-bottom: 2px solid var(--border-default); padding: 12px 8px; background-color: #fffacd;">Hutang (Rp)</th>
                     </tr>
                     <!-- Sub Headers -->
-                    <tr style="background-color: var(--bg-secondary);">
-                        <th style="width: 60px;">Nota</th>
-                        <th style="width: 90px;">Tanggal</th>
-                        <th style="width: 120px;">Pelanggan</th>
-                        <th style="width: 100px;">Motor</th>
-                        <th style="width: 60px;">Status</th>
-                        <th style="width: 100px; text-align: right;">OTR</th>
-                        <th style="width: 100px; text-align: right;">Jual</th>
-                        <th style="width: 100px; text-align: right;">Total</th>
-                        <th style="width: 100px; text-align: right;">DP</th>
-                        <th style="width: 100px; text-align: right;">Subsidi</th>
-                        <th style="width: 100px; text-align: right;">Insentif</th>
-                        <th style="width: 100px; text-align: right;">Sales</th>
-                        <th style="width: 100px; text-align: right;">Leasing</th>
+                    <tr>
+                        <th style="width: 70px; background-color: #e8f4f8;">Nota</th>
+                        <th style="width: 90px; background-color: #e8f4f8;">Tanggal</th>
+                        <th style="width: 80px; background-color: #e8f4f8;">No.Mesin</th>
+                        <th style="width: 80px; background-color: #e8f4f8;">No.Rangka</th>
+                        <th style="width: 100px; background-color: #e8f4f8;">Motor</th>
+                        <th style="width: 70px; background-color: #e8f4f8;">Warna</th>
+                        <th style="width: 80px; background-color: #e8f4f8;">Pelanggan</th>
+                        <th style="width: 70px; background-color: #f0e8f8;">Dealer</th>
+                        <th style="width: 70px; background-color: #f0e8f8;">Broker</th>
+                        <th style="width: 100px; text-align: right; background-color: #e8f8e8;">OTR</th>
+                        <th style="width: 100px; text-align: right; background-color: #e8f8e8;">Jual</th>
+                        <th style="width: 80px; text-align: right; background-color: #fff3e8;">AHM</th>
+                        <th style="width: 80px; text-align: right; background-color: #fff3e8;">Dealer</th>
+                        <th style="width: 80px; text-align: right; background-color: #fff3e8;">Leasing</th>
+                        <th style="width: 100px; text-align: right; background-color: #fde8e8;">DP</th>
+                        <th style="width: 100px; text-align: right; background-color: #fde8e8;">Subsidi</th>
+                        <th style="width: 100px; text-align: right; background-color: #fde8e8;">Insentif</th>
+                        <th style="width: 100px; text-align: right; background-color: #fffacd;">Sales</th>
+                        <th style="width: 100px; text-align: right; background-color: #fffacd;">Leasing</th>
+                        <th style="width: 100px; text-align: right; background-color: #fffacd;">Sisa Sales</th>
+                        <th style="width: 100px; text-align: right; background-color: #fffacd;">Sisa Leasing</th>
+                        <th style="width: 60px; background-color: #f5f5f5;">Status</th>
                     </tr>
                 </thead>
                 <tbody id="report-body">
                     <tr>
-                        <td colspan="13" style="text-align: center; padding: var(--space-8);">Silakan generate laporan terlebih dahulu</td>
+                        <td colspan="21" style="text-align: center; padding: var(--space-8);">Silakan generate laporan terlebih dahulu</td>
                     </tr>
                 </tbody>
                 <tfoot>
                     <tr style="background-color: var(--bg-secondary); font-weight: 600;">
-                        <td colspan="5" style="text-align: right; padding: 12px 8px;">TOTAL:</td>
+                        <td colspan="9" style="text-align: right; padding: 12px 8px;">TOTAL:</td>
                         <td style="text-align: right; padding: 12px 8px; width: 100px;" id="total-otr">0</td>
                         <td style="text-align: right; padding: 12px 8px; width: 100px;" id="total-harga-jual">0</td>
-                        <td style="text-align: right; padding: 12px 8px; width: 100px;" id="total-diskon">0</td>
+                        <td style="text-align: right; padding: 12px 8px; width: 80px;" id="total-diskon-ahm">0</td>
+                        <td style="text-align: right; padding: 12px 8px; width: 80px;" id="total-diskon-dealer">0</td>
+                        <td style="text-align: right; padding: 12px 8px; width: 80px;" id="total-diskon-leasing">0</td>
                         <td style="text-align: right; padding: 12px 8px; width: 100px;" id="total-dp">0</td>
                         <td style="text-align: right; padding: 12px 8px; width: 100px;" id="total-subsidi">0</td>
                         <td style="text-align: right; padding: 12px 8px; width: 100px;" id="total-insentif">0</td>
                         <td style="text-align: right; padding: 12px 8px; width: 100px;" id="total-hutang-sales">0</td>
                         <td style="text-align: right; padding: 12px 8px; width: 100px;" id="total-hutang-leasing">0</td>
+                        <td style="text-align: right; padding: 12px 8px; width: 100px;" id="total-sisa-sales">0</td>
+                        <td style="text-align: right; padding: 12px 8px; width: 100px;" id="total-sisa-leasing">0</td>
+                        <td></td>
                     </tr>
                 </tfoot>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Status Legend -->
+<div class="card" style="margin-top: var(--space-8); background-color: var(--bg-secondary);">
+    <div class="card-body" style="padding: var(--space-4);">
+        <div style="display: flex; gap: var(--space-6); flex-wrap: wrap; align-items: center;">
+            <strong style="font-size: 0.95rem;">Legend Status:</strong>
+            <div style="display: flex; gap: var(--space-4); flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="badge badge-secondary" style="min-width: 30px;">D</span>
+                    <span style="font-size: 0.9rem;">Draft</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="badge badge-warning" style="min-width: 30px;">P</span>
+                    <span style="font-size: 0.9rem;">Pending</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="badge badge-info" style="min-width: 30px;">A</span>
+                    <span style="font-size: 0.9rem;">Approved</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="badge badge-success" style="min-width: 30px;">L</span>
+                    <span style="font-size: 0.9rem;">Lunas</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="badge badge-danger" style="min-width: 30px;">C</span>
+                    <span style="font-size: 0.9rem;">Cancelled</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -214,65 +272,87 @@ function displayReport(data) {
     }
 
     try {
-        let totalOtr = 0, totalHargaJual = 0, totalDiskon = 0, totalDp = 0;
-        let totalSubsidi = 0, totalInsentif = 0, totalHutangSales = 0, totalHutangLeasing = 0;
+        let totalOtr = 0, totalHargaJual = 0, totalDiskonAhm = 0, totalDiskonDealer = 0, totalDiskonLeasing = 0;
+        let totalDp = 0, totalSubsidi = 0, totalInsentif = 0, totalHutangSales = 0, totalHutangLeasing = 0;
+        let totalSisaSales = 0, totalSisaLeasing = 0;
 
         data.forEach(t => {
-        const otr = t.harga_dasar || 0;
-        const diskonTotal = (t.diskon_ahm || 0) + (t.diskon_dealer || 0) + (t.diskon_leasing || 0);
-        const hargaJual = otr - diskonTotal;
-        const hutangSales = t.hutang_sales || 0;
-        const hutangLeasing = t.hutang_leasing || 0;
+            const otr = t.harga_dasar || 0;
+            const diskonAhm = t.diskon_ahm || 0;
+            const diskonDealer = t.diskon_dealer || 0;
+            const diskonLeasing = t.diskon_leasing || 0;
+            const diskonTotal = diskonAhm + diskonDealer + diskonLeasing;
+            const hargaJual = otr - diskonTotal;
+            const hutangSales = t.hutang_sales || 0;
+            const hutangLeasing = t.hutang_leasing || 0;
+            const totalTerbayar = t.total_terbayar || 0;
+            const sisaSales = hutangSales - totalTerbayar;
+            const sisaLeasing = hutangLeasing; // Leasing tidak ada pembayaran partial
 
-        totalOtr += otr;
-        totalHargaJual += hargaJual;
-        totalDiskon += diskonTotal;
-        totalDp += t.dp;
-        totalSubsidi += t.subsidi;
-        totalInsentif += t.insentif || 0;
-        totalHutangSales += hutangSales;
-        totalHutangLeasing += hutangLeasing;
+            totalOtr += otr;
+            totalHargaJual += hargaJual;
+            totalDiskonAhm += diskonAhm;
+            totalDiskonDealer += diskonDealer;
+            totalDiskonLeasing += diskonLeasing;
+            totalDp += t.dp;
+            totalSubsidi += t.subsidi;
+            totalInsentif += t.insentif || 0;
+            totalHutangSales += hutangSales;
+            totalHutangLeasing += hutangLeasing;
+            totalSisaSales += sisaSales;
+            totalSisaLeasing += sisaLeasing;
 
-        const statusColor = getStatusColor(t.status);
-        const row = `
-            <tr>
-                <td style="padding: 10px 8px; width: 60px;"><strong>${t.nota}</strong></td>
-                <td style="padding: 10px 8px; width: 90px;">${formatDate(t.tanggal_nota)}</td>
-                <td style="padding: 10px 8px; width: 120px;">${t.customer_name}</td>
-                <td style="padding: 10px 8px; width: 100px;">${t.motor_type}</td>
-                <td style="padding: 10px 8px; width: 60px;"><span class="badge badge-${statusColor}">${t.status}</span></td>
-                <td style="padding: 10px 8px; width: 100px; text-align: right;">${formatCurrency(otr)}</td>
-                <td style="padding: 10px 8px; width: 100px; text-align: right;">${formatCurrency(hargaJual)}</td>
-                <td style="padding: 10px 8px; width: 100px; text-align: right;">${formatCurrency(diskonTotal)}</td>
-                <td style="padding: 10px 8px; width: 100px; text-align: right;">${formatCurrency(t.dp)}</td>
-                <td style="padding: 10px 8px; width: 100px; text-align: right;">${formatCurrency(t.subsidi)}</td>
-                <td style="padding: 10px 8px; width: 100px; text-align: right;">${formatCurrency(t.insentif || 0)}</td>
-                <td style="padding: 10px 8px; width: 100px; text-align: right;">${formatCurrency(hutangSales)}</td>
-                <td style="padding: 10px 8px; width: 100px; text-align: right;">${formatCurrency(hutangLeasing)}</td>
-            </tr>
-        `;
+            const statusColor = getStatusColor(t.status);
+            const row = `
+                <tr>
+                    <td style="padding: 10px 8px; width: 70px; background-color: #e8f4f8;"><strong>${t.nota}</strong></td>
+                    <td style="padding: 10px 8px; width: 90px; background-color: #e8f4f8;">${formatDate(t.tanggal_nota)}</td>
+                    <td style="padding: 10px 8px; width: 80px; background-color: #e8f4f8;">${t.no_mesin || '-'}</td>
+                    <td style="padding: 10px 8px; width: 80px; background-color: #e8f4f8;">${t.no_rangka || '-'}</td>
+                    <td style="padding: 10px 8px; width: 100px; background-color: #e8f4f8;">${t.motor_type}</td>
+                    <td style="padding: 10px 8px; width: 70px; background-color: #e8f4f8;">${t.warna || '-'}</td>
+                    <td style="padding: 10px 8px; width: 80px; background-color: #e8f4f8;">${t.customer_name}</td>
+                    <td style="padding: 10px 8px; width: 70px; background-color: #f0e8f8;">${t.dealer_nama || '-'}</td>
+                    <td style="padding: 10px 8px; width: 70px; background-color: #f0e8f8;">${t.broker_nama || '-'}</td>
+                    <td style="padding: 10px 8px; width: 100px; text-align: right; background-color: #e8f8e8;">${formatCurrency(otr)}</td>
+                    <td style="padding: 10px 8px; width: 100px; text-align: right; background-color: #e8f8e8;">${formatCurrency(hargaJual)}</td>
+                    <td style="padding: 10px 8px; width: 80px; text-align: right; background-color: #fff3e8;">${formatCurrency(diskonAhm)}</td>
+                    <td style="padding: 10px 8px; width: 80px; text-align: right; background-color: #fff3e8;">${formatCurrency(diskonDealer)}</td>
+                    <td style="padding: 10px 8px; width: 80px; text-align: right; background-color: #fff3e8;">${formatCurrency(diskonLeasing)}</td>
+                    <td style="padding: 10px 8px; width: 100px; text-align: right; background-color: #fde8e8;">${formatCurrency(t.dp)}</td>
+                    <td style="padding: 10px 8px; width: 100px; text-align: right; background-color: #fde8e8;">${formatCurrency(t.subsidi)}</td>
+                    <td style="padding: 10px 8px; width: 100px; text-align: right; background-color: #fde8e8;">${formatCurrency(t.insentif || 0)}</td>
+                    <td style="padding: 10px 8px; width: 100px; text-align: right; background-color: #fffacd;">${formatCurrency(hutangSales)}</td>
+                    <td style="padding: 10px 8px; width: 100px; text-align: right; background-color: #fffacd;">${formatCurrency(hutangLeasing)}</td>
+                    <td style="padding: 10px 8px; width: 100px; text-align: right; background-color: #fffacd;">${formatCurrency(sisaSales)}</td>
+                    <td style="padding: 10px 8px; width: 100px; text-align: right; background-color: #fffacd;">${formatCurrency(sisaLeasing)}</td>
+                    <td style="padding: 10px 8px; width: 60px; background-color: #f5f5f5;"><span class="badge badge-${statusColor}">${t.status}</span></td>
+                </tr>
+            `;
             tbody.innerHTML += row;
         });
 
         // Update summary cards
-        updateSummaryCards(totalOtr, totalHargaJual, totalDiskon, totalDp, totalSubsidi, totalHutangSales + totalHutangLeasing, data.length);
+        updateSummaryCards(totalOtr, totalHargaJual, (totalDiskonAhm + totalDiskonDealer + totalDiskonLeasing), totalDp, totalSubsidi, totalHutangSales, totalHutangLeasing, data.length);
 
         // Update footer totals
-        updateFooterTotals(totalOtr, totalHargaJual, totalDiskon, totalDp, totalSubsidi, totalInsentif, totalHutangSales, totalHutangLeasing);
+        updateFooterTotals(totalOtr, totalHargaJual, totalDiskonAhm, totalDiskonDealer, totalDiskonLeasing, totalDp, totalSubsidi, totalInsentif, totalHutangSales, totalHutangLeasing, totalSisaSales, totalSisaLeasing);
     } catch (e) {
         console.error('Error in displayReport:', e);
         showToast('Error: ' + e.message, 'error');
     }
 }
 
-function updateSummaryCards(otr, hj, diskon, dp, subsidi, hutang, count) {
+function updateSummaryCards(otr, hj, diskon, dp, subsidi, hsales, hleasing, count) {
     const els = {
         'report-total': count,
         'report-otr': otr,
         'report-harga-jual': hj,
         'report-diskon': diskon,
         'report-dp': dp,
-        'report-hutang': hutang
+        'report-subsidi': subsidi,
+        'report-hutang-sales': hsales,
+        'report-hutang-leasing': hleasing
     };
 
     Object.keys(els).forEach(id => {
@@ -283,16 +363,20 @@ function updateSummaryCards(otr, hj, diskon, dp, subsidi, hutang, count) {
     });
 }
 
-function updateFooterTotals(otr, hj, diskon, dp, subsidi, insentif, hsales, hleasing) {
+function updateFooterTotals(otr, hj, diskonAhm, diskonDealer, diskonLeasing, dp, subsidi, insentif, hsales, hleasing, sisasales, sisaleasing) {
     const els = {
         'total-otr': otr,
         'total-harga-jual': hj,
-        'total-diskon': diskon,
+        'total-diskon-ahm': diskonAhm,
+        'total-diskon-dealer': diskonDealer,
+        'total-diskon-leasing': diskonLeasing,
         'total-dp': dp,
         'total-subsidi': subsidi,
         'total-insentif': insentif,
         'total-hutang-sales': hsales,
-        'total-hutang-leasing': hleasing
+        'total-hutang-leasing': hleasing,
+        'total-sisa-sales': sisasales,
+        'total-sisa-leasing': sisaleasing
     };
 
     Object.keys(els).forEach(id => {

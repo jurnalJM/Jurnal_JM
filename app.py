@@ -644,22 +644,30 @@ def get_transaksi():
             detail = t.detail
             motor_type = t.motor.type_motor.nama_type if t.motor and t.motor.type_motor else "N/A"
             broker_name = t.broker.nama if t.broker else ''
+            dealer_name = t.dealer.nama if t.dealer else ''
             data.append({
                 'id': t.id,
                 'nota': t.nota,
                 'tanggal_nota': t.tanggal.isoformat(),
                 'customer_name': t.nama_pembeli,
                 'customer_phone': t.telp_pembeli,
+                'no_mesin': t.motor.no_mesin if t.motor else '',
+                'no_rangka': t.motor.no_rangka if t.motor else '',
                 'motor_type': motor_type,
+                'warna': t.motor.warna if t.motor else '',
+                'dealer_nama': dealer_name,
                 'broker_id': t.broker_id,
-                'broker_name': broker_name,
+                'broker_nama': broker_name,
+                'harga_dasar': float(detail.harga_dasar) if detail and detail.harga_dasar else 0,
                 'dp': float(detail.dp) if detail and detail.dp else 0,
                 'subsidi': float(detail.subsidi) if detail and detail.subsidi else 0,
                 'diskon_ahm': float(detail.diskon_ahm) if detail and detail.diskon_ahm else 0,
                 'diskon_dealer': float(detail.diskon_dealer) if detail and detail.diskon_dealer else 0,
                 'diskon_leasing': float(detail.diskon_leasing) if detail and detail.diskon_leasing else 0,
+                'insentif': float(detail.insentif) if detail and detail.insentif else 0,
                 'hutang_sales': float(detail.hutang_sales) if detail and detail.hutang_sales else 0,
                 'hutang_leasing': float(detail.hutang_leasing) if detail and detail.hutang_leasing else 0,
+                'total_terbayar': float(detail.total_terbayar) if detail and detail.total_terbayar else 0,
                 'tgl_hutang_dibayar': detail.tgl_hutang_dibayar.isoformat() if detail and detail.tgl_hutang_dibayar else None,
                 'status': t.status_transaksi,
             })

@@ -9,9 +9,9 @@
 </div>
 
 <!-- Filter Section -->
-<div class="card">
-    <div class="card-header">
-        <h5>Filter Laporan</h5>
+<div class="card" style="border-left: 5px solid transparent; border-image: linear-gradient(180deg, #4a9b7f, #10b981, #f59e0b, #d97706) 0 0 0 1;">
+    <div class="card-header" style="background: linear-gradient(90deg, rgba(74, 155, 127, 0.05) 0%, transparent 100%);">
+        <h5 style="margin: 0; color: #333;">Filter Laporan</h5>
     </div>
     <div class="card-body">
         <div class="grid grid-3">
@@ -41,26 +41,28 @@
     </div>
 </div>
 
-<!-- Summary Cards -->
-<div class="stats-grid" style="margin-top: var(--space-8);">
-    <div class="stat-card">
-        <span class="stat-label">Total Hutang</span>
-        <div class="stat-value" id="total-hutang" style="color: #ef4444;">Rp 0</div>
+<!-- Summary Cards - Compact Single Row -->
+<div style="margin-top: var(--space-8); display: flex; align-items: center; gap: 20px; padding: 12px 16px; background: linear-gradient(90deg, #f9fafb 0%, #ffffff 50%, #f9fafb 100%); border-radius: 10px; overflow-x: auto; border-left: 5px solid transparent; border-image: linear-gradient(180deg, #4a9b7f, #10b981, #f59e0b, #d97706) 0 0 0 1; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+    <div style="display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap;">
+        <div style="font-size: 0.65rem; color: #999; font-weight: 600; text-transform: uppercase;">Total Hutang</div>
+        <div style="font-size: 1.3rem; font-weight: 700; color: #ef4444;" id="total-hutang">Rp 0</div>
     </div>
 
-    <div class="stat-card">
-        <span class="stat-label">Hutang Belum Dibayar</span>
-        <div class="stat-value" id="hutang-unpaid" style="color: #f59e0b;">Rp 0</div>
+    <div style="width: 2px; height: 40px; background: linear-gradient(to bottom, transparent, #d0d8e0, transparent); border-radius: 1px;"></div>
+
+    <div style="display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap;">
+        <div style="font-size: 0.65rem; color: #999; font-weight: 600; text-transform: uppercase;">Belum Dibayar</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #f59e0b;" id="hutang-unpaid">Rp 0</div>
     </div>
 
-    <div class="stat-card">
-        <span class="stat-label">Hutang Sudah Dibayar</span>
-        <div class="stat-value" id="hutang-paid" style="color: #10b981;">Rp 0</div>
+    <div style="display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap;">
+        <div style="font-size: 0.65rem; color: #999; font-weight: 600; text-transform: uppercase;">Sudah Dibayar</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #10b981;" id="hutang-paid">Rp 0</div>
     </div>
 
-    <div class="stat-card">
-        <span class="stat-label">Jumlah Transaksi</span>
-        <div class="stat-value" id="total-transaksi">0</div>
+    <div style="display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap;">
+        <div style="font-size: 0.65rem; color: #999; font-weight: 600; text-transform: uppercase;">Transaksi</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #4a9b7f;" id="total-transaksi">0</div>
     </div>
 </div>
 
@@ -143,24 +145,26 @@
 
 <!-- Bayar Hutang Modal -->
 <div class="modal-overlay" id="bayarHutangModal">
-    <div class="modal" style="width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;">
-        <div class="modal-header">
-            <h4 class="modal-title">Bayar Hutang Sales</h4>
+    <div class="modal" style="width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; border-left: 5px solid transparent; border-image: linear-gradient(180deg, #d97706, #f59e0b) 0 0 0 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background: linear-gradient(90deg, rgba(217, 119, 6, 0.05) 0%, transparent 100%); border-bottom: 2px solid #fef3c7;">
+            <h4 class="modal-title" style="color: #d97706; font-weight: 700;">Bayar Hutang Sales</h4>
             <button class="modal-close" onclick="closeBayarHutangForm()">×</button>
         </div>
         <form onsubmit="submitBayarHutang(event)">
             <div class="modal-body">
                 <!-- Info Transaksi -->
-                <div style="background-color: var(--bg-tertiary); padding: var(--space-3); border-radius: 4px; margin-bottom: var(--space-4);">
-                    <p style="margin-bottom: var(--space-2);"><span class="text-muted">No. Transaksi:</span> <strong id="bayar-nota">-</strong></p>
-                    <p style="margin: 0;"><span class="text-muted">Pelanggan:</span> <strong id="bayar-customer">-</strong></p>
+                <div style="background: linear-gradient(135deg, #fef9e7 0%, #fffbf0 100%); padding: 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);">
+                    <p style="margin-bottom: 8px; font-size: 0.85rem;"><span style="color: #999; font-weight: 500;">No. Transaksi</span></p>
+                    <p style="margin-bottom: 12px; font-size: 1.1rem; font-weight: 700; color: #d97706;" id="bayar-nota">-</p>
+                    <p style="margin-bottom: 8px; font-size: 0.85rem;"><span style="color: #999; font-weight: 500;">Pelanggan</span></p>
+                    <p style="margin: 0; font-size: 1rem; font-weight: 600; color: #333;" id="bayar-customer">-</p>
                 </div>
 
                 <!-- Hutang Calculation Breakdown -->
-                <div style="background-color: #f3f4f6; padding: var(--space-3); border-radius: 4px; margin-bottom: var(--space-4); border: 1px solid #e5e7eb;">
-                    <h6 style="margin-top: 0; margin-bottom: var(--space-3); color: #374151;">Perhitungan Hutang Sales</h6>
-                    <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: var(--space-3);">
-                        Hutang = OTR - DP (Dibayar) - Subsidi - Diskon - Diskon Tambahan
+                <div style="background: linear-gradient(135deg, #f0fdf4 0%, #f8fef5 100%); padding: 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #10b981;">
+                    <h6 style="margin-top: 0; margin-bottom: 12px; color: #059669; font-weight: 700; font-size: 0.95rem;">Perhitungan Hutang Sales</h6>
+                    <p style="font-size: 0.8rem; color: #666; margin-bottom: 16px; font-style: italic;">
+                        Hutang = OTR - DP - Subsidi - Diskon
                     </p>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
@@ -195,10 +199,18 @@
                 </div>
 
                 <!-- Hutang Status Info -->
-                <div style="background-color: #fef3c7; padding: var(--space-3); border-radius: 4px; margin-bottom: var(--space-4); border-left: 4px solid #f59e0b;">
-                    <p style="margin-bottom: var(--space-2);"><span class="text-muted">Sudah Dibayar:</span> <strong id="bayar-hutang-terbayar">Rp 0</strong></p>
-                    <p style="margin: 0;"><span class="text-muted">Sisa Hutang:</span> <strong id="bayar-hutang-sisa" style="color: #d97706; font-size: 1.1rem;">Rp 0</strong></p>
-                    <p style="margin-top: var(--space-2); margin-bottom: 0; font-size: 0.85rem;"><span class="text-muted">Status:</span> <span id="bayar-hutang-status" class="badge">-</span></p>
+                <div style="background: linear-gradient(135deg, #fffacd 0%, #fffff0 100%); padding: 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #d97706; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.1);">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <p style="margin: 0; font-size: 0.8rem; color: #999; margin-bottom: 4px;">Sudah Dibayar</p>
+                            <p style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #10b981;" id="bayar-hutang-terbayar">Rp 0</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-size: 0.8rem; color: #999; margin-bottom: 4px;">Sisa Hutang</p>
+                            <p style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #d97706;" id="bayar-hutang-sisa">Rp 0</p>
+                        </div>
+                    </div>
+                    <p style="margin: 0; font-size: 0.85rem;"><span style="color: #999;">Status:</span> <span id="bayar-hutang-status" class="badge" style="margin-left: 8px;">-</span></p>
                 </div>
 
                 <!-- Pembayaran Form -->

@@ -326,8 +326,18 @@ function renderJurnalTable(data) {
         const tr = document.createElement('tr');
         tr.style.cursor = 'pointer';
         tr.onclick = () => viewDetailJurnal(row.id);
-        tr.onmouseover = function() { this.style.backgroundColor = 'var(--bg-tertiary)'; };
-        tr.onmouseout = function() { this.style.backgroundColor = ''; };
+
+        // Highlight rows with unpaid debt (if tgl_hutang_dibayar is empty = belum dibayar)
+        const hasUnpaidDebt = !row.tgl_hutang_dibayar;
+        const defaultBgColor = hasUnpaidDebt ? '#ffe8e8' : '';
+        tr.style.backgroundColor = defaultBgColor;
+
+        tr.onmouseover = function() {
+            this.style.backgroundColor = hasUnpaidDebt ? '#ffd4d4' : 'var(--bg-tertiary)';
+        };
+        tr.onmouseout = function() {
+            this.style.backgroundColor = defaultBgColor;
+        };
         tr.innerHTML = `
             <td>${row.tanggal || '-'}</td>
             <td><strong>${row.nota || '-'}</strong></td>
@@ -398,7 +408,8 @@ function exportToExcel() {
         return;
     }
 
-    let csv = 'Tanggal,No Transaksi,Dealer,No Mesin,No Rangka,Type Motor,Warna,Nama Pemohon,Alamat,Handphone,No. Faktur,Tgl Faktur,Link/Broker,Ket DP,DP,Subsidi,Diskon AHM,Diskon Dealer,Diskon Leasing,Insentif,Leasing,Tgl Lunas,Status,No Polisi,No. Surat Leasing,Tgl. Surat Leasing,Nama Pemilik (STNK/BPKB),No BPKB,Tgl BIRO,Tgl Terima BPKB,Tgl Serah Terima\n';
+    // Header sesuai dengan kolom di grid
+    let csv = 'Tanggal,Nota,Dealer,No.Mesin,No.Rangka,Motor,Warna,Pelanggan,Alamat,HP,No.Faktur,Tgl.Faktur,Broker,Ket DP,DP,Subsidi,Diskon AHM,Diskon Dealer,Diskon Leasing,Insentif,Leasing,Tgl Lunas,Status,No Polisi,No.Surat,Tgl.Surat,Nama BPKB,No.BPKB,Tgl BIRO,Tgl Terima,Tgl Serah\n';
 
     currentJurnalData.forEach(row => {
         csv += `"${row.tanggal || ''}","${row.nota || ''}","${row.dealer_nama || ''}","${row.no_mesin || ''}","${row.no_rangka || ''}","${row.motor_type || ''}","${row.warna || ''}","${row.customer_name || ''}","${row.customer_alamat || ''}","${row.customer_phone || ''}","${row.no_faktur || ''}","${row.tgl_faktur || ''}","${row.broker_nama || ''}","${row.ket_dp || ''}",${row.dp || 0},${row.subsidi || 0},${row.diskon_ahm || 0},${row.diskon_dealer || 0},${row.diskon_leasing || 0},${row.insentif || 0},"${row.leasing_nama || ''}","${row.tgl_hutang_dibayar || ''}","${row.status || ''}","${row.no_polisi || ''}","${row.no_surat_pemberitahuan || ''}","${row.tgl_surat_pemberitahuan || ''}","${row.nama_surat || ''}","${row.no_bpkb || ''}","${row.tgl_biro || ''}","${row.tgl_terima_bpkb || ''}","${row.tgl_serah_terima || ''}"\n`;
