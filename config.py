@@ -51,6 +51,9 @@ DB_ECHO = os.getenv("DB_ECHO", "False").lower() == "true"  # Log SQL queries
 DB_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "10"))
 DB_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "20"))
 
+# Require TLS for the DB connection (needed for TiDB Cloud / most managed MySQL)
+DB_SSL_REQUIRED = os.getenv("DB_SSL_REQUIRED", "False").lower() == "true"
+
 # Enable foreign keys in SQLite
 DB_ENABLE_FK = True
 

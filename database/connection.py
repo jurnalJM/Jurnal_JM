@@ -11,7 +11,7 @@ from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 
-from config import DATABASE_URL, DB_ECHO, DB_POOL_SIZE, DB_MAX_OVERFLOW, DB_ENABLE_FK
+from config import DATABASE_URL, DB_ECHO, DB_POOL_SIZE, DB_MAX_OVERFLOW, DB_ENABLE_FK, DB_SSL_REQUIRED
 
 
 class DatabaseManager:
@@ -52,12 +52,23 @@ class DatabaseManager:
                 poolclass=StaticPool,
             )
         else:
-            # For other databases (future use)
+            connect_args = {}
+            if DB_SSL_REQUIRED:
+                import certifi
+
+                connect_args = {
+                    "ssl_ca": certifi.where(),
+                    "ssl_verify_cert": True,
+                    "ssl_verify_identity": True,
+                }
+
             cls._engine = create_engine(
                 database_url,
                 echo=echo,
                 pool_size=DB_POOL_SIZE,
                 max_overflow=DB_MAX_OVERFLOW,
+                pool_recycle=280,
+                connect_args=connect_args,
             )
 
         # Enable foreign keys in SQLite

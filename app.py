@@ -35,15 +35,15 @@ CORS(app)
 app.config['JSON_SORT_KEYS'] = False
 
 # Initialize database
-import os
-db_file = Path(__file__).parent / "data" / "jaya_motor.db"
-if db_file.exists():
-    # Database already exists, just connect
+from sqlalchemy import inspect as sa_inspect
+
+DatabaseManager.initialize()
+if sa_inspect(DatabaseManager.get_engine()).get_table_names():
+    # Tables already exist, just connect
     logger.info("Database exists, connecting...")
-    DatabaseManager.initialize()
     logger.info("[OK] Database connected")
 else:
-    # Database doesn't exist, create fresh with seed data
+    # No tables found, create fresh schema with seed data
     logger.info("Initializing database...")
     initialize_database()
     logger.info("[OK] Database initialized")
@@ -2423,12 +2423,13 @@ def create_pindah_stok():
 
         logger.info(f"[Pindah Stok] Motor {motor.no_mesin} dipindahkan")
 
+        transfer_id = transfer.id
         session.close()
 
         return jsonify({
             'success': True,
             'message': 'Stok berhasil dipindahkan',
-            'id': transfer.id
+            'id': transfer_id
         }), 201
 
     except Exception as e:
@@ -2441,7 +2442,7 @@ def return_pindah_stok(transfer_id):
     """Return stock to origin dealer"""
     try:
         from database.connection import DatabaseManager
-        from database.models import StokTransfer
+        from database.models import StokTransfer, StokMotor
 
         data = request.json
 

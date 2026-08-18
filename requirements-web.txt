@@ -5,11 +5,15 @@ flask-cors==4.0.0
 # Database & ORM
 SQLAlchemy==2.0.23
 sqlalchemy-utils==0.41.1
+PyMySQL==1.1.1
+cryptography==43.0.3
+certifi==2024.8.30
 
 # Data Processing & Export
 openpyxl==3.1.2
 pandas==2.0.3
 python-dateutil==2.8.2
+xlrd==2.0.1
 
 # PDF & Image
 reportlab==4.0.7
