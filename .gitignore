@@ -142,6 +142,8 @@ dmypy.json
 .env
 *.key
 *.pem
+data_export.json
+*_export.json
 
 # OS specific
 Thumbs.db
