@@ -75,7 +75,14 @@
       "Bash(curl -s -X PUT http://localhost:5000/api/transaksi/1 -H 'Content-Type: application/json' -d '{\"no_polisi\": \"B 1234 AA\"}')",
       "Bash(curl -s -X PUT http://localhost:5000/api/transaksi/1 -H 'Content-Type: application/json' -d '{\"no_polisi\": \"B5555BB\"}')",
       "Bash(curl -s -X PUT http://localhost:5000/api/transaksi/1 -H 'Content-Type: application/json' -d '{\"tgl_serah_terima\": \"2026-07-25\"}')",
-      "Bash(curl -s http://localhost:5000)"
+      "Bash(curl -s http://localhost:5000)",
+      "Read(//Library/Frameworks/Python.framework/Versions/**)",
+      "Read(//usr/local/bin/**)",
+      "Read(//opt/homebrew/**)",
+      "Bash(pyenv versions *)",
+      "Bash(brew list *)",
+      "Bash(lsof -ti:5000)",
+      "Bash(kill 89947)"
     ]
   }
 }
