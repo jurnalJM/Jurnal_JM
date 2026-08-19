@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: jurnaljm
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements-web.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_SSL_REQUIRED
+        value: "True"
+      - key: DEBUG
+        value: "False"
+      - key: LOG_LEVEL
+        value: "INFO"
+      - key: PYTHON_VERSION
+        value: "3.11.9"
